@@ -10,7 +10,8 @@ defaultTasks 'uploadArchives'
 
 configurations { deployJars }
 
-assert file('build/libs/gradle-javaPropFile-plugin-0.1-SNAPSHOT.jar').exists():
+assert fileTree(dir: 'build/libs', include: 'gradle-javaPropFile-plugin-*.jar').
+    singleFile.exists():
 '''Due to boot-strapping issue, you must build the jar with 'build.gradle'
 before you can use build file 'build-dist.gradle.
 '''
