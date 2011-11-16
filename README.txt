@@ -1,6 +1,8 @@
 JavaPropFile Gradle Plugin
 
 Load Gradle Project with properties from Java properties file.
+After loading properties from properties files, the String values are available
+like any Gradle Project String property values.
 
 This isn't simple loading like you could do with 3 lines of Groovy.
 What's so great?
@@ -34,7 +36,9 @@ Pull plugin from Internet.
         }
         apply plugin 'ivyxml'
         ...
+        // Load any properties files that you want to
         propFileLoader.load(file('build.properties')
+        propFileLoader.strict = false
         propFileLoader.load(file('local.properties')
 
 Use plugin jar file locally.
@@ -48,6 +52,19 @@ Use plugin jar file locally.
     sharing it with other project developers (assuming you use some SCM system).
     Or you can store it in a local directory, perhaps with other Gradle plugin
     jars.  The procedure is the same either way:
+
+        buildscript { dependencies {
+            classpath fileTree(
+                dir: 'directory/containing/the/plugin/jar/file',
+                include: 'gradle-javaPropFile-plugin-*.jar
+            )
+        } }
+        apply plugin 'ivyxml'
+        ...
+        // Load any properties files that you want to
+        propFileLoader.load(file('build.properties')
+        propFileLoader.strict = false
+        propFileLoader.load(file('local.properties')
 
 
 DETAILS
