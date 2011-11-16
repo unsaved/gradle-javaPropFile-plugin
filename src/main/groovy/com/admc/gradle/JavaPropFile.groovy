@@ -31,7 +31,7 @@ class JavaPropFile {
                 newVal = pv.replaceAll(/\$\{([^}]+)\}/, { matchGrps ->
                     // This block resolves ${references} in property values
                     if (gp.hasProperty(matchGrps[1])
-                            && gp.property(matchGrps[1]) instanceof String)
+                            && (gp.property(matchGrps[1]) instanceof String))
                         return gp.property(matchGrps[1])
                     if (expandSystemProperties
                             && System.properties.containsKey(matchGrps[1]))
@@ -45,7 +45,7 @@ class JavaPropFile {
                         if (gp.property(pk) == null)
                             throw new GradleException(
                             "Property setting '$pk' attempts to override null property value")
-                        if (! gp.property(pk) instanceof String)
+                        if (!(gp.property(pk) instanceof String))
                             throw new GradleException(
                             "Property setting '$pk' attempts to override non-String property value: ${gp.property(pk).class.name}")
                     }
