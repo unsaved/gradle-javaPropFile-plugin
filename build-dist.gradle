@@ -8,6 +8,11 @@ signing {
 apply from: 'build.gradle'
 defaultTasks 'uploadArchives'
 
+artifacts {
+     archives sourcesJar
+     archives javadocJar
+}
+
 configurations { deployJars }
 
 assert fileTree(dir: 'build/libs', include: 'gradle-javaPropFile-plugin-*.jar').
@@ -24,11 +29,12 @@ buildscript { dependencies {
 apply plugin: 'javaPropFile'
 propFileLoader.load(file('local.properties'))
 
-dependencies {
-    if (project.hasProperty('mavenRepository.dest.url')
-            && project.property('mavenRepository.dest.url').
-            startsWith('scp://'))
-        deployJars 'org.apache.maven.wagon:wagon-ssh:2.0'
+if (project.hasProperty('mavenRepository.dest.url')
+        && project.property('mavenRepository.dest.url').startsWith('scp://')) {
+    repositories { mavenCentral() }
+    dependencies {
+        deployJars 'org.apache.maven.wagon:wagon-ssh:latest.milestone'
+    }
 }
 
 // description attribute of project is always set, but may be null

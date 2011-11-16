@@ -54,3 +54,15 @@ task checkTabs << {
     if (tabFiles.size() > 0) println '  ' + tabFiles.join('\n  ')
 }
 checkTabs.description = 'Reports on any text files containing tab characters'
+
+task sourcesJar(type: Jar, dependsOn:classes) {
+     classifier = 'sources'
+     from sourceSets.main.allSource
+}
+sourcesJar.description = 'Build sources jar file'
+
+task javadocJar(type: Jar, dependsOn:javadoc) {
+     classifier = 'javadoc'
+     from javadoc.destinationDir
+}
+sourcesJar.description = 'Build javadoc jar file'
