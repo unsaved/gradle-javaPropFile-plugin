@@ -2,7 +2,7 @@ apply plugin: 'maven'
 apply plugin: 'signing'
 
 signing {
-    //sign configurations.archives
+    sign configurations.archives
 }
 
 apply from: 'build.gradle'
@@ -33,7 +33,7 @@ dependencies {
 // description attribute of project is always set, but may be null
 if (!project.hasProperty('description') ||
         project.property('description') == null)
-    project.description = '''Support Ivy-native dependency file, traditionally 'ivy.xml'.'''
+    project.description = '''Load Gradle Project with properties from Java properties files'''
 
 uploadArchives {
     /*
@@ -53,7 +53,7 @@ uploadArchives {
 
     repositories.mavenDeployer {
         configuration = configurations.deployJars
-        //beforeDeployment { MavenDeployment deployment -> signPom(deployment) }
+        beforeDeployment { MavenDeployment deployment -> signPom(deployment) }
         if (project.hasProperty('mavenRepository.dest.url'))
             repository(url: project.property('mavenRepository.dest.url')) {
                 authentication(authMap)
@@ -82,7 +82,7 @@ uploadArchives {
             licenses {
                 license {
                     name 'Apache 2.0'
-                    url 'https://github.com/unsaved/gradle-javaPropFile-plugin/blob/master/doc/LICENSE.txt'
+                    url 'https://raw.github.com/unsaved/gradle-javaPropFile-plugin/master/doc/LICENSE.txt'
                     distribution 'repo'
                 }
             }
@@ -94,13 +94,6 @@ uploadArchives { doFirst {
     assert project.hasProperty('group') && project.group != '' :
             '''Property 'group' is required by 'uploadArchives' task.
 '''
-    /*  Unfortunately, Maven plugin has no OOTB way to get a proper
-     *  organization name into the descriptors.
-     *  TODO:  Test this with Gradle 1.0 milestone 6.
-    assert project.hasProperty('organization') && project.organization != '' :
-            '''Property 'organization' is required by 'uploadArchives' task.
-'''
-     */
     assert project.hasProperty('mavenRepository.dest.url'):
     '''Property 'mavenRepository.dest.url' is required by 'uploadArchives' task.'''
 

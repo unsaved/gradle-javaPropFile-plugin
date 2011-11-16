@@ -1,14 +1,12 @@
 defaultTasks 'jar'
 
 if (version == 'unspecified') version = '0.1-SNAPSHOT'
-if ('com.admc' && !project.hasProperty('organization')) {
-    organization = ((group == 'com.admc')
-            ? 'Axis Data Management Corp.' : System.properties['user.name'])
-}
+if (!project.hasProperty('org.name'))
+    project.setProperty('org.name', ((group == 'com.admc')
+            ? 'Axis Data Management Corp.' : System.properties['user.name']))
 if (!project.hasProperty('implTitle'))
     implTitle = ((group == 'com.admc')
-            ? 'JavaPropFile Gradle plugin jar'
-            : 'Customization')
+            ? 'JavaPropFile Gradle plugin jar' : 'Customization')
 
 apply plugin: 'groovy'
 
@@ -26,9 +24,9 @@ jar { doFirst {
         'Specification-Title': 'JavaPropFile Gradle Plugin',
         'Specification-Version': '0.1-SNAPSHOT',
         'Specification-Vendor': 'Axis Data Management Corp.',
-        'Implementation-Title': 'JavaPropFile Gradle plugin jar',
+        'Implementation-Title': implTitle,
         'Implementation-Version': project.version,
-        'Implementation-Vendor': project.organization
+        'Implementation-Vendor': project.property('org.name')
     ) } }
 } }
 

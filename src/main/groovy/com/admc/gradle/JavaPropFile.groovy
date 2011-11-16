@@ -38,7 +38,7 @@ class JavaPropFile {
                         return System.properties[matchGrps[1]]
                     unresolveds << matchGrps[1]
                     haveNewVal = false
-                    return mathGrps[0]
+                    return matchGrps[0]
                 })
                 if (haveNewVal) {
                     if (gp.hasProperty(pk)) {
