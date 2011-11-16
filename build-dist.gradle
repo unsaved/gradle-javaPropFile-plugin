@@ -86,6 +86,17 @@ uploadArchives {
                     distribution 'repo'
                 }
             }
+            if (project.hasProperty('developer.name')
+                    || project.hasProperty('developer.email')) developers {
+                developer {
+                    if (project.hasProperty('developer.id'))
+                        id project.property('developer.id')
+                    if (project.hasProperty('developer.name'))
+                        name project.property('developer.name')
+                    if (project.hasProperty('developer.email'))
+                        email project.property('developer.email')
+                }
+            }
         }
     }
 }
