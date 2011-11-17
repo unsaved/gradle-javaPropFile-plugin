@@ -24,11 +24,10 @@ class JavaPropFilePluginTest {
         proj.apply plugin: com.admc.gradle.JavaPropFilePlugin
         if (checkProps == null) return proj
 
-        for (p in checkProps) {
-            assert !p.hasProperty(p):
-                "Gradle project has property '$p' set before test begins"
-            assert System.properties[p] == null:
-                "Java system property '$p' is set before test begins"
+        checkProps.each {
+            assert !proj.hasProperty(it):
+                "Gradle project has property '$it' set before test begins"
+            System.properties.remove(it)
         }
         return proj
     }
@@ -86,15 +85,16 @@ class JavaPropFilePluginTest {
         project.propFileLoader.load(f)
     }
 
-    @org.junit.Test(expected=GradleException.class)
-    void nullCollision() {
+    @org.junit.Test
+    void changeToNull() {
         Project project = JavaPropFilePluginTest.prepProject('aNull')
         project.setProperty('aNull', (String) null)
 
-        project.propFileLoader.overwriteThrow = true
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('aNull=one', 'ISO-8859-1')
         project.propFileLoader.load(f)
+        assertTrue(project.hasProperty('aNull'))
+        assertEquals('one', project.property('aNull'))
     }
 
     @org.junit.Test(expected=GradleException.class)
@@ -302,7 +302,6 @@ mid2   m2 ${bottom1}
         assert !project.hasProperty('file.separator'):
             '''Project has property 'file.separator' set before we start test'''
         
-        project.propFileLoader.overwriteThrow = true
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('systemProp.alpha=eins\nsystemProp.file.separator=*')
         project.propFileLoader.systemPropPrefix = 'systemProp.'
@@ -361,13 +360,15 @@ beta()=
 delta()=
 ''', 'ISO-8859-1')
         project.propFileLoader.overwriteThrow = true
-        project.setProperty('alpha', 'eins')
+        project.propFileLoader.typeCasting = true
         project.propFileLoader.load(f)
-        for (p in [
-            'alpha', 'beta', 'gamma', 'delta'
-        ]) assertTrue(project.hasProperty(p))
+        ['alpha', 'beta', 'gamma', 'delta'].each {
+            assertTrue("Missing property '$it'", project.hasProperty(it))
+        }
         assertEquals('', project.property('alpha'))
-        for (p in ['beta', 'gamma', 'delta']) assertNull(project.hasProperty(p))
+        ['beta', 'gamma', 'delta'].each {
+            assertNull("Non-null property '$it'", project.property(it))
+        }
     }
 
     @org.junit.Test
@@ -384,7 +385,9 @@ delta()=
         project.setProperty('gamma', null)
         project.setProperty('delta', '')
         project.propFileLoader.load(f)
-        for (p in ['beta', 'gamma', 'delta']) assertNull(project.hasProperty(p))
+        ['alpha', 'beta', 'gamma', 'delta'].each {
+            assertTrue("Missing property '$it'", project.hasProperty(it))
+        }
         assertEquals(new File('eins'), project.property('alpha'))
         assertEquals(new File('zwei'), project.property('beta'))
         assertNull(project.property('gamma'))
@@ -405,24 +408,75 @@ delta()=
         assertTrue(project.hasProperty('aFile'))
         assertTrue(project.hasProperty('aLong'))
         assertEquals(new File('eins'), project.property('aFile'))
-        assertEquals(Long.valueOf(9264L), project.property('aLong'))
+        assertEquals(Long.valueOf(9764L), project.property('aLong'))
     }
 
     @org.junit.Test
     void nonCastingParens() {
         Project project = JavaPropFilePluginTest.prepProject(
-                ['alpha(File)x', 'x(File)alpha', 'alpha()x', 's()alpha'])
+                ['alpha(File)x', 'x(File)beta', 'alpha', 'beta',
+                'alpha()x', 's()alpha'])
 
         File f = JavaPropFilePluginTest.mkTestFile()
-        f.write('alpha(File)x=eins\n(File)beta=zwei', 'ISO-8859-1')
+        f.write('alpha(File)x=eins\nx(File)beta=zwei', 'ISO-8859-1')
         project.propFileLoader.overwriteThrow = true
         project.propFileLoader.typeCasting = true
         project.propFileLoader.load(f)
-        for (p in ['beta', 'gamma', 'delta']) assertNull(project.hasProperty(p))
-        assertTrue(project.hasProperty('alpha'))
-        assertTrue(project.hasProperty('beta'))
-        assertEquals(new File('eins'), project.property('alpha'))
-        assertEquals(new File('zwei'), project.property('beta'))
+        ['alpha', 'beta'].each {
+            assertFalse("Missing property '$it'", project.hasProperty(it))
+        }
+        ['alpha(File)x', 'x(File)beta'].each {
+            assertTrue("Present property '$it'", project.hasProperty(it))
+        }
+        assertEquals('eins', project.property('alpha(File)x'))
+        assertEquals('zwei', project.property('x(File)beta'))
+    }
+
+    @org.junit.Test(expected=GradleException.class)
+    void overCasted1() {
+        Project project = JavaPropFilePluginTest.prepProject(
+                ['epsilon()', '(File)epsilon()'])
+
+        File f = JavaPropFilePluginTest.mkTestFile()
+        f.write('(File)epsilon()=sechs', 'ISO-8859-1')
+        project.propFileLoader.overwriteThrow = true
+        project.propFileLoader.typeCasting = true
+        project.propFileLoader.load(f)
+    }
+
+    @org.junit.Test(expected=GradleException.class)
+    void overCasted2() {
+        Project project =
+                JavaPropFilePluginTest.prepProject('(File)delta(junk)')
+
+        File f = JavaPropFilePluginTest.mkTestFile()
+        f.write('(File)delta(junk)=vier', 'ISO-8859-1')
+        project.propFileLoader.overwriteThrow = true
+        project.propFileLoader.typeCasting = true
+        project.propFileLoader.load(f)
+    }
+
+    @org.junit.Test(expected=GradleException.class)
+    void overCasted3() {
+        Project project =
+                JavaPropFilePluginTest.prepProject(['gamma', '(gamma)'])
+
+        File f = JavaPropFilePluginTest.mkTestFile()
+        f.write('(File)delta(junk)=vier', 'ISO-8859-1')
+        project.propFileLoader.overwriteThrow = true
+        project.propFileLoader.typeCasting = true
+        project.propFileLoader.load(f)
+    }
+
+    @org.junit.Test(expected=GradleException.class)
+    void emptyCast() {
+        Project project = JavaPropFilePluginTest.prepProject('()')
+
+        File f = JavaPropFilePluginTest.mkTestFile()
+        f.write('()=', 'ISO-8859-1')
+        project.propFileLoader.overwriteThrow = true
+        project.propFileLoader.typeCasting = true
+        project.propFileLoader.load(f)
     }
 
     @org.junit.Test(expected=GradleException.class)
@@ -436,10 +490,21 @@ delta()=
         project.propFileLoader.load(f)
     }
 
+    @org.junit.Test(expected=GradleException.class)
+    void missingCastingClass() {
+        Project project = JavaPropFilePluginTest.prepProject('alpha')
+
+        project.propFileLoader.overwriteThrow = true
+        project.propFileLoader.typeCasting = true
+        File f = JavaPropFilePluginTest.mkTestFile()
+        f.write('alpha(NoSuchClass)=x', 'ISO-8859-1')
+        project.propFileLoader.load(f)
+    }
+
     @org.junit.Test
     void parenthesizedSysProps() {
         Project project = JavaPropFilePluginTest.prepProject(
-                ['(File)systemProp.alpha', 'beta(File)', 'gama()', 'alpha',
+                ['(File)systemProp.alpha', 'beta(File)', 'gamma()', 'alpha',
                 'beta', 'gamma', 'systemProp.alpha', 'systemProp.beta(File)',
                 'systemProp.gamma()'])
 
@@ -448,26 +513,27 @@ delta()=
         f.write('''
 (File)systemProp.alpha=eins
 systemProp.beta(File)=zwei
-systemProp.gamma()=''')
+systemProp.gamma()=
+''')
         project.propFileLoader.systemPropPrefix = 'systemProp.'
         project.propFileLoader.typeCasting = true
         project.propFileLoader.load(f)
-        for (p in ['alpha', 'beta', 'gamma', 'systemProp.alpha',
-                'systemProp.beta(File)', 'systemProp.gamma()']) {
-            if (System.properties['(File)systemProp.alpha'] != null)
-                throw new IllegalStateException(
-                        "System property '$p' set before our test began")
-            if (project.hasProperty(p))
-                throw new IllegalStateException(
-                        "Project has property '$p' before our test began")
+        ['alpha', 'beta', 'gamma', 'systemProp.alpha', '(File)systemProp.alpha',
+                'systemProp.beta(File)', 'systemProp.gamma()'].each {
+            assertFalse("System property '$it' is set",
+                    System.properties.containsKey(it))
+                
         }
-        assertFalse(project.hasProperty('beta(File)'))
-        assertFalse(project.hasProperty('gamma'))
-        assertNull(System.properties['(File)systemProp.alpha'])
+        ['alpha', 'beta', 'gamma', 'beta(File)', 'gamma()',
+                'systemProp.beta(File)', 'systemProp.gamma()'].each {
+            assertFalse("Project has property '$it'", project.hasProperty(it))
+        }
 
-        assertTrue(project.hasProperty('(File)systemProp.alpha'))
-        assertEquals('eins', project.property('(File)systemProp.alpha'))
+        assertTrue(project.hasProperty('systemProp.alpha'))
+        assertTrue(System.properties.containsKey('beta(File)'))
+        assertTrue(System.properties.containsKey('gamma()'))
+        assertEquals(new File('eins'), project.property('systemProp.alpha'))
         assertEquals('zwei', System.properties['beta(File)'])
-        assertEquals('', System.properties['gamma'])
+        assertEquals('', System.properties['gamma()'])
     }
 }

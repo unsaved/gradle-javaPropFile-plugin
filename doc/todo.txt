@@ -1,12 +1,6 @@
-overwrite + overwriteThrow.  Check for incompatible combo.
-typeCasting
-    First look for a .valueOf(String) method
-    Lacking that, look for a (String) constructor
-Allow ^([^)]) or ([^)])$ where () only usable with value of 'null'.
-systemPropPrefix (Gradle uses 'systemProp.')
-    System.properties['file.separator'] = '@'
-
 Document
+    Don't allow changing types, but can change from value null to anything,
+     and from anything to null.
     Note that app.properties for shared, etc.
     Sequence is important if "changing" a value
     What's wrong with 'gradle.properties'.
