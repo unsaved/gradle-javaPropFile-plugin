@@ -95,4 +95,56 @@ class JavaPropFilePluginTest {
         f.write('aNull=one', "ISO-8859-1")
         project.propFileLoader.load(f)
     }
+
+    @org.junit.Test(expected=GradleException.class)
+    void unsetLoneStrict() {
+        Project project = ProjectBuilder.builder().build()
+        project.apply plugin: com.admc.gradle.JavaPropFilePlugin
+        if (project.hasProperty('notset'))
+            throw new IllegalStateException(
+                    '''Project has property 'notset' before our test began''')
+        File f = JavaPropFilePluginTest.mkTestFile()
+        f.write('alpha=${notset}', "ISO-8859-1")
+        project.propFileLoader.load(f)
+    }
+
+    @org.junit.Test(expected=GradleException.class)
+    void unsetSandwichedStrict() {
+        Project project = ProjectBuilder.builder().build()
+        project.apply plugin: com.admc.gradle.JavaPropFilePlugin
+        if (project.hasProperty('notset'))
+            throw new IllegalStateException(
+                    '''Project has property 'notset' before our test began''')
+        File f = JavaPropFilePluginTest.mkTestFile()
+        f.write('alpha=pre${notset}post', "ISO-8859-1")
+        project.propFileLoader.load(f)
+    }
+
+    @org.junit.Test
+    void unsetLoneNonstrict() {
+        Project project = ProjectBuilder.builder().build()
+        project.apply plugin: com.admc.gradle.JavaPropFilePlugin
+        if (project.hasProperty('notset'))
+            throw new IllegalStateException(
+                    '''Project has property 'notset' before our test began''')
+        File f = JavaPropFilePluginTest.mkTestFile()
+        f.write('alpha=${notset}', "ISO-8859-1")
+        project.propFileLoader.strict = false
+        project.propFileLoader.load(f)
+        assertFalse(project.hasProperty('alpha'))
+    }
+
+    @org.junit.Test
+    void unsetSandwichedNonstrict() {
+        Project project = ProjectBuilder.builder().build()
+        project.apply plugin: com.admc.gradle.JavaPropFilePlugin
+        if (project.hasProperty('notset'))
+            throw new IllegalStateException(
+                    '''Project has property 'notset' before our test began''')
+        File f = JavaPropFilePluginTest.mkTestFile()
+        f.write('alpha=pre${notset}post', "ISO-8859-1")
+        project.propFileLoader.strict = false
+        project.propFileLoader.load(f)
+        assertFalse(project.hasProperty('alpha'))
+    }
 }

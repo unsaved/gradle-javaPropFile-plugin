@@ -6,8 +6,6 @@ Allow ^([^)]) or ([^)])$ where () only usable with value of 'null'.
 systemPropPrefix (Gradle uses 'systemProp.')  VERIFY CAN ACTUALLY WRITE
 unsetBehavior blankit?
 
-Add tests for
-    Undefined references, allowed and prohibited
 
 Document
     Sequence is important if "changing" a value
