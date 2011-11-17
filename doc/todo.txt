@@ -1,0 +1,13 @@
+Note that app.properties for shared, etc.
+overwrite true
+Use a Pattern for replaceAll
+Add typing to JavaPropFile inform of 'typed'.
+Allow ^([^)]) or ([^)])$ where () only usable with value of 'null'.
+
+Add tests for
+    Undefined references, allowed and prohibited
+
+Document
+    If use typePrefixDelim or typeSuffixDelim, if you use any of
+        -, :, or any white space character.  Suggest that $ works well.
+    The two *Delim settings are mutually exclusive.
