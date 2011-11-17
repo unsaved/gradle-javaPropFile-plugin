@@ -28,7 +28,7 @@ class JavaPropFile {
             unresolveds.clear()
             new HashMap(props).each() { pk, pv ->
                 haveNewVal = true
-                newVal = pv.replaceAll(/\$\{([^}]+)\}/, { matchGrps ->
+                newVal = pv.replaceAll(/\$\{([^}]+)\}/) { matchGrps ->
                     // This block resolves ${references} in property values
                     if (gp.hasProperty(matchGrps[1])
                             && (gp.property(matchGrps[1]) instanceof String))
@@ -39,7 +39,7 @@ class JavaPropFile {
                     unresolveds << matchGrps[1]
                     haveNewVal = false
                     return matchGrps[0]
-                })
+                }
                 if (haveNewVal) {
                     if (gp.hasProperty(pk)) {
                         if (gp.property(pk) == null)

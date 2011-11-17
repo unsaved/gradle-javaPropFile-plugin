@@ -4,11 +4,18 @@ Use a Pattern for replaceAll
 Add typing to JavaPropFile inform of 'typed'.
 Allow ^([^)]) or ([^)])$ where () only usable with value of 'null'.
 systemPropPrefix (Gradle uses 'systemProp.')  VERIFY CAN ACTUALLY WRITE
+unsetBehavior blankit?
 
 Add tests for
     Undefined references, allowed and prohibited
 
 Document
+    Sequence is important if "changing" a value
+    What's wrong with 'gradle.properties'.
+       File name is fixed.
+       Since you can have only one in home directory and one in project
+        directory, it's impossible to separate shared from private properties
+        in an intuitive way.
     If use typePrefixDelim or typeSuffixDelim, if you use any of
         -, :, or any white space character.  Suggest that $ works well.
     The two *Delim settings are mutually exclusive.

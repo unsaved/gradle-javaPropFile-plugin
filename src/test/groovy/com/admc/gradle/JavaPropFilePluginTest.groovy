@@ -15,7 +15,7 @@ class JavaPropFilePluginTest {
     }
 
     @org.junit.Test
-    public void trivialPropertySet() {
+    void trivialPropertySet() {
         Project project = ProjectBuilder.builder().build()
         project.apply plugin: com.admc.gradle.JavaPropFilePlugin
         if (project.hasProperty('alpha'))
@@ -31,7 +31,7 @@ class JavaPropFilePluginTest {
     }
 
     @org.junit.Test
-    public void sysProperty() {
+    void sysProperty() {
         Project project = ProjectBuilder.builder().build()
         project.apply plugin: com.admc.gradle.JavaPropFilePlugin
         if (project.hasProperty('me'))
@@ -48,7 +48,7 @@ class JavaPropFilePluginTest {
     }
 
     @org.junit.Test
-    public void nest() {
+    void nest() {
         Project project = ProjectBuilder.builder().build()
         project.apply plugin: com.admc.gradle.JavaPropFilePlugin
         if (project.hasProperty('alpha'))
@@ -69,7 +69,7 @@ class JavaPropFilePluginTest {
     }
 
     @org.junit.Test(expected=GradleException.class)
-    public void typeCollision() {
+    void typeCollision() {
         Project project = ProjectBuilder.builder().build()
         project.apply plugin: com.admc.gradle.JavaPropFilePlugin
         if (project.hasProperty('aFile'))
@@ -83,7 +83,7 @@ class JavaPropFilePluginTest {
     }
 
     @org.junit.Test(expected=GradleException.class)
-    public void nullCollision() {
+    void nullCollision() {
         Project project = ProjectBuilder.builder().build()
         project.apply plugin: com.admc.gradle.JavaPropFilePlugin
         if (project.hasProperty('aNull'))
