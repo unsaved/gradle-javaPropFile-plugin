@@ -1,18 +1,31 @@
-package com.admc.gradle;
+package com.admc.gradle
 
+import java.util.regex.Pattern
 import org.gradle.api.Project
 import org.gradle.api.GradleException
 
 class JavaPropFile {
+    private static final Pattern curlyRefGrpPattern =
+            Pattern.compile(/\$\{([^}]+)\}/)
+    private static final Pattern curlyRefPattern =
+            Pattern.compile(/\$\{[^}]+\}/)
+
     private Project gp
-    private boolean strict = true
-    private boolean expandSystemProperties = true
+    Behavior unsatisfiedRefBehavior = Behavior.THROW
+    boolean expandSystemProperties = true
+
+    // Giving up on UNSET because Gradle provides no way to remove a
+    // property from a Project.  Project.properties.remove('x') does not work.
+    enum Behavior { LITERAL, EMPTY, NO_SET, THROW }
+    //enum Behavior { LITERAL, EMPTY, NO_SET, UNSET, THROW }
 
     JavaPropFile(Project p) {
         gp = p
     }
 
     void load(File propFile) {
+        assert unsatisfiedRefBehavior != null:
+            '''unsatisfiedRefBehavior may not be set to null'''
         assert propFile.isFile() && propFile.canRead():
             """Specified properties file inaccessible:  $propFile.absolutePath
 """
@@ -28,7 +41,7 @@ class JavaPropFile {
             unresolveds.clear()
             new HashMap(props).each() { pk, pv ->
                 haveNewVal = true
-                newVal = pv.replaceAll(/\$\{([^}]+)\}/) { matchGrps ->
+                newVal = pv.replaceAll(curlyRefGrpPattern) { matchGrps ->
                     // This block resolves ${references} in property values
                     if (gp.hasProperty(matchGrps[1])
                             && (gp.property(matchGrps[1]) instanceof String))
@@ -53,29 +66,49 @@ class JavaPropFile {
                     props.remove(pk)
                 }
             }
-            if (prevCount == props.size()) {
-                if (strict)
-                    throw new GradleException(
-                        'Unable to resolve top-level properties: ' + props.keySet()
-                        + '\ndue to unresolved references to: ' + unresolveds)
-                gp.logger.error(
-                        'Unable to resolve top-level properties: ' + props.keySet()
-                        + '\ndue to unresolved references to: ' + unresolveds)
-                return
-            }
+            if (prevCount == props.size()) break
             prevCount = props.size()
+        }
+        if (prevCount == 0) return
+        // If we get here, then we have unsatisfied references
+        if (unsatisfiedRefBehavior == Behavior.THROW)
+            throw new GradleException(
+                'Unable to resolve top-level properties: ' + props.keySet()
+                + '\ndue to unresolved references to: ' + unresolveds)
+        gp.logger.warn(
+                'Unable to resolve top-level properties: ' + props.keySet()
+                + '\ndue to unresolved references to: ' + unresolveds
+                + '.\nWill handle according to unsatisifiedRefBehavior: '
+                + unsatisfiedRefBehavior)
+        if (unsatisfiedRefBehavior == Behavior.NO_SET) return
+        new HashMap(props).each() { pk, pv ->
+            switch (unsatisfiedRefBehavior) {
+              case Behavior.LITERAL:
+                gp.setProperty(pk, pv)
+                break
+              case Behavior.EMPTY:
+                gp.setProperty(pk, pv.replaceAll(curlyRefPattern, ''))
+                break
+              /* See not above about Behavior.UNSET.
+              case Behavior.UNSET:
+                gp.properties.remove(pk)
+                break
+             */
+              default:
+                assert false: "Unexpected Behavior value:  $unsatisfiedRefBehavior"
+            }
         }
     }
 
     void traditionalPropertiesInit() {
-        boolean originalStrictness = strict;
+        Behavior originalBehavior = unsatisfiedRefBehavior
         File appPropertiesFile = gp.file('app.properties')
         File localPropertiesFile = gp.file('local.properties')
         // Unlike Ant, the LAST loaded properties will override.
-        strict = true;
+        unsatisfiedRefBehavior = Behavior.THROW
         if (appPropertiesFile.exists()) load(appPropertiesFile)
-        strict = false;
+        unsatisfiedRefBehavior = Behavior.NO_SET
         if (localPropertiesFile.exists()) load(localPropertiesFile)
-        strict = originalStrictness
+        unsatisfiedRefBehavior = originalBehavior
     }
 }

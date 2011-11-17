@@ -1,13 +1,12 @@
-Note that app.properties for shared, etc.
-overwrite true
-Use a Pattern for replaceAll
+overwrite + overwriteRefusalThrow.  Check for incompatible combo.
 Add typing to JavaPropFile inform of 'typed'.
 Allow ^([^)]) or ([^)])$ where () only usable with value of 'null'.
-systemPropPrefix (Gradle uses 'systemProp.')  VERIFY CAN ACTUALLY WRITE
-unsetBehavior blankit?
+systemPropPrefix (Gradle uses 'systemProp.')
+    System.properties['file.separator'] = '@'
 
 
 Document
+    Note that app.properties for shared, etc.
     Sequence is important if "changing" a value
     What's wrong with 'gradle.properties'.
        File name is fixed.
