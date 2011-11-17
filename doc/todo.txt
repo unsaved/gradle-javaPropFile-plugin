@@ -1,9 +1,10 @@
-overwrite + overwriteRefusalThrow.  Check for incompatible combo.
-Add typing to JavaPropFile inform of 'typed'.
+overwrite + overwriteThrow.  Check for incompatible combo.
+typeCasting
+    First look for a .valueOf(String) method
+    Lacking that, look for a (String) constructor
 Allow ^([^)]) or ([^)])$ where () only usable with value of 'null'.
 systemPropPrefix (Gradle uses 'systemProp.')
     System.properties['file.separator'] = '@'
-
 
 Document
     Note that app.properties for shared, etc.
@@ -16,3 +17,7 @@ Document
     If use typePrefixDelim or typeSuffixDelim, if you use any of
         -, :, or any white space character.  Suggest that $ works well.
     The two *Delim settings are mutually exclusive.
+
+
+A future release
+    Allow specifying targets other than the Project, like Extension objects.

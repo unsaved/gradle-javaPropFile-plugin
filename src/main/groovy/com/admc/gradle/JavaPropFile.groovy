@@ -13,6 +13,10 @@ class JavaPropFile {
     private Project gp
     Behavior unsatisfiedRefBehavior = Behavior.THROW
     boolean expandSystemProperties = true
+    boolean overwrite = true
+    boolean overwriteThrow
+    boolean typeCasting
+    String systemPropPrefix
 
     // Giving up on UNSET because Gradle provides no way to remove a
     // property from a Project.  Project.properties.remove('x') does not work.
@@ -55,14 +59,18 @@ class JavaPropFile {
                 }
                 if (haveNewVal) {
                     if (gp.hasProperty(pk)) {
-                        if (gp.property(pk) == null)
-                            throw new GradleException(
-                            "Property setting '$pk' attempts to override null property value")
-                        if (!(gp.property(pk) instanceof String))
-                            throw new GradleException(
-                            "Property setting '$pk' attempts to override non-String property value: ${gp.property(pk).class.name}")
+                        if (!gp.property(pk).equals(newVal)) {
+                            if (gp.property(pk) == null)
+                                throw new GradleException(
+                                "Property setting '$pk' attempts to override null property value")
+                            if (!(gp.property(pk) instanceof String))
+                                throw new GradleException(
+                                "Property setting '$pk' attempts to override non-String property value: ${gp.property(pk).class.name}")
+                            gp.setProperty(pk, newVal)
+                        }
+                    } else {
+                        gp.setProperty(pk, newVal)
                     }
-                    gp.setProperty(pk, newVal)
                     props.remove(pk)
                 }
             }
