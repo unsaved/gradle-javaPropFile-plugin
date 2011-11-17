@@ -261,6 +261,52 @@ class JavaPropFilePluginTest {
     }
 
     @org.junit.Test
+    void deeplyNested() {
+        Project project = ProjectBuilder.builder().build()
+        project.apply plugin: com.admc.gradle.JavaPropFilePlugin
+        if (project.hasProperty('bottom1')
+                || project.hasProperty('mid2')
+                || project.hasProperty('mid3a')
+                || project.hasProperty('mid3b')
+                || project.hasProperty('top4'))
+            throw new IllegalStateException(
+                    '''Project has a property set before our test began''')
+        File f = JavaPropFilePluginTest.mkTestFile()
+        f.write('''
+# White space in settings is to test that it is tolerated and ignored
+mid3a=m3a ${bottom1} ${mid2}
+top4=t4 ${mid3a} ${mid3b} ${bottom1}
+    mid3b   m3b ${mid2}
+bottom1  =  Bottom
+mid2   m2 ${bottom1}
+''', "ISO-8859-1")
+        project.propFileLoader.load(f)
+        assertTrue(project.hasProperty('top4'))
+        assertEquals(project.property('top4'), 't4 m3a Bottom m2 Bottom m3b m2 Bottom Bottom')
+    }
+
+    @org.junit.Test
+    void preset() {
+        Project project = ProjectBuilder.builder().build()
+        project.apply plugin: com.admc.gradle.JavaPropFilePlugin
+        if (project.hasProperty('alpha'))
+            throw new IllegalStateException(
+                    '''Project has property 'alpha' before our test began''')
+        if (project.hasProperty('beta'))
+            throw new IllegalStateException(
+                    '''Project has property 'beta' before our test began''')
+        File f = JavaPropFilePluginTest.mkTestFile()
+        f.write('alpha=replacement\nbeta=${beta} addition')
+        project.setProperty('alpha', 'eins')
+        project.setProperty('beta', 'zwei')
+        project.propFileLoader.load(f)
+        assertTrue(project.hasProperty('alpha'))
+        assertTrue(project.hasProperty('beta'))
+        assertEquals(project.property('alpha'), 'replacement')
+        assertEquals(project.property('beta'), 'zwei addition')
+    }
+
+    @org.junit.Test
     void traditionalSanityCheck() {
         // Can't test much specifically, but we know that the method can at
         // least be called.
