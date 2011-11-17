@@ -4,8 +4,7 @@ if (version == 'unspecified') version = '0.2-SNAPSHOT'
 if (!project.hasProperty('org.name'))
     project.setProperty('org.name', ((group == 'com.admc')
             ? 'Axis Data Management Corp.' : System.properties['user.name']))
-if (!project.hasProperty('implTitle'))
-    implTitle = ((group == 'com.admc')
+if (!project.hasProperty('jarTitle')) jarTitle = ((group == 'com.admc')
             ? 'JavaPropFile Gradle plugin jar' : 'Customization')
 
 apply plugin: 'groovy'
@@ -24,7 +23,7 @@ jar { doFirst {
         'Specification-Title': 'JavaPropFile Gradle Plugin',
         'Specification-Version': '0.2-SNAPSHOT',
         'Specification-Vendor': 'Axis Data Management Corp.',
-        'Implementation-Title': implTitle,
+        'Implementation-Title': project.jarTitle,
         'Implementation-Version': project.version,
         'Implementation-Vendor': project.property('org.name')
     ) } }

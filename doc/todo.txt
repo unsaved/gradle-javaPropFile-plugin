@@ -3,6 +3,7 @@ overwrite true
 Use a Pattern for replaceAll
 Add typing to JavaPropFile inform of 'typed'.
 Allow ^([^)]) or ([^)])$ where () only usable with value of 'null'.
+systemPropPrefix (Gradle uses 'systemProp.')  VERIFY CAN ACTUALLY WRITE
 
 Add tests for
     Undefined references, allowed and prohibited
