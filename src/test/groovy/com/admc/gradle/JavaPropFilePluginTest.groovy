@@ -393,17 +393,19 @@ delta()=
 
     @org.junit.Test
     void typeCasting() {
-        Project project = JavaPropFilePluginTest.prepProject(['alpha', 'beta'])
+        Project project = JavaPropFilePluginTest.prepProject(
+                ['aFile', 'aLong'])
 
         File f = JavaPropFilePluginTest.mkTestFile()
-        f.write('alpha(File)=eins\n(File)beta=zwei', 'ISO-8859-1')
+        // One using String cons. + one using valueOf methods
+        f.write('aFile(File)=eins\n(Long)aLong=9764', 'ISO-8859-1')
         project.propFileLoader.overwriteThrow = true
         project.propFileLoader.typeCasting = true
         project.propFileLoader.load(f)
-        assertTrue(project.hasProperty('alpha'))
-        assertTrue(project.hasProperty('beta'))
-        assertEquals(new File('eins'), project.property('alpha'))
-        assertEquals(new File('zwei'), project.property('beta'))
+        assertTrue(project.hasProperty('aFile'))
+        assertTrue(project.hasProperty('aLong'))
+        assertEquals(new File('eins'), project.property('aFile'))
+        assertEquals(Long.valueOf(9264L), project.property('aLong'))
     }
 
     @org.junit.Test
