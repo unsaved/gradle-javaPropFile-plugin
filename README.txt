@@ -57,7 +57,7 @@ Pull plugin from Internet.
                 classpath 'com.admc:gradle-javaPropFile-plugin:latest.milestone'
             }
         }
-        apply plugin 'javaPropFile'
+        apply plugin: 'javaPropFile'
         import com.admc.gradle.JavaPropFile
         ...
         // Load any properties files that you want to.
@@ -88,7 +88,7 @@ Use plugin jar file locally.
                 include: 'gradle-javaPropFile-plugin-*.jar
             )
         } }
-        apply plugin 'javaPropFile'
+        apply plugin: 'javaPropFile'
         import com.admc.gradle.JavaPropFile
         ...
         // Load any properties files that you want to.
