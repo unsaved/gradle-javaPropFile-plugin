@@ -109,14 +109,24 @@ class JavaPropFile {
 
     void traditionalPropertiesInit() {
         Behavior originalBehavior = unsatisfiedRefBehavior
+        boolean originalOverwrite = overwrite
+        boolean originalOverwriteThrow = overwriteThrow
+
         File appPropertiesFile = gp.file('app.properties')
         File localPropertiesFile = gp.file('local.properties')
         // Unlike Ant, the LAST loaded properties will override.
         unsatisfiedRefBehavior = Behavior.THROW
+        overwrite = true
+        overwriteThrow = true
         if (appPropertiesFile.exists()) load(appPropertiesFile)
+
         unsatisfiedRefBehavior = Behavior.NO_SET
+        overwriteThrow = true
         if (localPropertiesFile.exists()) load(localPropertiesFile)
+
         unsatisfiedRefBehavior = originalBehavior
+        overwrite = originalOverwrite
+        overwriteThrow = originalOverwriteThrow
     }
 
     private static final List defaultGroovyPackages =
