@@ -110,12 +110,11 @@ DETAILS
 
     The provided method 'propFileLoader.traditionalPropertiesInit()'
     loads 'app.properties' (if it is present), prohibiting use of undefined
-    ${...} references and prohibiting property overwriting;, then loads
-    'local.properties' (if it is present), allowing use of undefined
-    references and property overwriting.  (It will use whatever settings you
-    have made previously regarding typeCasting, system property assignment,
-    and system property expansion.  Only the last of these is enabled by
-    default).
+    ${...} references; then loads 'local.properties' (if it is present),
+    allowing use of undefined references.  Overwriting is allowed.
+    (It will use whatever settings you have made previously regarding
+    typeCasting, system property assignment, and system property expansion.
+    Only the last of these is enabled by default).
 
     Gradle provides no way to unset/remove any Project property, therefore
     JavaPropFile has no capability to remove a property.

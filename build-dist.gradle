@@ -52,8 +52,6 @@ buildscript { dependencies {
         include: 'gradle-javaPropFile-plugin-*.jar'
     )
 } }
-description = ''  // Necessary for propFileLoader to override it, since Gradle
-                  // defaults 'description' to null.
 apply plugin: 'javaPropFile'
 propFileLoader.traditionalPropertiesInit()
 

@@ -117,11 +117,10 @@ class JavaPropFile {
         // Unlike Ant, the LAST loaded properties will override.
         unsatisfiedRefBehavior = Behavior.THROW
         overwrite = true
-        overwriteThrow = true
+        overwriteThrow = false
         if (appPropertiesFile.exists()) load(appPropertiesFile)
 
         unsatisfiedRefBehavior = Behavior.NO_SET
-        overwriteThrow = true
         if (localPropertiesFile.exists()) load(localPropertiesFile)
 
         unsatisfiedRefBehavior = originalBehavior
