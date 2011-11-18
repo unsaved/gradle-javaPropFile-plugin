@@ -58,17 +58,11 @@ Pull plugin from Internet.
             }
         }
         apply plugin: 'javaPropFile'
-        import com.admc.gradle.JavaPropFile
-        ...
-        // Load any properties files that you want to.
-        // propFileLoader settings will effect following .loads.
-        propFileLoader.overwriteThrow = true
-        propFileLoader.load(file('build.properties')  // Shared properties file
-
-        propFileLoader.overwriteThrow = false
-        propFileLoader.unsatisfiedRefBehavior = JavaPropFile.Behavior.NO_SET
-        propFileLoader.systemPropPrefix = 'sys$'
-        propFileLoader.load(file('local.properties')  // Personal prop file
+        // Following loads 'build.properties' then 'local.properties' files
+        // from project directory if they exist there.
+        propFileLoader.traditionalPropertiesInit()
+        // See 'Detailed Example below' for specifying your own file names,
+        // with your own settings.
 
 Use plugin jar file locally.
 
@@ -88,6 +82,22 @@ Use plugin jar file locally.
                 include: 'gradle-javaPropFile-plugin-*.jar
             )
         } }
+        apply plugin: 'javaPropFile'
+        // Following loads 'build.properties' then 'local.properties' files
+        // from project directory if they exist there.
+        propFileLoader.traditionalPropertiesInit()
+        // See 'Detailed Example below' for specifying your own file names,
+        // with your own settings.
+
+Detailed Example
+
+    To really access the power of JavaPropFile, apply your own settings and
+    then use 'propFileLoader.load(File)' to load properties file from
+    where you want.  See the following section for details about all available
+    settings.
+
+        // Before running 'apply', you must get the plugin into the Gradle
+        // classpath, as explained in the previous subsections.  Then...
         apply plugin: 'javaPropFile'
         import com.admc.gradle.JavaPropFile
         ...
