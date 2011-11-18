@@ -68,7 +68,7 @@ class JavaPropFile {
                     return matchGrps[0]
                 }
                 if (haveNewVal) {
-                    setProperty(pk, newValString, systemPropPattern)
+                    assign(pk, newValString, systemPropPattern)
                     props.remove(pk)
                 }
             }
@@ -90,10 +90,11 @@ class JavaPropFile {
         new HashMap(props).each() { pk, pv ->
             switch (unsatisfiedRefBehavior) {
               case Behavior.LITERAL:
-                gp.setProperty(pk, pv)
+                assign(pk, pv, systemPropPattern)
                 break
               case Behavior.EMPTY:
-                gp.setProperty(pk, pv.replaceAll(curlyRefPattern, ''))
+                assign(pk,
+                        pv.replaceAll(curlyRefPattern, ''), systemPropPattern)
                 break
               /* See not above about Behavior.UNSET.
               case Behavior.UNSET:
@@ -167,7 +168,7 @@ class JavaPropFile {
         }
     }
 
-    private void setProperty(
+    private void assign(
             String rawName, String valString, Pattern systemPropPattern) {
         boolean setSysProp = false
         Matcher matcher = null

@@ -15,6 +15,9 @@ class JavaPropFilePluginTest {
         return newFile
     }
 
+    // TODO:  Rewrite prepProject(List<String>) using varargs, then get rid
+    // of the wrapper method.
+
     private static Project prepProject(String checkProp) {
         return prepProject([checkProp])
     }
@@ -215,17 +218,22 @@ class JavaPropFilePluginTest {
     }
 
     @org.junit.Test
-    void unsetLoneEmpty() {
-        Project project = JavaPropFilePluginTest.prepProject('alpha')
+    void unsetLoneEmpties() {
+        Project project = JavaPropFilePluginTest.prepProject(['alpha', 'beta'])
 
         project.propFileLoader.overwriteThrow = true
         File f = JavaPropFilePluginTest.mkTestFile()
-        f.write('alpha=${notset}', 'ISO-8859-1')
+        f.write('alpha=${notset}\nsp$beta=pre${alsoNotSet}post', 'ISO-8859-1')
         project.propFileLoader.unsatisfiedRefBehavior =
                 JavaPropFile.Behavior.EMPTY
+        project.propFileLoader.systemPropPrefix = 'sp$'
         project.propFileLoader.load(f)
         assertTrue(project.hasProperty('alpha'))
+        assertFalse(project.hasProperty('beta'))
+        assertFalse(System.properties.containsKey('alpha'))
+        assertTrue(System.properties.containsKey('beta'))
         assertEquals('', project.property('alpha'))
+        assertEquals('prepost', System.properties['beta'])
     }
 
     @org.junit.Test
