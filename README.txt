@@ -57,7 +57,7 @@ Pull plugin from Internet.
                 classpath 'com.admc:gradle-javaPropFile-plugin:latest.milestone'
             }
         }
-        apply plugin 'ivyxml'
+        apply plugin 'javaPropFile'
         import com.admc.gradle.JavaPropFile
         ...
         // Load any properties files that you want to.
@@ -88,7 +88,7 @@ Use plugin jar file locally.
                 include: 'gradle-javaPropFile-plugin-*.jar
             )
         } }
-        apply plugin 'ivyxml'
+        apply plugin 'javaPropFile'
         import com.admc.gradle.JavaPropFile
         ...
         // Load any properties files that you want to.
@@ -121,8 +121,8 @@ DETAILS
 
     Configurations:
 
-        After you "apply plugin 'ivyxml'", you can set the following properties
-        on extension object 'propFileLoader'.
+        After you "apply plugin 'javaPropFile'", you can set the following
+        properties on extension object 'propFileLoader'.
 
         boolean propFileLoader.unsatisfiedRefBehavior
             What to do when ${x} is used in a property value, but 'x' is not
