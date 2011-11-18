@@ -44,10 +44,8 @@ class JavaPropFile {
         propFile.withInputStream { props.load(it) }
         gp.logger.info(
                 'Loaded ' + props.size() + ' from ' + propFile.absolutePath)
-        String newValString, propName, cName
-        boolean haveNewVal, setSysProp
-        Object newVal
-        Matcher matcher
+        String newValString
+        boolean haveNewVal
         int prevCount = props.size()
         def unresolveds = []
         Pattern systemPropPattern = ((systemPropPrefix == null) 
@@ -70,93 +68,7 @@ class JavaPropFile {
                     return matchGrps[0]
                 }
                 if (haveNewVal) {
-                    setSysProp = false
-                    if (systemPropPattern != null) {
-                        matcher = systemPropPattern.matcher(pk)
-                        setSysProp = matcher.matches()
-                    }
-                    cName = null
-                    if (setSysProp) {
-                        propName = matcher.group(1)
-                    } else if (typeCasting) {
-                        if (pk.charAt(0) == '('
-                                && pk.charAt(pk.length()-1) == ')')
-                            throw new GradleException(
-                                    "TypeCast name may not begin with ( and "
-                                    + "end with ): $pk")
-                        if (pk.length() > 2 && pk.startsWith("()")) {
-                            propName = pk.substring(2)
-                            if (newValString.length() > 0)
-                                throw new GradleException(
-                                        "Non-empty value supplied to a null "
-                                        + "typeCast for property '$propName'")
-                            cName = ''
-                        } else if (pk.length() > 2 && pk.endsWith("()")) {
-                            propName = pk.substring(0, pk.length() - 2)
-                            if (newValString.length() > 0)
-                                throw new GradleException(
-                                        "Non-empty value supplied to a null "
-                                        + "typeCast for property '$propName'")
-                            cName = ''
-                        } else {
-                            matcher = castFirstPattern.matcher(pk)
-                            if (matcher.matches()) {
-                                cName = matcher.group(1)
-                                propName = matcher.group(2)
-                            } else {
-                                matcher = castLastPattern.matcher(pk)
-                                if (matcher.matches()) {
-                                    propName = matcher.group(1)
-                                    cName = matcher.group(2)
-                                } else {
-                                    propName = pk
-                                }
-                            }
-                        }
-                    } else {
-                        propName = pk
-                    }
-                    assert propName != null
-                    newVal = ((cName == null) ? newValString
-                            : JavaPropFile.instantiateFromString(
-                              newValString, cName))
-                    if ((setSysProp && System.properties.containsKey(propName))
-                            || (!setSysProp && gp.hasProperty(propName))) {
-                        Object oldVal = (
-                                setSysProp ? System.properties[propName]
-                                           : gp.property(propName))
-                        // We will do absolutely nothing if either
-                        // (!overwrite && !overwriteThrow)
-                        // or if oldVar == newVar.
-                        if ((overwrite || overwriteThrow) && (oldVal != newVal
-                                && ((oldVal == null || newVal == null)
-                                || !oldVal.equals(newVal)))) {
-                            if (overwriteThrow)
-                                throw new GradleException(
-                                        "Configured to prohibit property value "
-                                        + "changes, but attempted to change "
-                                        + "value of property '$propName' from "
-                                        + "'$oldVal' to '$newVal'")
-                            // Property value really changing
-                            if (oldVal != null && newVal != null
-                                    && !oldVal.class.equals(newVal.class))
-                                throw new GradleException("Incompatible type "
-                                        + "for change of property "
-                                        + "'$propName'.  From "
-                                        + oldVal.class.name + ' to '
-                                        + newVal.class.name)
-                            if (setSysProp)
-                                System.setProperty(propName, newVal)
-                            else
-                                gp.setProperty(propName, newVal)
-                        }
-                    } else {
-                        // New property
-                        if (setSysProp)
-                            System.setProperty(propName, newVal)
-                        else
-                            gp.setProperty(propName, newVal)
-                    }
+                    setProperty(pk, newValString, systemPropPattern)
                     props.remove(pk)
                 }
             }
@@ -252,6 +164,98 @@ class JavaPropFile {
             return cons.newInstance(str)
         } catch (Exception e) {
             throw new GradleException("Failed to construct a $c.name with param '$str': $e")
+        }
+    }
+
+    private void setProperty(
+            String rawName, String valString, Pattern systemPropPattern) {
+        boolean setSysProp = false
+        Matcher matcher = null
+        String cName = null
+        String propName = null
+
+        if (systemPropPattern != null) {
+            matcher = systemPropPattern.matcher(rawName)
+            setSysProp = matcher.matches()
+        }
+        if (setSysProp) {
+            propName = matcher.group(1)
+        } else if (typeCasting) {
+            if (rawName.charAt(0) == '('
+                    && rawName.charAt(rawName.length()-1) == ')')
+                throw new GradleException(
+                        "TypeCast name may not begin with ( and "
+                        + "end with ): $rawName")
+            if (rawName.length() > 2 && rawName.startsWith("()")) {
+                propName = rawName.substring(2)
+                if (valString.length() > 0)
+                    throw new GradleException(
+                            "Non-empty value supplied to a null "
+                            + "typeCast for property '$propName'")
+                cName = ''
+            } else if (rawName.length() > 2 && rawName.endsWith("()")) {
+                propName = rawName.substring(0, rawName.length() - 2)
+                if (valString.length() > 0)
+                    throw new GradleException(
+                            "Non-empty value supplied to a null "
+                            + "typeCast for property '$propName'")
+                cName = ''
+            } else {
+                matcher = castFirstPattern.matcher(rawName)
+                if (matcher.matches()) {
+                    cName = matcher.group(1)
+                    propName = matcher.group(2)
+                } else {
+                    matcher = castLastPattern.matcher(rawName)
+                    if (matcher.matches()) {
+                        propName = matcher.group(1)
+                        cName = matcher.group(2)
+                    } else {
+                        propName = rawName
+                    }
+                }
+            }
+        } else {
+            propName = rawName
+        }
+        assert propName != null
+        Object newVal = ((cName == null) ? valString
+                : JavaPropFile.instantiateFromString(valString, cName))
+        if ((setSysProp && System.properties.containsKey(propName))
+                || (!setSysProp && gp.hasProperty(propName))) {
+            Object oldVal = (setSysProp ? System.properties[propName]
+                    : gp.property(propName))
+            // We will do absolutely nothing if either
+            // (!overwrite && !overwriteThrow)
+            // or if oldVar == newVar.
+            if ((overwrite || overwriteThrow) && (oldVal != newVal
+                    && ((oldVal == null || newVal == null)
+                    || !oldVal.equals(newVal)))) {
+                if (overwriteThrow)
+                    throw new GradleException(
+                            "Configured to prohibit property value "
+                            + "changes, but attempted to change "
+                            + "value of property '$propName' from "
+                            + "'$oldVal' to '$newVal'")
+                // Property value really changing
+                if (oldVal != null && newVal != null
+                        && !oldVal.class.equals(newVal.class))
+                    throw new GradleException("Incompatible type "
+                            + "for change of property "
+                            + "'$propName'.  From "
+                            + oldVal.class.name + ' to '
+                            + newVal.class.name)
+                if (setSysProp)
+                    System.setProperty(propName, newVal)
+                else
+                    gp.setProperty(propName, newVal)
+            }
+        } else {
+            // New property
+            if (setSysProp)
+                System.setProperty(propName, newVal)
+            else
+                gp.setProperty(propName, newVal)
         }
     }
 }
