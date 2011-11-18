@@ -1,6 +1,6 @@
 defaultTasks 'jar'
 
-if (version == 'unspecified') version = '0.2.0'
+if (version == 'unspecified') version = '0.2.1-SNAPSHOT'
 if (!project.hasProperty('org.name'))
     project.setProperty('org.name', ((group == 'com.admc')
             ? 'Axis Data Management Corp.' : System.properties['user.name']))
@@ -22,7 +22,7 @@ jar { doFirst {
     project.metaInf << files('doc/LICENSE.txt')
     jar { manifest { attributes(
         'Specification-Title': 'JavaPropFile Gradle Plugin',
-        'Specification-Version': '0.2.0',
+        'Specification-Version': '0.2.1-SNAPSHOT',
         'Specification-Vendor': 'Axis Data Management Corp.',
         'Implementation-Title': project.property('jar.title'),
         'Implementation-Version': project.version,
