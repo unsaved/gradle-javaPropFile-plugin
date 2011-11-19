@@ -1,0 +1,100 @@
+/**
+ * Demonstrates usage of the JavaPropFile Gradle Plugin
+ *
+ * See the JavaPropFile README.txt file at
+ * https://github.com/unsaved/gradle-javaPropFile-plugin/raw/master/README.txt
+ * for a list and explanation of all provided methods and settings for the
+ * plugin.
+ */
+
+defaultTasks 'displaySomeProps', 'displaySomeSysProps'
+
+buildscript {
+    repositories { mavenCentral() }
+    dependencies {
+        classpath 'com.admc:gradle-javaPropFile-plugin:latest.milestone'
+    }
+}
+apply plugin: 'javaPropFile'
+//apply plugin: 'java'   To keep simpe, I'm not loading other plugins
+
+// 'apply' but don't use execute non-configuration methods of other plugins
+// before you load().  This way you can effect the other plugins with
+// settings in your .properties files.
+
+// We will change this Gradle property with a properties file.
+startAsFile = file('x.txt')
+
+// You only need this import if you will change the default
+// unsatisfiedRefBehavior.
+import com.admc.gradle.JavaPropFile
+// Load any properties files that you want to.
+// propFileLoader settings will effect following .load()s.
+
+// Prohibit overwriting existing properties on our required team-shared
+// properties file.
+// For shared properties file, it's good to leave the default, conservative
+// unsatisfiedRefBehavior in place.  If there is a bad setting in a shared
+// file, we will want to know about it and fix it.
+// Sometimes we want to be able to change existing properties, sometimes not...
+propFileLoader.overwriteThrow = true
+propFileLoader.load(file('app.properties'))
+
+// Resetting .overwriteThrow setting back to it's default:
+// We're giving developers lots of power with the personal file, since it
+// won't effect other developers.
+propFileLoader.overwriteThrow = false
+propFileLoader.unsatisfiedRefBehavior = JavaPropFile.Behavior.NO_SET
+propFileLoader.typeCasting = true
+propFileLoader.systemPropPrefix = 'sys$'
+// Load option personal properties file, if present.
+// If you have no opposing constraint, consider using file name
+// 'local.properties' for this purpose.  For this example, I am sharing the
+// file with you, so I'm avoiding confusion for my own source code management
+// by not naming this file to-be-shared 'local.properties'.
+def localPropFile = file('sample-local.properties')
+if (localPropFile.isFile()) propFileLoader.load(localPropFile)
+
+
+task displaySomeProps << {
+    Object o;
+    ['jdbcImpl.default', 'alpha', 'title', 'group', 'dest.file', 'preferences',
+    'backup.file', 'xfer.maxTime', 'javac.debug', 'dest.path', 'nested.var',
+    'startAsFile', 'nestee', 'nester1', 'nester2'
+    ].each {
+        println "Property '$it':"
+        if (project.hasProperty(it)) {
+            o = project.property(it)
+            if (o == null) {
+                println '    <NULL>'
+            } else {
+                println '    Type: ' + o.class.name
+                println "    Value: $o"
+            }
+        } else {
+            println '    <NOT_SET>'
+        }
+    }
+}
+displaySomeProps.description =
+        'Display values of my pre-defined set of properties'
+
+task displaySomeSysProps << {
+    Object o;
+    ['file.separator', 'java.io.tmpdir', 'user.home'].each {
+        println "Property '$it':"
+        if (System.properties.containsKey(it)) {
+            o = System.properties[it]
+            if (o == null) {
+                println '    <NULL>'
+            } else {
+                println '    Type: ' + o.class.name
+                println "    Value: $o"
+            }
+        } else {
+            println '    <NOT_SET>'
+        }
+    }
+}
+displaySomeSysProps.description =
+        'Display values of my pre-defined set of system properties'

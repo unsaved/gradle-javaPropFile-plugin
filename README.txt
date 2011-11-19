@@ -14,14 +14,21 @@ property or a system property, or some mix of literals and those, you can't.
 If you want to set a Boolean or File value, you will have to change your
 Gradle Groovy code to convert.
 
+A sample build is provided in subdirectory "doc".
+Even if you don't care to run the demo, you would probably benefit by looking
+at the .properties files in there, if not the "build.gradle" file.
+If you want to run the example and are pulling this project from Git, then cd
+to the doc subdirectory and run "../gradlew" ("..\gradlew" on Windows).  You
+do not need to have Gradle installed to run the demonstration.
+
+
 MOTIVATION
 
     + Nested definitions like users of Ant and Log4j are used to.
-      (I.e. use references like ${this} in your property values.
-      Order of property settings in a single properties file is of no
-      consequence.  ${ref} references can be made before or after the 'ref'
-      property is defined, as long as it is defined in this file (or before
-      this file is loaded).
+      I.e. use references like ${this} in your property values.
+      ${ref} references can be made before or after the 'ref' property is
+      defined, as long as the ref is defined in this file (or before this file
+      is loaded).
       (The special situation of ${referencing} a property + the referenced
       property was set before loading the current properties file + the
       referenced property value is changed in the current properties file,
@@ -58,17 +65,19 @@ Pull plugin from Internet.
     Couldn't be easier.  This will pull the plugin from Maven Central:
 
         buildscript {
-            mavenCentral()
+            repositories { mavenCentral() }
             dependencies {
                 classpath 'com.admc:gradle-javaPropFile-plugin:latest.milestone'
             }
         }
         apply plugin: 'javaPropFile'
-        // Following loads 'build.properties' then 'local.properties' files
+        // Following loads 'app.properties' then 'local.properties' files
         // from project directory if they exist there.
         propFileLoader.traditionalPropertiesInit()
-        // See 'Detailed Example below' for specifying your own file names,
-        // with your own settings.
+        // See
+        // https://github.com/unsaved/gradle-javaPropFile-plugin/tree/master/doc
+        // for examples of specifying your own file names and settings,
+        // including usage of typeCasting.
 
 Use plugin jar file locally.
 
@@ -89,35 +98,12 @@ Use plugin jar file locally.
             )
         } }
         apply plugin: 'javaPropFile'
-        // Following loads 'build.properties' then 'local.properties' files
+        // Following loads 'app.properties' then 'local.properties' files
         // from project directory if they exist there.
         propFileLoader.traditionalPropertiesInit()
-        // See 'Detailed Example below' for specifying your own file names,
-        // with your own settings.
-
-Detailed Example
-
-    To really access the power of JavaPropFile, apply your own settings and
-    then use 'propFileLoader.load(File)' to load properties file from
-    where you want.  See the following section for details about all available
-    settings.
-
-        // Before running 'apply', you must get the plugin into the Gradle
-        // classpath, as explained in the previous subsections.  Then...
-        apply plugin: 'javaPropFile'
-        import com.admc.gradle.JavaPropFile
-        ...
-        // Load any properties files that you want to.
-        // propFileLoader settings will effect following .loads.
-        propFileLoader.overwriteThrow = true
-        propFileLoader.load(file('build.properties')  // Shared properties file
-
-        propFileLoader.overwriteThrow = false
-        propFileLoader.unsatisfiedRefBehavior = JavaPropFile.Behavior.NO_SET
-        propFileLoader.systemPropPrefix = 'sys$'
-        // Load option personal properties file, if present
-        def localPropFile = file('local.properties')
-        if (localPropFile.isFile()) propFileLoader.load(localPropFile)
+        // https://github.com/unsaved/gradle-javaPropFile-plugin/tree/master/doc
+        // for examples of specifying your own file names and settings,
+        // including usage of typeCasting.
 
 
 DETAILS
@@ -145,6 +131,8 @@ DETAILS
         newVersion=1.2.3
     (Since sequence-independent, it's ok to reference newVersion before you
     assign a value to it).
+    You would also introduce this undesirable state if you assign to the same
+    property twice in the same properties file-- so don't do that.
 
     Precedence works intuitively, not freakishly like Ant properties.
     The value of a variable will be the last value that was assigned to it.
@@ -160,12 +148,17 @@ DETAILS
             plugin.
 
         void propFileLoader.traditionalPropertiesInit()
-            loads 'app.properties' (if it is present), prohibiting use of
+            Loads 'app.properties' (if it is present), prohibiting use of
             undefined ${...} references; then loads 'local.properties' (if it
             is present), allowing use of undefined references.  Overwriting is
             allowed.  (It will use whatever settings you have made previously
             regarding typeCasting, system property assignment, and system
             property expansion.  Only the last of these is enabled by default).
+            File 'build.properties' is actually a more traditional file name
+            than 'app.properties' or 'local.properties', but unfortunately
+            the name 'build.properties' does not distinguish whether it is
+            intended for shared or private/local usage, so I have standardized
+            on the distinctive names 'app.properties' and 'local.properties'.
 
     Configurations:
 
@@ -174,8 +167,9 @@ DETAILS
 
         boolean propFileLoader.unsatisfiedRefBehavior
             What to do when ${x} is used in a property value, but 'x' is not
-            defined.  Defaults to com.admc.gradle.THROW, which will cause
-            the property file load to fast-fail.
+            defined.
+            Defaults to com.admc.gradle.THROW, which will cause the property
+            file load to fast-fail.
             You can change the behavior to any of the following.  (My syntax
             here assumes that you imported the class
             com.admc.gradle.JavaPropFile).
@@ -250,7 +244,9 @@ nor property value:
 
     envTarget()=
 
-If you have JavaPropFile configured to allow property overwriting (by default
-it is allowed), you are still never allowed to directly change a variable value
-from one non-null type to another non-null type.
-If you really want to, you can assign to null and then assign to the new value.
+Type Validation
+    If you have JavaPropFile configured to allow property overwriting (by
+    default it is allowed), you are still never allowed to directly change a
+    variable value from one non-null type to another non-null type.
+    If you really want to, you can get around htis constraint by assigning null
+    and then assign to the new value.

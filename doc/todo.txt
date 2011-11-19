@@ -1,17 +1,2 @@
-Document
-    Don't allow changing types, but can change from value null to anything,
-     and from anything to null.
-    Note that app.properties for shared, etc.
-    Sequence is important if "changing" a value
-    What's wrong with 'gradle.properties'.
-       File name is fixed.
-       Since you can have only one in home directory and one in project
-        directory, it's impossible to separate shared from private properties
-        in an intuitive way.
-    If use typePrefixDelim or typeSuffixDelim, if you use any of
-        -, :, or any white space character.  Suggest that $ works well.
-    The two *Delim settings are mutually exclusive.
-
-
 A future release
     Allow specifying targets other than the Project, like Extension objects.
