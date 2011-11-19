@@ -1,5 +1,7 @@
 defaultTasks 'jar'
 
+apply plugin: 'groovy'
+
 if (version == 'unspecified') version = '0.2.2-SNAPSHOT'
 if (!project.hasProperty('org.name'))
     project.setProperty('org.name', ((group == 'com.admc')
@@ -7,8 +9,6 @@ if (!project.hasProperty('org.name'))
 if (!project.hasProperty('jar.title'))
     project.setProperty('jar.title', (group == 'com.admc')
             ? 'JavaPropFile Gradle plugin jar' : 'Customization')
-
-apply plugin: 'groovy'
 
 dependencies {
     compile gradleApi()
