@@ -115,7 +115,9 @@ Detailed Example
         propFileLoader.overwriteThrow = false
         propFileLoader.unsatisfiedRefBehavior = JavaPropFile.Behavior.NO_SET
         propFileLoader.systemPropPrefix = 'sys$'
-        propFileLoader.load(file('local.properties')  // Personal prop file
+        // Load option personal properties file, if present
+        def localPropFile = file('local.properties')
+        if (localPropFile.isFile()) propFileLoader.load(localPropFile)
 
 
 DETAILS
