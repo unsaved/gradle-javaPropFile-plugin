@@ -150,16 +150,22 @@ DETAILS
     The value of a variable will be the last value that was assigned to it.
     You can prohibit attempts to overwrite by throwing or silently ignoring.
 
-    The provided method 'propFileLoader.traditionalPropertiesInit()'
-    loads 'app.properties' (if it is present), prohibiting use of undefined
-    ${...} references; then loads 'local.properties' (if it is present),
-    allowing use of undefined references.  Overwriting is allowed.
-    (It will use whatever settings you have made previously regarding
-    typeCasting, system property assignment, and system property expansion.
-    Only the last of these is enabled by default).
-
     Gradle provides no way to unset/remove any Project property, therefore
     JavaPropFile has no capability to remove a property.
+
+    Provided Methods:
+
+        void propFileLoader.load(File)
+            Obviously, loads a properties file.  That's the whole point of this
+            plugin.
+
+        void propFileLoader.traditionalPropertiesInit()
+            loads 'app.properties' (if it is present), prohibiting use of
+            undefined ${...} references; then loads 'local.properties' (if it
+            is present), allowing use of undefined references.  Overwriting is
+            allowed.  (It will use whatever settings you have made previously
+            regarding typeCasting, system property assignment, and system
+            property expansion.  Only the last of these is enabled by default).
 
     Configurations:
 
