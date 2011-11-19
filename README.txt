@@ -18,8 +18,14 @@ MOTIVATION
 
     + Nested definitions like users of Ant and Log4j are used to.
       (I.e. use references like ${this} in your property values.
-      If setting are new (i.e. not changing existing properties), you can
-      reference properties before they are set.
+      Order of property settings in a single properties file is of no
+      consequence.  ${ref} references can be made before or after the 'ref'
+      property is defined, as long as it is defined in this file (or before
+      this file is loaded).
+      (The special situation of ${referencing} a property + the referenced
+      property was set before loading the current properties file + the
+      referenced property value is changed in the current properties file,
+      is discussed below).
 
     + System properties are expanded, like users of Ant, Log4j, and Ivy
       are used to.  May be disabled.
@@ -115,18 +121,28 @@ Detailed Example
 DETAILS
 
     NESTING LIMITATION.  You can't depend on sequence in property files.
-    As long as you are not changing existing property values, this allows you
-    to nest without concern for sequence.  But if you change a property that
-    is set before running load(), you should not use a ${reference} to that
-    property, because it is not guaranteed whether it will expand to the
-    original or changed value.  Definitely watch for this when changing
-    Gradle-supplied property values like 'version' or 'group'.
-    Therefore, don't nest these.  If, for example, in a single properties file
-    you want to change the 'version' and also include the version in another
-    property, you must write the literal twice, like:
+    As long as you are not referencing pre-existing-but-changing property
+    values, this allows you to nest without concern for sequence.  But if you
+    change a property that was set before running load(), you should not use a
+    ${reference} to that property in the same build file, because it is not
+    guaranteed whether it will expand to the original or changed value.
+    Definitely watch for this when changing Gradle-supplied property values
+    like 'version' or 'group'.  Therefore, don't nest these.
+    If, for example, in a single properties file you want to change the
+    'version' and also include the version in another property, you must write
+    the literal twice, like:
         version=1.2.3
         title=My Widget, v. 1.3.3
     NOT!!  title=My Widget, v. ${version}
+    This is only a concern if the referenced property both pre-exists and is
+    changed in the SAME properties file.  If for any reason you really want to
+    used nested references using these changing proeprties, then use an
+    intermediate variable:
+        version=${newVersion}
+        title=My Widget, v. ${newVersion}
+        newVersion=1.2.3
+    (Since sequence-independent, it's ok to reference newVersion before you
+    assign a value to it).
 
     Precedence works intuitively, not freakishly like Ant properties.
     The value of a variable will be the last value that was assigned to it.
