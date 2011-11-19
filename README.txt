@@ -114,6 +114,20 @@ Detailed Example
 
 DETAILS
 
+    NESTING LIMITATION.  You can't depend on sequence in property files.
+    As long as you are not changing existing property values, this allows you
+    to nest without concern for sequence.  But if you change a property that
+    is set before running load(), you should not use a ${reference} to that
+    property, because it is not guaranteed whether it will expand to the
+    original or changed value.  Definitely watch for this when changing
+    Gradle-supplied property values like 'version' or 'group'.
+    Therefore, don't nest these.  If, for example, in a single properties file
+    you want to change the 'version' and also include the version in another
+    property, you must write the literal twice, like:
+        version=1.2.3
+        title=My Widget, v. 1.3.3
+    NOT!!  title=My Widget, v. ${version}
+
     Precedence works intuitively, not freakishly like Ant properties.
     The value of a variable will be the last value that was assigned to it.
     You can prohibit attempts to overwrite by throwing or silently ignoring.
