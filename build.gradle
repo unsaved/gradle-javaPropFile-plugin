@@ -2,6 +2,12 @@ defaultTasks 'jar'
 
 apply plugin: 'groovy'
 
+def localGradleFile = file('local.gradle')
+if (localGradleFile.isFile()) {
+    logger.info('''Executing optional build file 'localGradleFile'.''')
+    apply from: localGradleFile
+}
+
 if (version == 'unspecified') version = '0.2.2-SNAPSHOT'
 if (!project.hasProperty('org.name'))
     project.setProperty('org.name', ((group == 'com.admc')
