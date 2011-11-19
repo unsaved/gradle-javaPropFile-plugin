@@ -19,8 +19,17 @@
  * publish to a Maven repository.
  */
 
+buildscript { dependencies {
+    classpath fileTree(
+        dir: 'build/libs',
+        excludes: ['*-sources.jar', '*-javadoc.jar'],
+        include: 'gradle-javaPropFile-plugin-*.jar'
+    )
+} }
+
 apply plugin: 'maven'
 apply plugin: 'signing'
+apply plugin: 'javaPropFile'
 
 signing {
     sign configurations.archives
@@ -45,14 +54,6 @@ assert fileTree(
 before you can use build file 'build-dist.gradle'.
 '''
 
-buildscript { dependencies {
-    classpath fileTree(
-        dir: 'build/libs',
-        excludes: ['*-sources.jar', '*-javadoc.jar'],
-        include: 'gradle-javaPropFile-plugin-*.jar'
-    )
-} }
-apply plugin: 'javaPropFile'
 propFileLoader.traditionalPropertiesInit()
 
 if (project.hasProperty('mavenRepository.dest.url')
