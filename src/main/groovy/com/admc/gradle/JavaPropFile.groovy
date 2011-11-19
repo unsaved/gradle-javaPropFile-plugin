@@ -118,10 +118,10 @@ class JavaPropFile {
         unsatisfiedRefBehavior = Behavior.THROW
         overwrite = true
         overwriteThrow = false
-        if (appPropertiesFile.exists()) load(appPropertiesFile)
+        if (appPropertiesFile.isFile()) load(appPropertiesFile)
 
         unsatisfiedRefBehavior = Behavior.NO_SET
-        if (localPropertiesFile.exists()) load(localPropertiesFile)
+        if (localPropertiesFile.isFile()) load(localPropertiesFile)
 
         unsatisfiedRefBehavior = originalBehavior
         overwrite = originalOverwrite
