@@ -139,14 +139,14 @@ class JavaPropFile {
         assert cName != null
         if (cName == '') return null
         Class<?> c = null;
-        if (cName.indexOf('.') < 0)
+        if (cName.indexOf('.') < 0) {
             for (pkg in JavaPropFile.defaultGroovyPackages) try {
                 c = Class.forName(pkg + '.' + cName)
                 break
             } catch (Exception e) {
                 // intentionally empty
             }
-        else try {
+        } else try {
             c = Class.forName(cName)
         } catch (Exception e) {
             // intentionally empty

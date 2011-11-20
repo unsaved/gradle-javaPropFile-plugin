@@ -6,8 +6,6 @@ import org.gradle.testfixtures.ProjectBuilder
 import static org.junit.Assert.*
 
 class JavaPropFilePluginTest {
-    private int counter = 0
-
     private static File mkTestFile() {
         File newFile = File.createTempFile(
                 getClass().simpleName + '', ".properties")
