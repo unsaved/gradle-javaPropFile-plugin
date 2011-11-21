@@ -41,14 +41,13 @@ class JavaPropFile {
             """Specified properties file inaccessible:  $propFile.absolutePath
 """
         List<String> orderedKeyList = orderedKeyList(propFile)
+        Set<String> assigneds = []  // Checking for conflicting assignments
         Properties propsIn = new Properties()
         propFile.withInputStream { propsIn.load(it) }
         Map<String, String> props =
                 // Enumeration.toSet() not available until Groovy v. 1.8.0
                 //propsIn.propertyNames().toSet().collectEntries {
                 propsIn.propertyNames().toList().collectEntries {
-//System.out.println("From ($it) to ...")
-//System.out.println(propsIn.getProperty(it))
             [(it): propsIn.getProperty(it).replace('\\$', '\u0004')]
         }
         assert props.size() == propsIn.size():
@@ -59,13 +58,17 @@ class JavaPropFile {
         String newValString
         boolean haveNewVal
         int prevCount = props.size()
-        def unresolveds = []
+        List<String> unresolveds = []
+        List<String> toRemove = []
         Pattern systemPropPattern = ((systemPropPrefix == null) 
                 ? null
                 : Pattern.compile("^\\Q" + systemPropPrefix + "\\E(.+)"))
         while (prevCount > 0) {
             unresolveds.clear()
-            new HashMap(props).each() { pk, pv ->
+            toRemove.clear()
+            orderedKeyList.each {
+                def pk = it
+                def pv = props[pk]
                 haveNewVal = true
                 newValString = pv.replaceAll(curlyRefGrpPattern) { matchGrps ->
                     // This block resolves ${references} in property values
@@ -80,10 +83,16 @@ class JavaPropFile {
                     return matchGrps[0]
                 }
                 if (haveNewVal) {
+                    if (assigneds.contains(pk))
+                        throw new GradleException(
+                                "Conflicting assignments for property '$pk'")
                     assign(pk, newValString, systemPropPattern)
-                    props.remove(pk)
+                    assigneds << pk
+                    toRemove << pk
                 }
             }
+            orderedKeyList -= toRemove
+            toRemove.each { props.remove(it) }
             if (prevCount == props.size()) break
             prevCount = props.size()
         }
@@ -190,12 +199,12 @@ class JavaPropFile {
     }
 
     private void assign(
-            String rawName, String rawString, Pattern systemPropPattern) {
+            String rawName, String rawValue, Pattern systemPropPattern) {
         boolean setSysProp = false
         Matcher matcher = null
         String cName = null
         String propName = null
-        String valString = rawString.replace('\u0004', '$')
+        String valString = rawValue.replace('\u0004', '$')
 
         if (systemPropPattern != null) {
             matcher = systemPropPattern.matcher(rawName)

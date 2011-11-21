@@ -497,6 +497,14 @@ delta()=
     }
 
     @org.junit.Test(expected=GradleException.class)
+    void conflictingAssignmets() {
+        Project project = JavaPropFilePluginTest.prepProject(['alpha', 'beta'])
+        File f = JavaPropFilePluginTest.mkTestFile()
+        f.write('alpha=1\nalpha=2', 'ISO-8859-1')
+        project.propFileLoader.load(f)
+    }
+
+    @org.junit.Test(expected=GradleException.class)
     void missingCastingClass() {
         Project project = JavaPropFilePluginTest.prepProject('alpha')
 

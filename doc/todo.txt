@@ -2,3 +2,14 @@ Implement arrays and collections like:
     x(Long[,]ArrayList)=3.14,6.28
 
 Allow specifying targets other than the Project, like Extension objects.
+
+DOCUMENT
+    Escaping
+    Multiple definitions for a single property are useless.
+    Equivalent references in a single properties file are stable.  I.e., in a
+     single properties file ${x} will always resolve to the exact same thing.
+    Intuitive sequence.
+        If the reference of a ${ref} is assigned to in "this" file, then the
+        very last assignment in this file is honored.
+    Changing variables ok now
+    Can only reference String variables, whether typecasting or not.
