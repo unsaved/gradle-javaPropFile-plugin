@@ -1,2 +1,6 @@
-A future release
-    Allow specifying targets other than the Project, like Extension objects.
+Implement \$ escaping
+
+Implement arrays and collections like:
+    x(Long[,]ArrayList)=3.14,6.28
+
+Allow specifying targets other than the Project, like Extension objects.
