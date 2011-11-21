@@ -40,8 +40,20 @@ class JavaPropFile {
         assert propFile.isFile() && propFile.canRead():
             """Specified properties file inaccessible:  $propFile.absolutePath
 """
-        Properties props = new Properties()
-        propFile.withInputStream { props.load(it) }
+        List<String> orderedKeyList = orderedKeyList(propFile)
+        Properties propsIn = new Properties()
+        propFile.withInputStream { propsIn.load(it) }
+        Map<String, String> props =
+                // Enumeration.toSet() not available until Groovy v. 1.8.0
+                //propsIn.propertyNames().toSet().collectEntries {
+                propsIn.propertyNames().toList().collectEntries {
+//System.out.println("From ($it) to ...")
+//System.out.println(propsIn.getProperty(it))
+            [(it): propsIn.getProperty(it).replace('\\$', '\u0004')]
+        }
+        assert props.size() == propsIn.size():
+            ('Transformed ' + propsIn.size() + ' input properties into '
+                    + props.size() + ' entries')
         gp.logger.info(
                 'Loaded ' + props.size() + ' from ' + propFile.absolutePath)
         String newValString
@@ -178,11 +190,12 @@ class JavaPropFile {
     }
 
     private void assign(
-            String rawName, String valString, Pattern systemPropPattern) {
+            String rawName, String rawString, Pattern systemPropPattern) {
         boolean setSysProp = false
         Matcher matcher = null
         String cName = null
         String propName = null
+        String valString = rawString.replace('\u0004', '$')
 
         if (systemPropPattern != null) {
             matcher = systemPropPattern.matcher(rawName)
@@ -267,5 +280,31 @@ class JavaPropFile {
             else
                 gp.setProperty(propName, newVal)
         }
+    }
+
+    List<String> orderedKeyList(File f) {
+        Properties workPs = new Properties();
+        StringBuilder sb = new StringBuilder()
+        List<String> keyList = []
+        String nextKey, pText
+        List<String> tmpList
+        f.readLines('ISO-8859-1').each {
+            sb.append(it).append('\n')
+            pText = sb + '\u0003=\n'
+            workPs.clear()
+            workPs.load(new StringReader(pText))
+            tmpList = workPs.propertyNames().toList()
+            if (tmpList.size() < 2) return
+            assert tmpList.size() == 2:
+                ('Parsing error.  ' + workPs.size()
+                        + " properties from:  $pText\n$tmpList")
+            assert workPs.getProperty('\u0003') != null:
+                ('Parsing error.  Got 2 properties but not EOT from:  '
+                        + "$pText\n$tmpList")
+            tmpList.remove('\u0003')
+            keyList << tmpList[0]
+            sb.length = 0
+        }
+        return keyList
     }
 }

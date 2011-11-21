@@ -542,4 +542,17 @@ systemProp.gamma()=
         assertEquals('zwei', System.properties['beta(File)'])
         assertEquals('', System.properties['gamma()'])
     }
+
+    @org.junit.Test
+    void escape() {
+        Project project = JavaPropFilePluginTest.prepProject('alpha')
+
+        project.propFileLoader.overwriteThrow = true
+        File f = JavaPropFilePluginTest.mkTestFile()
+        f.write('alpha=one\\\\${escaped}two')
+        project.propFileLoader.typeCasting = true
+        project.propFileLoader.load(f)
+        assertTrue(project.hasProperty('alpha'))
+        assertEquals('one${escaped}two', project.property('alpha'))
+    }
 }
