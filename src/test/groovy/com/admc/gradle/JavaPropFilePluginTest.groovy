@@ -13,17 +13,9 @@ class JavaPropFilePluginTest {
         return newFile
     }
 
-    // TODO:  Rewrite prepProject(List<String>) using varargs, then get rid
-    // of the wrapper method.
-
-    private static Project prepProject(String checkProp) {
-        return prepProject([checkProp])
-    }
-
-    private static Project prepProject(List<String> checkProps) {
+    private static Project prepProject(String... checkProps) {
         Project proj = ProjectBuilder.builder().build()
         proj.apply plugin: com.admc.gradle.JavaPropFilePlugin
-        if (checkProps == null) return proj
 
         checkProps.each {
             assert !proj.hasProperty(it):
@@ -62,7 +54,7 @@ class JavaPropFilePluginTest {
 
     @org.junit.Test
     void nest() {
-        Project project = JavaPropFilePluginTest.prepProject(['alpha', 'beta'])
+        Project project = JavaPropFilePluginTest.prepProject('alpha', 'beta')
 
         project.propFileLoader.overwriteThrow = true
         File f = JavaPropFilePluginTest.mkTestFile()
@@ -101,7 +93,7 @@ class JavaPropFilePluginTest {
     @org.junit.Test(expected=GradleException.class)
     void unsetLoneThrow() {
         Project project =
-                JavaPropFilePluginTest.prepProject(['notset', 'alpha'])
+                JavaPropFilePluginTest.prepProject('notset', 'alpha')
 
         project.propFileLoader.overwriteThrow = true
         File f = JavaPropFilePluginTest.mkTestFile()
@@ -217,7 +209,7 @@ class JavaPropFilePluginTest {
 
     @org.junit.Test
     void unsetLoneEmpties() {
-        Project project = JavaPropFilePluginTest.prepProject(['alpha', 'beta'])
+        Project project = JavaPropFilePluginTest.prepProject('alpha', 'beta')
 
         project.propFileLoader.overwriteThrow = true
         File f = JavaPropFilePluginTest.mkTestFile()
@@ -251,7 +243,7 @@ class JavaPropFilePluginTest {
     @org.junit.Test
     void deeplyNested() {
         Project project = JavaPropFilePluginTest.prepProject(
-                ['bottom1', 'mid2', 'mid3a', 'mid3b', 'top4'])
+                'bottom1', 'mid2', 'mid3a', 'mid3b', 'top4')
 
         project.propFileLoader.overwriteThrow = true
         File f = JavaPropFilePluginTest.mkTestFile()
@@ -271,7 +263,7 @@ mid2   m2 ${bottom1}
 
     @org.junit.Test
     void overwrite() {
-        Project project = JavaPropFilePluginTest.prepProject(['alpha', 'beta'])
+        Project project = JavaPropFilePluginTest.prepProject('alpha', 'beta')
 
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('alpha=replacement\nbeta=${beta} addition')
@@ -286,7 +278,7 @@ mid2   m2 ${bottom1}
 
     @org.junit.Test
     void noOverwrite() {
-        Project project = JavaPropFilePluginTest.prepProject(['alpha', 'beta'])
+        Project project = JavaPropFilePluginTest.prepProject('alpha', 'beta')
 
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('alpha=replacement\nbeta=${beta} addition')
@@ -302,9 +294,9 @@ mid2   m2 ${bottom1}
 
     @org.junit.Test
     void setSysProps() {
-        Project project = prepProject([
+        Project project = prepProject(
             'alpha', 'systemProp.file.separator', 'systemProp.slpha'
-        ])
+        )
         assert !project.hasProperty('file.separator'):
             '''Project has property 'file.separator' set before we start test'''
         
@@ -354,7 +346,7 @@ mid2   m2 ${bottom1}
     @org.junit.Test
     void nullAssignments() {
         Project project = JavaPropFilePluginTest.prepProject(
-                ['alpha', 'beta', 'gamma', 'delta'])
+                'alpha', 'beta', 'gamma', 'delta')
 
         project.propFileLoader.overwriteThrow = true
         File f = JavaPropFilePluginTest.mkTestFile()
@@ -380,7 +372,7 @@ delta()=
     @org.junit.Test
     void castedNochangeOverwrite() {
         Project project = JavaPropFilePluginTest.prepProject(
-                ['alpha', 'beta', 'gamma', 'delta'])
+                'alpha', 'beta', 'gamma', 'delta')
 
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('alpha(File)=eins\n(File)beta=zwei\ngamma()=', 'ISO-8859-1')
@@ -402,8 +394,7 @@ delta()=
 
     @org.junit.Test
     void typeCasting() {
-        Project project = JavaPropFilePluginTest.prepProject(
-                ['aFile', 'aLong'])
+        Project project = JavaPropFilePluginTest.prepProject('aFile', 'aLong')
 
         File f = JavaPropFilePluginTest.mkTestFile()
         // One using String cons. + one using valueOf methods
@@ -420,8 +411,8 @@ delta()=
     @org.junit.Test
     void nonCastingParens() {
         Project project = JavaPropFilePluginTest.prepProject(
-                ['alpha(File)x', 'x(File)beta', 'alpha', 'beta',
-                'alpha()x', 's()alpha'])
+                'alpha(File)x', 'x(File)beta', 'alpha', 'beta',
+                'alpha()x', 's()alpha')
 
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('alpha(File)x=eins\nx(File)beta=zwei', 'ISO-8859-1')
@@ -441,7 +432,7 @@ delta()=
     @org.junit.Test(expected=GradleException.class)
     void overCasted1() {
         Project project = JavaPropFilePluginTest.prepProject(
-                ['epsilon()', '(File)epsilon()'])
+                'epsilon()', '(File)epsilon()')
 
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('(File)epsilon()=sechs', 'ISO-8859-1')
@@ -465,7 +456,7 @@ delta()=
     @org.junit.Test(expected=GradleException.class)
     void overCasted3() {
         Project project =
-                JavaPropFilePluginTest.prepProject(['gamma', '(gamma)'])
+                JavaPropFilePluginTest.prepProject('gamma', '(gamma)')
 
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('(File)delta(junk)=vier', 'ISO-8859-1')
@@ -498,7 +489,7 @@ delta()=
 
     @org.junit.Test(expected=GradleException.class)
     void conflictingAssignmets() {
-        Project project = JavaPropFilePluginTest.prepProject(['alpha', 'beta'])
+        Project project = JavaPropFilePluginTest.prepProject('alpha', 'beta')
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('alpha=1\nalpha=2', 'ISO-8859-1')
         project.propFileLoader.load(f)
@@ -518,9 +509,9 @@ delta()=
     @org.junit.Test
     void parenthesizedSysProps() {
         Project project = JavaPropFilePluginTest.prepProject(
-                ['(File)systemProp.alpha', 'beta(File)', 'gamma()', 'alpha',
+                '(File)systemProp.alpha', 'beta(File)', 'gamma()', 'alpha',
                 'beta', 'gamma', 'systemProp.alpha', 'systemProp.beta(File)',
-                'systemProp.gamma()'])
+                'systemProp.gamma()')
 
         project.propFileLoader.overwriteThrow = true
         File f = JavaPropFilePluginTest.mkTestFile()
