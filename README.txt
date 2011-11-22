@@ -57,6 +57,23 @@ MOTIVATION
       as the instantiation parameter.  The resultant object is what will be
       added as a Project property.  Use () to set a null value.
 
+UPCOMING.  A release within days will have all of these features.  You can get
+some of these improvements now by pulling source code from Git and building
+(requires only a Java SDK).  The other items will be completed ASAP.
+
+    Complication about "changing" values of referenced properties has been
+    greatly simplified.
+
+    Can escape occurrence of ${...} in property values and leave the literal
+    ${...} by escaping like:  \\${...}.
+
+    Typecasting supports arrays and arbitrary specified Collection types.
+
+    Can refer to Gradle extension object properties with another $ like:
+    ${extensionObjectName.property}
+
+    Can set Gradle extension object properties.
+
 
 USAGE
 
@@ -108,6 +125,9 @@ Use plugin jar file locally.
 
 DETAILS
 
+    [NOTE:  The nesting limitation will be greatly narrowed and simplified in
+    the next release of JavaPropFile.  You can pull from Git to get the
+    improvement immediately.]
     NESTING LIMITATION.  You can't depend on sequence in property files.
     As long as you are not referencing pre-existing-but-changing property
     values, this allows you to nest without concern for sequence.  But if you

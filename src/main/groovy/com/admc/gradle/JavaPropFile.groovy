@@ -1,6 +1,7 @@
 package com.admc.gradle
 
 import java.util.regex.Pattern
+import java.util.regex.PatternSyntaxException
 import java.util.regex.Matcher
 import java.lang.reflect.Method
 import java.lang.reflect.Constructor
@@ -16,6 +17,8 @@ class JavaPropFile {
             Pattern.compile(/\(([^)]+)\)(.+)/)
     private static final Pattern castLastPattern =
             Pattern.compile(/(.+)\(([^)]+)\)/)
+    private static final Pattern castComponentsPattern =
+            Pattern.compile(/(?:([^$]+)\$)?([^\[]+)(?:\[(.+)\]([^\[\]]+)?)?/)
 
     private Project gp
     Behavior unsatisfiedRefBehavior = Behavior.THROW
@@ -40,7 +43,6 @@ class JavaPropFile {
         assert propFile.isFile() && propFile.canRead():
             """Specified properties file inaccessible:  $propFile.absolutePath
 """
-        List<String> orderedKeyList = orderedKeyList(propFile)
         Set<String> assigneds = []  // Checking for conflicting assignments
         Properties propsIn = new Properties()
         propFile.withInputStream { propsIn.load(it) }
@@ -55,6 +57,15 @@ class JavaPropFile {
                     + props.size() + ' entries')
         gp.logger.info(
                 'Loaded ' + props.size() + ' from ' + propFile.absolutePath)
+        def duplicateDefs = [:]
+        List<String> orderedKeyList = orderedKeyList(propFile)
+        props.keySet().each {
+            def count = orderedKeyList.count(it)
+            if (count != 1) duplicateDefs[it] = count
+        }
+        if (duplicateDefs.size() > 0)
+            throw new GradleException(
+                    'Duplicate definitions present: ' + duplicateDefs)
         String newValString
         boolean haveNewVal
         int prevCount = props.size()
@@ -68,19 +79,18 @@ class JavaPropFile {
             toRemove.clear()
             orderedKeyList.each {
                 def pk = it
-                def pv = props[pk]
+                def pv = props.get(pk)
                 haveNewVal = true
                 newValString = pv.replaceAll(curlyRefGrpPattern) { matchGrps ->
                     // This block resolves ${references} in property values
-                    if (gp.hasProperty(matchGrps[1])
-                            && (gp.property(matchGrps[1]) instanceof String))
-                        return gp.property(matchGrps[1])
+                    if (gp.hasProperty(matchGrps[1]))
+                        return gp.property(matchGrps[1]).toString()
                     if (expandSystemProps
                             && System.properties.containsKey(matchGrps[1]))
                         return System.properties[matchGrps[1]]
                     unresolveds << matchGrps[1]
                     haveNewVal = false
-                    return matchGrps[0]
+                    return matchGrps.first()
                 }
                 if (haveNewVal) {
                     if (assigneds.contains(pk))
@@ -91,8 +101,8 @@ class JavaPropFile {
                     toRemove << pk
                 }
             }
-            orderedKeyList -= toRemove
             toRemove.each { props.remove(it) }
+            orderedKeyList -= toRemove
             if (prevCount == props.size()) break
             prevCount = props.size()
         }
@@ -155,11 +165,50 @@ class JavaPropFile {
         // includes BigDecimal and BigInteger from that package, but there
         // are only 2 other things in the package.
 
-    private static Object instantiateFromString(String str, String cName) {
+    private static Object instantiateFromString(String str, String cStr) {
         assert str != null
-        assert cName != null
-        if (cName == '') return null
-        Class<?> c = null;
+        assert cStr != null
+        if (cStr == '') return null
+        Matcher matcher = castComponentsPattern.matcher(cStr)
+        assert matcher.matches()
+        String extObjName = matcher.group(1)
+        String cName = matcher.group(2)
+        String splitterStr = matcher.group(3)
+        String colName = matcher.group(4)
+System.out.println("EXTOBJ/cName/splitter/col=" + extObjName + '/' + cName + '/' + splitterStr + '/' + colName)
+        if (colName == null && splitterStr != null) colName = ''
+
+        String[] strings = null
+        if (splitterStr == null) {
+            strings = [str]
+        } else try {
+            strings = str.split(splitterStr)
+        } catch (PatternSyntaxException pse) {
+            throw new GradleException(
+                    "Malformatted splitter pattern:  $splitterStr")
+        }
+        Collection colInstance = null;
+        if (colName != null) {
+            Class colClass
+            if (colName == '') {
+                colClass = ArrayList.class
+            } else {
+                throw new GradleException(
+                        "Unsupported Collection type: $colName")
+            }
+            if (!Collection.class.isAssignableFrom(colClass))
+                throw new GradleException('Specified type does not implement '
+                        + "Collection: $colName")
+            try {
+                colInstance = colClass.newInstance()
+            } catch (Exception e) {
+                throw new GradleException(
+                        'Failed to instantiate Collection instance of '
+                        + "'$colName':  $e")
+            }
+        }
+
+        Class c = null;
         if (cName.indexOf('.') < 0) {
             for (pkg in JavaPropFile.defaultGroovyPackages) try {
                 c = Class.forName(pkg + '.' + cName)
@@ -175,26 +224,39 @@ class JavaPropFile {
         if (c == null)
             throw new GradleException("Inaccessible typeCasting class: $cName")
         Method m = null
+        Constructor<?> cons = null
         try {
             m = c.getDeclaredMethod("valueOf", String.class)
         } catch (Exception e) {
-            // Intentionally empty
+            try {
+                cons = c.getDeclaredConstructor(String.class)
+            } catch (Exception nestedE) {
+                throw new GradleException("TypeCasting class $cName has neither a static static .valueOf(String) method nor a (String) constructor")
+            }
         }
-        if (m != null) try {
-            return m.invoke(null, str)
+        assert (m == null && cons != null) || (m != null && cons == null)
+        if (colName == null) try {
+            return (m == null) ? cons.newInstance(str) : m.invoke(null, str)
         } catch (Exception e) {
-            throw new GradleException("Failed to generate a $c.name with param '$str': $e")
+            throw new GradleException("Failed to "
+                    + ((m == null) ? 'construct' : 'valueOf')
+                    + " a $c.name with param '$str': $e")
         }
-        Constructor<?> cons = null
+        strings.each { try {
+            colInstance <<
+                    ((m == null) ? cons.newInstance(it) : m.invoke(null, it))
+        } catch (Exception e) {
+            throw new GradleException("Failed to "
+                    + ((m == null) ? 'construct' : 'valueOf')
+                    + " a $c.name with param '$it': $e")
+        } }
+        if (colName != '') return colInstance
         try {
-            cons = c.getDeclaredConstructor(String.class)
+            return colInstance.toArray(
+                    java.lang.reflect.Array.newInstance(c, 0))
         } catch (Exception e) {
-            throw new GradleException("TypeCasting class $cName has neither a static static .valueOf(String) method nor a (String) constructor")
-        }
-        try {
-            return cons.newInstance(str)
-        } catch (Exception e) {
-            throw new GradleException("Failed to construct a $c.name with param '$str': $e")
+            throw new GradleException(
+                    "Failed to convert internal List to array: $e")
         }
     }
 
@@ -291,6 +353,11 @@ class JavaPropFile {
         }
     }
 
+    /**
+     * Returns sequence-preserving list of keys in a properties file.
+     * This does not correspond exactly to java.util.Properties read from the
+     * file, because this list preserves multiple elements for duplicate keys.
+     */
     List<String> orderedKeyList(File f) {
         Properties workPs = new Properties();
         StringBuilder sb = new StringBuilder()
@@ -311,7 +378,7 @@ class JavaPropFile {
                 ('Parsing error.  Got 2 properties but not EOT from:  '
                         + "$pText\n$tmpList")
             tmpList.remove('\u0003')
-            keyList << tmpList[0]
+            keyList << tmpList.first()
             sb.length = 0
         }
         return keyList

@@ -488,7 +488,7 @@ delta()=
     }
 
     @org.junit.Test(expected=GradleException.class)
-    void conflictingAssignmets() {
+    void conflictingAssignments() {
         Project project = JavaPropFilePluginTest.prepProject('alpha', 'beta')
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('alpha=1\nalpha=2', 'ISO-8859-1')
@@ -553,5 +553,65 @@ systemProp.gamma()=
         project.propFileLoader.load(f)
         assertTrue(project.hasProperty('alpha'))
         assertEquals('one${escaped}two', project.property('alpha'))
+    }
+
+    @org.junit.Test
+    void extObjRef() {
+        Project project = JavaPropFilePluginTest.prepProject('alpha')
+
+        File f = JavaPropFilePluginTest.mkTestFile()
+        f.write('alpha=pre${mockbean$str1}post')
+        project.apply plugin: com.admc.gradle.MockPlugin
+        project.mockBean.assignSome()
+        project.propFileLoader.load(f)
+        assertTrue(project.hasProperty('alpha'))
+        assertEquals('one${escaped}two', project.property('alpha'))
+    }
+
+    @org.junit.Test
+    void arrayCast() {
+        Project project = JavaPropFilePluginTest.prepProject('alpha')
+
+        File f = JavaPropFilePluginTest.mkTestFile()
+        f.write('alpha(Integer[\\ ])=94 3 12')
+        project.propFileLoader.typeCasting = true
+System.out.println '#########################################################'
+        project.propFileLoader.load(f)
+System.out.println '^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^'
+        assertTrue(project.hasProperty('alpha'))
+        assertEquals('[Ljava.lang.Integer;',
+                project.property('alpha').class.name)
+        assertArrayEquals((Integer[]) [94, 3, 12], project.property('alpha'))
+    }
+
+    @org.junit.Test
+    void modifyExistingSeeChange() {
+        Project project = JavaPropFilePluginTest.prepProject(
+                'alpha', 'beta', 'gamma')
+
+        File f = JavaPropFilePluginTest.mkTestFile()
+        f.write('beta=two${alpha}\nalpha=eins\ngamma=three${alpha}\n')
+        project.setProperty('alpha', 'one')
+        project.propFileLoader.load(f)
+        assertTrue(project.hasProperty('alpha'))
+        assertTrue(project.hasProperty('beta'))
+        assertTrue(project.hasProperty('gamma'))
+        assertEquals('eins', project.property('alpha'))
+        assertEquals('twoone', project.property('beta'))
+        assertEquals('threeeins', project.property('gamma'))
+    }
+
+    @org.junit.Test
+    void modifyExistingNoSeeChange() {
+        Project project = JavaPropFilePluginTest.prepProject('alpha', 'beta')
+
+        File f = JavaPropFilePluginTest.mkTestFile()
+        f.write('alpha=eins\nbeta=two${alpha}\n')
+        project.setProperty('alpha', 'one')
+        project.propFileLoader.load(f)
+        assertTrue(project.hasProperty('alpha'))
+        assertTrue(project.hasProperty('beta'))
+        assertEquals('eins', project.property('alpha'))
+        assertEquals('twoeins', project.property('beta'))
     }
 }
