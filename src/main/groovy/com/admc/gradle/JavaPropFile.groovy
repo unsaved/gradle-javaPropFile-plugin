@@ -7,6 +7,7 @@ import java.lang.reflect.Method
 import java.lang.reflect.Constructor
 import org.gradle.api.Project
 import org.gradle.api.GradleException
+import org.gradle.api.UnknownDomainObjectException
 
 class JavaPropFile {
     private static final Pattern curlyRefGrpPattern =
@@ -18,7 +19,7 @@ class JavaPropFile {
     private static final Pattern castLastPattern =
             Pattern.compile(/(.+)\(([^)]+)\)/)
     private static final Pattern castComponentsPattern =
-            Pattern.compile(/(?:([^$]+)\$)?([^\[]+)(?:\[(.+)\]([^\[\]]+)?)?/)
+            Pattern.compile(/([^\[]+)(?:\[(.+)\]([^\[\]]+)?)?/)
 
     private Project gp
     Behavior unsatisfiedRefBehavior = Behavior.THROW
@@ -27,6 +28,16 @@ class JavaPropFile {
     boolean overwriteThrow
     boolean typeCasting
     String systemPropPrefix
+    private Map<String, Map<String, Object>> deferrals =
+            new HashMap<String, Map<String, Object>>()
+    boolean defer = true
+
+    /**
+     * Return a COPY of this internal structure
+     */
+    Map<String, String> getDeferredExtensionProps() {
+        return new HashMap(deferrals)
+    }
 
     // Giving up on UNSET because Gradle provides no way to remove a
     // property from a Project.  Project.properties.remove('x') does not work.
@@ -43,7 +54,7 @@ class JavaPropFile {
         assert propFile.isFile() && propFile.canRead():
             """Specified properties file inaccessible:  $propFile.absolutePath
 """
-        Set<String> assigneds = []  // Checking for conflicting assignments
+        Set<String> handled = []  // Checking for conflicting assignments
         Properties propsIn = new Properties()
         propFile.withInputStream { propsIn.load(it) }
         Map<String, String> props =
@@ -80,24 +91,45 @@ class JavaPropFile {
             orderedKeyList.each {
                 def pk = it
                 def pv = props.get(pk)
+                int dollarIndex
                 haveNewVal = true
                 newValString = pv.replaceAll(curlyRefGrpPattern) { matchGrps ->
                     // This block resolves ${references} in property values
-                    if (gp.hasProperty(matchGrps[1]))
-                        return gp.property(matchGrps[1]).toString()
-                    if (expandSystemProps
-                            && System.properties.containsKey(matchGrps[1]))
-                        return System.properties[matchGrps[1]]
+                    dollarIndex = matchGrps[1].indexOf('$')
+                    if (dollarIndex > 0
+                            && dollarIndex < matchGrps[1].length() - 1) {
+                        String extObjName =
+                                matchGrps[1].substring(0, dollarIndex)
+                        String propName = matchGrps[1].substring(dollarIndex+1)
+                        try {
+                            return gp.extensions.getByName(extObjName)[propName]
+                        } catch (UnknownDomainObjectException udoe) {
+                            throw new GradleException(
+                                "Domain Extension Object '$extObjName' "
+                                + 'specified by reference ${' + matchGrps[1]
+                                + '} is inaccessible')
+                        } catch (MissingPropertyException mpe) {
+                            throw new GradleException(
+                                "No such property '$propName' available "
+                                + "for Domain Extension Object '$extObjName'")
+                        }
+                    } else {
+                        if (gp.hasProperty(matchGrps[1]))
+                            return gp.property(matchGrps[1]).toString()
+                        if (expandSystemProps
+                                && System.properties.containsKey(matchGrps[1]))
+                            return System.properties[matchGrps[1]]
+                    }
                     unresolveds << matchGrps[1]
                     haveNewVal = false
                     return matchGrps.first()
                 }
                 if (haveNewVal) {
-                    if (assigneds.contains(pk))
+                    if (handled.contains(pk))
                         throw new GradleException(
                                 "Conflicting assignments for property '$pk'")
-                    assign(pk, newValString, systemPropPattern)
-                    assigneds << pk
+                    assignOrDefer(null, pk, newValString, systemPropPattern)
+                    handled << pk
                     toRemove << pk
                 }
             }
@@ -121,10 +153,10 @@ class JavaPropFile {
         new HashMap(props).each() { pk, pv ->
             switch (unsatisfiedRefBehavior) {
               case Behavior.LITERAL:
-                assign(pk, pv, systemPropPattern)
+                assignOrDefer(null, pk, pv, systemPropPattern)
                 break
               case Behavior.EMPTY:
-                assign(pk,
+                assignOrDefer(null, pk,
                         pv.replaceAll(curlyRefPattern, ''), systemPropPattern)
                 break
               /* See not above about Behavior.UNSET.
@@ -136,6 +168,9 @@ class JavaPropFile {
                 assert false: "Unexpected Behavior value:  $unsatisfiedRefBehavior"
             }
         }
+        if (deferrals.size() > 0)
+            gp.logger.info('Waiting for ' + deferrals.size()
+                    + ' extension objects to appear as deferral targets')
     }
 
     void traditionalPropertiesInit() {
@@ -171,11 +206,9 @@ class JavaPropFile {
         if (cStr == '') return null
         Matcher matcher = castComponentsPattern.matcher(cStr)
         assert matcher.matches()
-        String extObjName = matcher.group(1)
-        String cName = matcher.group(2)
-        String splitterStr = matcher.group(3)
-        String colName = matcher.group(4)
-System.out.println("EXTOBJ/cName/splitter/col=" + extObjName + '/' + cName + '/' + splitterStr + '/' + colName)
+        String cName = matcher.group(1)
+        String splitterStr = matcher.group(2)
+        String colName = matcher.group(3)
         if (colName == null && splitterStr != null) colName = ''
 
         String[] strings = null
@@ -193,9 +226,9 @@ System.out.println("EXTOBJ/cName/splitter/col=" + extObjName + '/' + cName + '/'
             if (colName == '') {
                 colClass = ArrayList.class
             } else {
-                throw new GradleException(
-                        "Unsupported Collection type: $colName")
+                colClass = JavaPropFile.resolveClass(colName)
             }
+            assert colClass != null
             if (!Collection.class.isAssignableFrom(colClass))
                 throw new GradleException('Specified type does not implement '
                         + "Collection: $colName")
@@ -208,21 +241,7 @@ System.out.println("EXTOBJ/cName/splitter/col=" + extObjName + '/' + cName + '/'
             }
         }
 
-        Class c = null;
-        if (cName.indexOf('.') < 0) {
-            for (pkg in JavaPropFile.defaultGroovyPackages) try {
-                c = Class.forName(pkg + '.' + cName)
-                break
-            } catch (Exception e) {
-                // intentionally empty
-            }
-        } else try {
-            c = Class.forName(cName)
-        } catch (Exception e) {
-            // intentionally empty
-        }
-        if (c == null)
-            throw new GradleException("Inaccessible typeCasting class: $cName")
+        Class c = JavaPropFile.resolveClass(cName)
         Method m = null
         Constructor<?> cons = null
         try {
@@ -260,96 +279,212 @@ System.out.println("EXTOBJ/cName/splitter/col=" + extObjName + '/' + cName + '/'
         }
     }
 
-    private void assign(
+    /**
+     * @param className A qualified class name, or an unqualified class name
+     *                  that will be searched for according to Groovy default
+     *                  package rules.
+     * @return java.lang.Class instance.  Never returns null
+     * @throws GradleException if specified class not accessible
+     */
+    public static Class resolveClass(String className) {
+        if (className.indexOf('.') < 0) {
+            for (pkg in JavaPropFile.defaultGroovyPackages) try {
+                return Class.forName(pkg + '.' + className)
+            } catch (Exception e) {
+                // intentionally empty
+            }
+        } else try {
+            return Class.forName(className)
+        } catch (Exception e) {
+            // intentionally empty
+        }
+        throw new GradleException("Requested class inaccessible:  $className")
+    }
+
+    /**
+     * @return true if assignment made, false if assignment deferred
+     */
+    private boolean assignOrDefer(Object extensionObject,
             String rawName, String rawValue, Pattern systemPropPattern) {
         boolean setSysProp = false
         Matcher matcher = null
-        String cName = null
-        String propName = null
+        String cExpr = null
+        String midName = null
         String valString = rawValue.replace('\u0004', '$')
+        String extObjName = null
 
+        String escapedName = (rawName.replace('\\$', '\u0001')
+                .replace('\\(', '\u0002').replace('\\)', '\u0003'))
         if (systemPropPattern != null) {
-            matcher = systemPropPattern.matcher(rawName)
+            matcher = systemPropPattern.matcher(escapedName)
             setSysProp = matcher.matches()
         }
         if (setSysProp) {
-            propName = matcher.group(1)
+            midName = matcher.group(1)
         } else if (typeCasting) {
-            if (rawName.charAt(0) == '('
-                    && rawName.charAt(rawName.length()-1) == ')')
+            if (escapedName.charAt(0) == '('
+                    && escapedName.charAt(escapedName.length()-1) == ')')
                 throw new GradleException(
                         "TypeCast name may not begin with ( and "
-                        + "end with ): $rawName")
-            if (rawName.length() > 2 && rawName.startsWith("()")) {
-                propName = rawName.substring(2)
+                        + "end with ): $escapedName")
+            if (escapedName.length() > 2 && escapedName.startsWith("()")) {
+                midName = escapedName.substring(2)
                 if (valString.length() > 0)
                     throw new GradleException(
                             "Non-empty value supplied to a null "
-                            + "typeCast for property '$propName'")
-                cName = ''
-            } else if (rawName.length() > 2 && rawName.endsWith("()")) {
-                propName = rawName.substring(0, rawName.length() - 2)
+                            + "typeCast for property '$midName'")
+                cExpr = ''
+            } else if (escapedName.length() > 2 && escapedName.endsWith("()")) {
+                midName = escapedName.substring(0, escapedName.length() - 2)
                 if (valString.length() > 0)
                     throw new GradleException(
                             "Non-empty value supplied to a null "
-                            + "typeCast for property '$propName'")
-                cName = ''
+                            + "typeCast for property '$midName'")
+                cExpr = ''
             } else {
-                matcher = castFirstPattern.matcher(rawName)
+                matcher = castFirstPattern.matcher(escapedName)
                 if (matcher.matches()) {
-                    cName = matcher.group(1)
-                    propName = matcher.group(2)
+                    cExpr = matcher.group(1)
+                    midName = matcher.group(2)
                 } else {
-                    matcher = castLastPattern.matcher(rawName)
+                    matcher = castLastPattern.matcher(escapedName)
                     if (matcher.matches()) {
-                        propName = matcher.group(1)
-                        cName = matcher.group(2)
+                        midName = matcher.group(1)
+                        cExpr = matcher.group(2)
                     } else {
-                        propName = rawName
+                        midName = escapedName
                     }
                 }
             }
         } else {
-            propName = rawName
+            midName = escapedName
         }
-        assert propName != null
-        Object newVal = ((cName == null) ? valString
-                : JavaPropFile.instantiateFromString(valString, cName))
-        if ((setSysProp && System.properties.containsKey(propName))
-                || (!setSysProp && gp.hasProperty(propName))) {
-            Object oldVal = (setSysProp ? System.properties[propName]
-                    : gp.property(propName))
+        assert midName != null
+        if (!setSysProp) {
+            if (extensionObject == null) {
+                int dollarIndex = midName.indexOf('$')
+                if (dollarIndex > 0 && dollarIndex < midName.length() - 1) try {
+                    extObjName = (midName.substring(0, dollarIndex)
+                            .replace('\u0001', '$')
+                            .replace('\u0002', '(').replace('\u0003', ')'))
+                    midName = midName.substring(dollarIndex+1)
+                    extensionObject = gp.extensions.getByName(extObjName)
+                    extObjName = null  // Clear to prevent deferral
+                } catch (UnknownDomainObjectException udoe) {
+                    if (!defer) throw new GradleException(
+                            "Domain Extension Object '$extObjName' "
+                            + "specified by property name '$rawName'"
+                            + ' is inaccessible')
+                    // Non-null extObjName will be retained, triggering deferral
+                }
+            }
+        }
+        String propName = (midName.replace('\u0001', '$')
+                .replace('\u0002', '(').replace('\u0003', ')'))
+        Object newVal = ((cExpr == null) ? valString
+                : JavaPropFile.instantiateFromString(valString,
+                cExpr.replace('\u0001', '$')
+                .replace('\u0002', '(').replace('\u0003', ')')))
+        if (extObjName == null) {
+            assign(extensionObject, setSysProp, propName, newVal)
+            return true
+        }
+        deferFor(extObjName,  propName, newVal)
+        return false;
+    }
+
+    public executeDeferrals() {
+        Set<String> satisfieds = [] as Set
+        deferrals.each { objName, propMap ->
+            Object extObj = null
+            try {
+                extObj = gp.extensions.getByName(objName)
+            } catch (UnknownDomainObjectException udoe) {
+                return
+            }
+            propMap.each { name, value ->
+                try {
+                    extObj[name] = value
+                } catch (MissingPropertyException mpe) {
+                    throw new GradleException(
+                        "No such property '$name' available "
+                        + "for Domain Extension Object '$objName'")
+                }
+            }
+            satisfieds << objName
+        }
+        satisfieds.each { deferrals.remove(it) }
+        if (deferrals.size() > 0)
+            gp.logger.info('Waiting for ' + deferrals.size()
+                    + ' extension objects to appear as deferral targets')
+    }
+
+    private void deferFor(
+            String extensionObjName, String propName, Object propVal) {
+        if (!deferrals.containsKey(propName))
+            deferrals[propName] = new HashMap<String, Object>()
+        deferrals.put(propName, propVal)
+    }
+
+    private assign(Object extObj, boolean isSys, String pName, Object val) {
+        if (extObj != null
+                || (isSys && System.properties.containsKey(pName))
+                || (!isSys && gp.hasProperty(pName))) {
+            Object oldVal = null;
+            if (isSys) {
+                oldVal = System.properties[pName]
+            } else if (extObj != null) try {
+                oldVal = extObj[pName]
+            } catch (MissingPropertyException mpe) {
+                throw new GradleException(
+                        "No such property '$pName' available "
+                        + 'for Domain Extension Object')
+            } else {
+                oldVal = gp.property(pName)
+            }
             // We will do absolutely nothing if either
             // (!overwrite && !overwriteThrow)
             // or if oldVar == newVar.
-            if ((overwrite || overwriteThrow) && (oldVal != newVal
-                    && ((oldVal == null || newVal == null)
-                    || !oldVal.equals(newVal)))) {
+            if ((overwrite || overwriteThrow) && (oldVal != val
+                    && ((oldVal == null || val == null)
+                    || !oldVal.equals(val)))) {
                 if (overwriteThrow)
                     throw new GradleException(
                             "Configured to prohibit property value "
                             + "changes, but attempted to change "
-                            + "value of property '$propName' from "
-                            + "'$oldVal' to '$newVal'")
+                            + "value of property '$pName' from "
+                            + "'$oldVal' to '$val'")
                 // Property value really changing
-                if (oldVal != null && newVal != null
-                        && !oldVal.class.equals(newVal.class))
+                if (oldVal != null && val != null
+                        && !oldVal.class.equals(val.class))
                     throw new GradleException("Incompatible type "
                             + "for change of property "
-                            + "'$propName'.  From "
+                            + "'$pName'.  From "
                             + oldVal.class.name + ' to '
-                            + newVal.class.name)
-                if (setSysProp)
-                    System.setProperty(propName, newVal)
-                else
-                    gp.setProperty(propName, newVal)
+                            + val.class.name)
+                writeValue(pName, val, isSys, extObj)
             }
         } else {
             // New property
-            if (setSysProp)
-                System.setProperty(propName, newVal)
+            writeValue(pName, val, isSys, extObj)
+        }
+    }
+
+    /**
+     * Writes teh value to Project property, Java property, or Extension object
+     */
+    private void writeValue(String name,
+            Object value, boolean isSysProp, Object extensionObject) {
+        try {
+            if (isSysProp)
+                System.setProperty(name, value)
+            else if (extensionObject != null)
+                extensionObject[name] = value
             else
-                gp.setProperty(propName, newVal)
+                gp.setProperty(name, value)
+        } catch (Exception e) {
+            throw new GradleException(
+                "Assignment to '$name' of value '$value' failed:  $e")
         }
     }
 

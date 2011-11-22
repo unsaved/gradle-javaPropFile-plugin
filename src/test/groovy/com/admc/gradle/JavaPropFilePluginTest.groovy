@@ -543,7 +543,7 @@ systemProp.gamma()=
     }
 
     @org.junit.Test
-    void escape() {
+    void escapeRef() {
         Project project = JavaPropFilePluginTest.prepProject('alpha')
 
         project.propFileLoader.overwriteThrow = true
@@ -556,16 +556,81 @@ systemProp.gamma()=
     }
 
     @org.junit.Test
+    void escapeNameDollar() {
+        Project project = JavaPropFilePluginTest.prepProject('al$pha')
+
+        project.propFileLoader.overwriteThrow = true
+        File f = JavaPropFilePluginTest.mkTestFile()
+        f.write('al\\\\$pha=one')
+        project.propFileLoader.typeCasting = true
+        project.propFileLoader.load(f)
+        assertTrue(project.hasProperty('al$pha'))
+        assertEquals('one', project.property('al$pha'))
+    }
+
+    @org.junit.Test
+    void escapeNameOpenParen() {
+        Project project = JavaPropFilePluginTest.prepProject('(al)pha')
+
+        project.propFileLoader.overwriteThrow = true
+        File f = JavaPropFilePluginTest.mkTestFile()
+        f.write('\\\\(al)pha=one')
+        project.propFileLoader.typeCasting = true
+        project.propFileLoader.load(f)
+        assertTrue(project.hasProperty('(al)pha'))
+        assertEquals('one', project.property('(al)pha'))
+    }
+
+    @org.junit.Test
+    void escapeNameCloseParen() {
+        Project project = JavaPropFilePluginTest.prepProject('(al)pha')
+
+        project.propFileLoader.overwriteThrow = true
+        File f = JavaPropFilePluginTest.mkTestFile()
+        f.write('(al\\\\)pha=one')
+        project.propFileLoader.typeCasting = true
+        project.propFileLoader.load(f)
+        assertTrue(project.hasProperty('(al)pha'))
+        assertEquals('one', project.property('(al)pha'))
+    }
+
+    @org.junit.Test
+    void deferredExtObjAssignment() {
+        Project project = JavaPropFilePluginTest.prepProject()
+
+        File f = JavaPropFilePluginTest.mkTestFile()
+        f.write('mockBean$str2=val')
+        project.propFileLoader.load(f)
+        assertEquals(1, project.propFileLoader.deferredExtensionProps.size())
+        project.apply plugin: com.admc.gradle.MockPlugin
+        assertNull(project.mockBean.str2)
+        assertEquals('val', project.mockBean.str2)
+        assertEquals(0, project.propFileLoader.deferredExtensionProps.size())
+    }
+
+    @org.junit.Test
+    void extObjAssignment() {
+        Project project = JavaPropFilePluginTest.prepProject()
+
+        File f = JavaPropFilePluginTest.mkTestFile()
+        f.write('mockBean$str2=val')
+        project.apply plugin: com.admc.gradle.MockPlugin
+        assertNull(project.mockBean.str2)
+        project.propFileLoader.load(f)
+        assertEquals('val', project.mockBean.str2)
+    }
+
+    @org.junit.Test
     void extObjRef() {
         Project project = JavaPropFilePluginTest.prepProject('alpha')
 
         File f = JavaPropFilePluginTest.mkTestFile()
-        f.write('alpha=pre${mockbean$str1}post')
+        f.write('alpha=pre${mockBean$str1}post')
         project.apply plugin: com.admc.gradle.MockPlugin
         project.mockBean.assignSome()
         project.propFileLoader.load(f)
         assertTrue(project.hasProperty('alpha'))
-        assertEquals('one${escaped}two', project.property('alpha'))
+        assertEquals('preonepost', project.property('alpha'))
     }
 
     @org.junit.Test
@@ -575,13 +640,40 @@ systemProp.gamma()=
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('alpha(Integer[\\ ])=94 3 12')
         project.propFileLoader.typeCasting = true
-System.out.println '#########################################################'
         project.propFileLoader.load(f)
-System.out.println '^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^'
         assertTrue(project.hasProperty('alpha'))
+        assertNotNull(project.hasProperty('alpha'))
         assertEquals('[Ljava.lang.Integer;',
                 project.property('alpha').class.name)
         assertArrayEquals((Integer[]) [94, 3, 12], project.property('alpha'))
+    }
+
+    @org.junit.Test
+    void listCast() {
+        Project project = JavaPropFilePluginTest.prepProject('alpha')
+
+        File f = JavaPropFilePluginTest.mkTestFile()
+        f.write('alpha(Integer[\\ ]ArrayList)=94 3 12')
+        project.propFileLoader.typeCasting = true
+        project.propFileLoader.load(f)
+        assertTrue(project.hasProperty('alpha'))
+        assertNotNull(project.hasProperty('alpha'))
+        assertEquals(ArrayList.class, project.property('alpha').class)
+        assertEquals([94, 3, 12] as ArrayList, project.property('alpha'))
+    }
+
+    @org.junit.Test
+    void setCast() {
+        Project project = JavaPropFilePluginTest.prepProject('alpha')
+
+        File f = JavaPropFilePluginTest.mkTestFile()
+        f.write('alpha(Integer[\\ ]HashSet)=94 3 12')
+        project.propFileLoader.typeCasting = true
+        project.propFileLoader.load(f)
+        assertTrue(project.hasProperty('alpha'))
+        assertNotNull(project.hasProperty('alpha'))
+        assertEquals(HashSet.class, project.property('alpha').class)
+        assertEquals([94, 3, 12] as HashSet, project.property('alpha'))
     }
 
     @org.junit.Test
