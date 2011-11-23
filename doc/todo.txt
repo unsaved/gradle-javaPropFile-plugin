@@ -6,3 +6,6 @@ DOCUMENT
     Equivalent references in a single properties file are stable.  I.e., in a
      single properties file ${x} will always resolve to the exact same thing.
      Point out the single exception.
+    Sequence matters here too:
+        t1(Thread)=one
+        t1.name=two

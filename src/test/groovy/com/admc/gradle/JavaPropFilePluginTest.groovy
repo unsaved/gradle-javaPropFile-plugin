@@ -814,4 +814,16 @@ systemProp|gamma()=
         assertEquals('eins', project.property('alpha'))
         assertEquals('twoeins', project.property('beta'))
     }
+
+    @org.junit.Test
+    void projCastObjNesting() {
+        Project project = JavaPropFilePluginTest.prepProject('t1')
+        project.propFileLoader.typeCasting = true
+
+        File f = JavaPropFilePluginTest.mkTestFile()
+        f.write('t1(Thread)=one\nt1.name=two')
+        project.propFileLoader.load(f)
+        assertTrue(project.hasProperty('t1'))
+        assertEquals('two', project.t1.name)
+    }
 }
