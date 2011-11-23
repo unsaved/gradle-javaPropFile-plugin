@@ -53,7 +53,7 @@ class JavaPropFilePluginTest {
     }
 
     @org.junit.Test
-    void nest() {
+    void refNest() {
         Project project = JavaPropFilePluginTest.prepProject('alpha', 'beta')
 
         project.propFileLoader.overwriteThrow = true
@@ -241,7 +241,7 @@ class JavaPropFilePluginTest {
     }
 
     @org.junit.Test
-    void deeplyNested() {
+    void deepRefNest() {
         Project project = JavaPropFilePluginTest.prepProject(
                 'bottom1', 'mid2', 'mid3a', 'mid3b', 'top4')
 
@@ -295,14 +295,14 @@ mid2   m2 ${bottom1}
     @org.junit.Test
     void setSysProps() {
         Project project = prepProject(
-            'alpha', 'systemProp.file.separator', 'systemProp.slpha'
+            'alpha', 'systemProp$file.separator', 'systemProp$slpha'
         )
         assert !project.hasProperty('file.separator'):
             '''Project has property 'file.separator' set before we start test'''
         
         File f = JavaPropFilePluginTest.mkTestFile()
-        f.write('systemProp.alpha=eins\nsystemProp.file.separator=*')
-        project.propFileLoader.systemPropPrefix = 'systemProp.'
+        f.write('systemProp$alpha=eins\nsystemProp$file.separator=*')
+        project.propFileLoader.systemPropPrefix = 'systemProp$'
         project.propFileLoader.load(f)
         assertFalse(project.hasProperty('alpha'))
         assertFalse(project.hasProperty('file.separator'))
@@ -509,35 +509,35 @@ delta()=
     @org.junit.Test
     void parenthesizedSysProps() {
         Project project = JavaPropFilePluginTest.prepProject(
-                '(File)systemProp.alpha', 'beta(File)', 'gamma()', 'alpha',
-                'beta', 'gamma', 'systemProp.alpha', 'systemProp.beta(File)',
-                'systemProp.gamma()')
+                '(File)systemProp|alpha', 'beta(File)', 'gamma()', 'alpha',
+                'beta', 'gamma', 'systemProp|alpha', 'systemProp|beta(File)',
+                'systemProp|gamma()')
 
         project.propFileLoader.overwriteThrow = true
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('''
-(File)systemProp.alpha=eins
-systemProp.beta(File)=zwei
-systemProp.gamma()=
+(File)systemProp|alpha=eins
+systemProp|beta(File)=zwei
+systemProp|gamma()=
 ''')
-        project.propFileLoader.systemPropPrefix = 'systemProp.'
+        project.propFileLoader.systemPropPrefix = 'systemProp|'
         project.propFileLoader.typeCasting = true
         project.propFileLoader.load(f)
-        ['alpha', 'beta', 'gamma', 'systemProp.alpha', '(File)systemProp.alpha',
-                'systemProp.beta(File)', 'systemProp.gamma()'].each {
+        ['alpha', 'beta', 'gamma', 'systemProp|alpha', '(File)systemProp|alpha',
+                'systemProp|beta(File)', 'systemProp|gamma()'].each {
             assertFalse("System property '$it' is set",
                     System.properties.containsKey(it))
                 
         }
         ['alpha', 'beta', 'gamma', 'beta(File)', 'gamma()',
-                'systemProp.beta(File)', 'systemProp.gamma()'].each {
+                'systemProp|beta(File)', 'systemProp|gamma()'].each {
             assertFalse("Project has property '$it'", project.hasProperty(it))
         }
 
-        assertTrue(project.hasProperty('systemProp.alpha'))
+        assertTrue(project.hasProperty('systemProp|alpha'))
         assertTrue(System.properties.containsKey('beta(File)'))
         assertTrue(System.properties.containsKey('gamma()'))
-        assertEquals(new File('eins'), project.property('systemProp.alpha'))
+        assertEquals(new File('eins'), project.property('systemProp|alpha'))
         assertEquals('zwei', System.properties['beta(File)'])
         assertEquals('', System.properties['gamma()'])
     }
@@ -556,6 +556,21 @@ systemProp.gamma()=
     }
 
     @org.junit.Test
+    void escapedDotRef() {
+        Project project = JavaPropFilePluginTest.prepProject('al.pha', 'beta')
+
+        project.setProperty('al.pha', 'one')
+        project.propFileLoader.overwriteThrow = true
+        File f = JavaPropFilePluginTest.mkTestFile()
+        f.write('beta=pre${al\\\\.pha}post')
+        project.propFileLoader.typeCasting = true
+        project.propFileLoader.load(f)
+        assertTrue(project.hasProperty('al.pha'))
+        assertTrue(project.hasProperty('beta'))
+        assertEquals('preonepost', project.property('beta'))
+    }
+
+    @org.junit.Test
     void escapeNameDollar() {
         Project project = JavaPropFilePluginTest.prepProject('al$pha')
 
@@ -566,6 +581,19 @@ systemProp.gamma()=
         project.propFileLoader.load(f)
         assertTrue(project.hasProperty('al$pha'))
         assertEquals('one', project.property('al$pha'))
+    }
+
+    @org.junit.Test
+    void escapedDotSet() {
+        Project project = JavaPropFilePluginTest.prepProject('al.pha')
+
+        project.propFileLoader.overwriteThrow = true
+        File f = JavaPropFilePluginTest.mkTestFile()
+        f.write('al\\\\.pha=one')
+        project.propFileLoader.typeCasting = true
+        project.propFileLoader.load(f)
+        assertTrue(project.hasProperty('al.pha'))
+        assertEquals('one', project.property('al.pha'))
     }
 
     @org.junit.Test
@@ -594,6 +622,16 @@ systemProp.gamma()=
         assertEquals('one', project.property('(al)pha'))
     }
 
+    @org.junit.Test(expected=GradleException.class)
+    void noDefer() {
+        Project project = JavaPropFilePluginTest.prepProject()
+
+        File f = JavaPropFilePluginTest.mkTestFile()
+        f.write('mockBean$str2=val')
+        project.propFileLoader.defer = false
+        project.propFileLoader.load(f)
+    }
+
     @org.junit.Test
     void deferredExtObjAssignment() {
         Project project = JavaPropFilePluginTest.prepProject()
@@ -603,7 +641,9 @@ systemProp.gamma()=
         project.propFileLoader.load(f)
         assertEquals(1, project.propFileLoader.deferredExtensionProps.size())
         project.apply plugin: com.admc.gradle.MockPlugin
-        assertNull(project.mockBean.str2)
+        //assertNull(project.mockBean.str2)
+        // If executeDeferrals not invoked via callback, do:
+        //project.propFileLoader.executeDeferrals()
         assertEquals('val', project.mockBean.str2)
         assertEquals(0, project.propFileLoader.deferredExtensionProps.size())
     }
@@ -631,6 +671,74 @@ systemProp.gamma()=
         project.propFileLoader.load(f)
         assertTrue(project.hasProperty('alpha'))
         assertEquals('preonepost', project.property('alpha'))
+    }
+
+    @org.junit.Test
+    void objNestRef() {
+        Project project = JavaPropFilePluginTest.prepProject('alpha')
+        project.propFileLoader.overwriteThrow = true
+
+        File f = JavaPropFilePluginTest.mkTestFile()
+        f.write('alpha=pre${mockBean$str1}post')
+        project.apply plugin: com.admc.gradle.MockPlugin
+        project.mockBean.assignSome()
+        project.propFileLoader.load(f)
+        assertTrue(project.hasProperty('alpha'))
+        assertEquals('preonepost', project.property('alpha'))
+    }
+
+    @org.junit.Test
+    void castColObjNestRef() {
+        Project project = JavaPropFilePluginTest.prepProject('alpha')
+
+        File f = JavaPropFilePluginTest.mkTestFile()
+        f.write('alpha=pre${mockBean$strList}post')
+        project.apply plugin: com.admc.gradle.MockPlugin
+        project.mockBean.assignSome()
+        project.propFileLoader.load(f)
+        assertTrue(project.hasProperty('alpha'))
+        assertEquals('pre' + ['ONE', 'TWO', 'THREE'].toString() + 'post',
+                project.property('alpha'))
+    }
+
+    @org.junit.Test
+    void ObjDeepNestRef() {
+        Project project = JavaPropFilePluginTest.prepProject('alpha')
+        project.propFileLoader.overwriteThrow = true
+
+        File f = JavaPropFilePluginTest.mkTestFile()
+        f.write('alpha=pre${mockBean$tHolder1.heldThread.name}post')
+        project.apply plugin: com.admc.gradle.MockPlugin
+        project.mockBean.assignSome()
+        project.propFileLoader.load(f)
+        assertTrue(project.hasProperty('alpha'))
+        assertEquals('prename:unopost', project.property('alpha'))
+    }
+
+
+    @org.junit.Test
+    void castColObjNestSet() {
+        Project project = JavaPropFilePluginTest.prepProject()
+        project.propFileLoader.typeCasting = true
+
+        File f = JavaPropFilePluginTest.mkTestFile()
+        f.write('mockBean$intList(Integer[\\\\|]ArrayList)=91|72|101')
+        project.apply plugin: com.admc.gradle.MockPlugin
+        project.propFileLoader.load(f)
+        assertEquals([91, 72, 101], project.mockBean.intList)
+    }
+
+    @org.junit.Test
+    void objDeepNestSet() {
+        Project project = JavaPropFilePluginTest.prepProject()
+
+        File f = JavaPropFilePluginTest.mkTestFile()
+        f.write('mockBean$tHolder1.heldThread.name=New Thread Name')
+        project.apply plugin: com.admc.gradle.MockPlugin
+        project.mockBean.assignSome()
+        project.propFileLoader.load(f)
+        assertEquals('New Thread Name',
+                project.mockBean.tHolder1.heldThread.name)
     }
 
     @org.junit.Test

@@ -6,10 +6,12 @@ import java.util.regex.Matcher
 import java.lang.reflect.Method
 import java.lang.reflect.Constructor
 import org.gradle.api.Project
+import org.gradle.api.Plugin
+import org.gradle.api.Action
 import org.gradle.api.GradleException
 import org.gradle.api.UnknownDomainObjectException
 
-class JavaPropFile {
+class JavaPropFile implements Action<Plugin> {
     private static final Pattern curlyRefGrpPattern =
             Pattern.compile(/\$\{([^}]+)\}/)
     private static final Pattern curlyRefPattern =
@@ -31,6 +33,7 @@ class JavaPropFile {
     private Map<String, Map<String, Object>> deferrals =
             new HashMap<String, Map<String, Object>>()
     boolean defer = true
+    private boolean callbackRegistered
 
     /**
      * Return a COPY of this internal structure
@@ -50,9 +53,19 @@ class JavaPropFile {
 
     void load(File propFile) {
         assert unsatisfiedRefBehavior != null:
-            '''unsatisfiedRefBehavior may not be set to null'''
+            '''unsatisfiedRefBehavior may not be set to null
+'''
         assert propFile.isFile() && propFile.canRead():
             """Specified properties file inaccessible:  $propFile.absolutePath
+"""
+        assert systemPropPrefix == null || systemPropPrefix.indexOf('.') < 0:
+            """Specified systemPropPrefix conflicts with nested property delimiter '.':
+$systemPropPrefix
+"""
+        assert (!typeCasting || systemPropPrefix == null
+                || systemPropPrefix.indexOf('$') < 0):
+            """To avoid ambiguity, when typeCasting is on systemPropPrefix may not contain '\$':
+$systemPropPrefix
 """
         Set<String> handled = []  // Checking for conflicting assignments
         Properties propsIn = new Properties()
@@ -102,20 +115,24 @@ class JavaPropFile {
                                 matchGrps[1].substring(0, dollarIndex)
                         String propName = matchGrps[1].substring(dollarIndex+1)
                         try {
-                            return gp.extensions.getByName(extObjName)[propName]
+                            return JavaPropFile.getNestedValue(
+                                    gp.extensions.getByName(extObjName),
+                                    propName)
                         } catch (UnknownDomainObjectException udoe) {
                             throw new GradleException(
                                 "Domain Extension Object '$extObjName' "
                                 + 'specified by reference ${' + matchGrps[1]
-                                + '} is inaccessible')
+                                + '} is inaccessible', udoe)
                         } catch (MissingPropertyException mpe) {
                             throw new GradleException(
                                 "No such property '$propName' available "
-                                + "for Domain Extension Object '$extObjName'")
+                                + "for Domain Extension Object '$extObjName'",
+                                mpe)
                         }
                     } else {
-                        if (gp.hasProperty(matchGrps[1]))
-                            return gp.property(matchGrps[1]).toString()
+                        if (JavaPropFile.hasNestedValue(gp, matchGrps[1]))
+                            return JavaPropFile.getNestedValue(
+                                    gp, matchGrps[1]).toString()
                         if (expandSystemProps
                                 && System.properties.containsKey(matchGrps[1]))
                             return System.properties[matchGrps[1]]
@@ -138,39 +155,48 @@ class JavaPropFile {
             if (prevCount == props.size()) break
             prevCount = props.size()
         }
-        if (prevCount == 0) return
-        // If we get here, then we have unsatisfied references
-        if (unsatisfiedRefBehavior == Behavior.THROW)
-            throw new GradleException(
-                'Unable to resolve top-level properties: ' + props.keySet()
-                + '\ndue to unresolved references to: ' + unresolveds)
-        gp.logger.warn(
-                'Unable to resolve top-level properties: ' + props.keySet()
-                + '\ndue to unresolved references to: ' + unresolveds
-                + '.\nWill handle according to unsatisifiedRefBehavior: '
-                + unsatisfiedRefBehavior)
-        if (unsatisfiedRefBehavior == Behavior.NO_SET) return
-        new HashMap(props).each() { pk, pv ->
-            switch (unsatisfiedRefBehavior) {
-              case Behavior.LITERAL:
-                assignOrDefer(null, pk, pv, systemPropPattern)
-                break
-              case Behavior.EMPTY:
-                assignOrDefer(null, pk,
-                        pv.replaceAll(curlyRefPattern, ''), systemPropPattern)
-                break
-              /* See not above about Behavior.UNSET.
-              case Behavior.UNSET:
-                gp.properties.remove(pk)
-                break
-             */
-              default:
-                assert false: "Unexpected Behavior value:  $unsatisfiedRefBehavior"
+        if (prevCount != 0) {
+            // If we get here, then we have unsatisfied references
+            if (unsatisfiedRefBehavior == Behavior.THROW)
+                throw new GradleException(
+                    'Unable to resolve top-level properties: ' + props.keySet()
+                    + '\ndue to unresolved references to: ' + unresolveds)
+            gp.logger.warn(
+                    'Unable to resolve top-level properties: ' + props.keySet()
+                    + '\ndue to unresolved references to: ' + unresolveds
+                    + '.\nWill handle according to unsatisifiedRefBehavior: '
+                    + unsatisfiedRefBehavior)
+            if (unsatisfiedRefBehavior == Behavior.NO_SET) return
+            new HashMap(props).each() { pk, pv ->
+                switch (unsatisfiedRefBehavior) {
+                  case Behavior.LITERAL:
+                    assignOrDefer(null, pk, pv, systemPropPattern)
+                    break
+                  case Behavior.EMPTY:
+                    assignOrDefer(null, pk, pv.replaceAll(curlyRefPattern, ''),
+                            systemPropPattern)
+                    break
+                  /* See not above about Behavior.UNSET.
+                  case Behavior.UNSET:
+                    gp.properties.remove(pk)
+                    break
+                 */
+                  default:
+                    assert false:
+                        "Unexpected Behavior value:  $unsatisfiedRefBehavior"
+                }
             }
         }
-        if (deferrals.size() > 0)
+        if (deferrals.size() > 0) {
+            if (!callbackRegistered) {
+                gp.plugins.whenPluginAdded(this)
+                gp.logger.info(getClass().name
+                        + ' registered for plugin addition notification')
+                // How in hell do I cancel the callback???
+            }
             gp.logger.info('Waiting for ' + deferrals.size()
                     + ' extension objects to appear as deferral targets')
+        }
     }
 
     void traditionalPropertiesInit() {
@@ -218,7 +244,7 @@ class JavaPropFile {
             strings = str.split(splitterStr)
         } catch (PatternSyntaxException pse) {
             throw new GradleException(
-                    "Malformatted splitter pattern:  $splitterStr")
+                    "Malformatted splitter pattern:  $splitterStr", pse)
         }
         Collection colInstance = null;
         if (colName != null) {
@@ -237,7 +263,7 @@ class JavaPropFile {
             } catch (Exception e) {
                 throw new GradleException(
                         'Failed to instantiate Collection instance of '
-                        + "'$colName':  $e")
+                        + "'$colName'", e)
             }
         }
 
@@ -250,7 +276,7 @@ class JavaPropFile {
             try {
                 cons = c.getDeclaredConstructor(String.class)
             } catch (Exception nestedE) {
-                throw new GradleException("TypeCasting class $cName has neither a static static .valueOf(String) method nor a (String) constructor")
+                throw new GradleException("TypeCasting class $cName has neither a static static .valueOf(String) method nor a (String) constructor", nestedE)
             }
         }
         assert (m == null && cons != null) || (m != null && cons == null)
@@ -259,7 +285,7 @@ class JavaPropFile {
         } catch (Exception e) {
             throw new GradleException("Failed to "
                     + ((m == null) ? 'construct' : 'valueOf')
-                    + " a $c.name with param '$str': $e")
+                    + " a $c.name with param '$str'", e)
         }
         strings.each { try {
             colInstance <<
@@ -267,7 +293,7 @@ class JavaPropFile {
         } catch (Exception e) {
             throw new GradleException("Failed to "
                     + ((m == null) ? 'construct' : 'valueOf')
-                    + " a $c.name with param '$it': $e")
+                    + " a $c.name with param '$it'", e)
         } }
         if (colName != '') return colInstance
         try {
@@ -275,7 +301,7 @@ class JavaPropFile {
                     java.lang.reflect.Array.newInstance(c, 0))
         } catch (Exception e) {
             throw new GradleException(
-                    "Failed to convert internal List to array: $e")
+                    "Failed to convert internal List to array", e)
         }
     }
 
@@ -374,7 +400,7 @@ class JavaPropFile {
                     if (!defer) throw new GradleException(
                             "Domain Extension Object '$extObjName' "
                             + "specified by property name '$rawName'"
-                            + ' is inaccessible')
+                            + ' is inaccessible', udoe)
                     // Non-null extObjName will be retained, triggering deferral
                 }
             }
@@ -393,7 +419,15 @@ class JavaPropFile {
         return false;
     }
 
-    public executeDeferrals() {
+    /**
+     * Implementation of Action interface
+     */
+    void execute(Plugin plugin) {
+        executeDeferrals()
+    }
+
+    void executeDeferrals() {
+        if (deferrals.size() < 1) return
         Set<String> satisfieds = [] as Set
         deferrals.each { objName, propMap ->
             Object extObj = null
@@ -404,43 +438,47 @@ class JavaPropFile {
             }
             propMap.each { name, value ->
                 try {
-                    extObj[name] = value
+                    setNestedValue(extObj, name, value)
                 } catch (MissingPropertyException mpe) {
                     throw new GradleException(
                         "No such property '$name' available "
-                        + "for Domain Extension Object '$objName'")
+                        + "for Domain Extension Object '$objName'", mpe)
                 }
             }
             satisfieds << objName
         }
+        if (satisfieds.size() == 0) return
         satisfieds.each { deferrals.remove(it) }
-        if (deferrals.size() > 0)
+        if (deferrals.size() == 0)
+            gp.logger.info(
+                    'All JavaPropFile extension object deferrals satisfied')
+        else
             gp.logger.info('Waiting for ' + deferrals.size()
                     + ' extension objects to appear as deferral targets')
     }
 
     private void deferFor(
             String extensionObjName, String propName, Object propVal) {
-        if (!deferrals.containsKey(propName))
-            deferrals[propName] = new HashMap<String, Object>()
-        deferrals.put(propName, propVal)
+        if (!deferrals.containsKey(extensionObjName))
+            deferrals[extensionObjName] = new HashMap<String, Object>()
+        deferrals[extensionObjName].put(propName, propVal)
     }
 
     private assign(Object extObj, boolean isSys, String pName, Object val) {
         if (extObj != null
                 || (isSys && System.properties.containsKey(pName))
-                || (!isSys && gp.hasProperty(pName))) {
+                || (!isSys && JavaPropFile.hasNestedValue(gp, pName))) {
             Object oldVal = null;
             if (isSys) {
                 oldVal = System.properties[pName]
             } else if (extObj != null) try {
-                oldVal = extObj[pName]
+                oldVal = JavaPropFile.getNestedValue(extObj, pName)
             } catch (MissingPropertyException mpe) {
                 throw new GradleException(
                         "No such property '$pName' available "
-                        + 'for Domain Extension Object')
+                        + 'for Domain Extension Object', mpe)
             } else {
-                oldVal = gp.property(pName)
+                oldVal = JavaPropFile.getNestedValue(gp, pName)
             }
             // We will do absolutely nothing if either
             // (!overwrite && !overwriteThrow)
@@ -458,10 +496,8 @@ class JavaPropFile {
                 if (oldVal != null && val != null
                         && !oldVal.class.equals(val.class))
                     throw new GradleException("Incompatible type "
-                            + "for change of property "
-                            + "'$pName'.  From "
-                            + oldVal.class.name + ' to '
-                            + val.class.name)
+                            + "for change of property " + "'$pName'.  From "
+                            + oldVal.class.name + ' to ' + val.class.name)
                 writeValue(pName, val, isSys, extObj)
             }
         } else {
@@ -471,7 +507,7 @@ class JavaPropFile {
     }
 
     /**
-     * Writes teh value to Project property, Java property, or Extension object
+     * Writes the value to Project property, Java property, or Extension object
      */
     private void writeValue(String name,
             Object value, boolean isSysProp, Object extensionObject) {
@@ -479,12 +515,12 @@ class JavaPropFile {
             if (isSysProp)
                 System.setProperty(name, value)
             else if (extensionObject != null)
-                extensionObject[name] = value
+                JavaPropFile.setNestedValue(extensionObject, name, value)
             else
-                gp.setProperty(name, value)
+                JavaPropFile.setNestedValue(gp, name, value)
         } catch (Exception e) {
             throw new GradleException(
-                "Assignment to '$name' of value '$value' failed:  $e")
+                "Assignment to '$name' of value '$value' failed", e)
         }
     }
 
@@ -517,5 +553,48 @@ class JavaPropFile {
             sb.length = 0
         }
         return keyList
+    }
+
+    /**
+     * @throws MissingPropertyException if any element of propertyPath fails
+     *         to resolve for the given extension object
+     */
+    private static void setNestedValue(
+            Object topObject, String propertyPath, Object newValue) {
+        List<String> tokens =
+                propertyPath.replace('\\.', '\u001F').split('\\.', -1) as List
+        String propertyName = tokens.pop()
+        Object object = topObject
+        tokens.each {
+            object = object[it.replace('\u001F', '.')]
+        }
+        object[propertyName.replace('\u001F', '.')] = newValue
+    }
+
+    /**
+     * Throws only from internal problems accessing the value
+     */
+    private static boolean hasNestedValue(
+            Object topObject, String propertyPath) {
+        try {
+           JavaPropFile.getNestedValue(topObject, propertyPath)
+        } catch (MissingPropertyException mpe) {
+            return false
+        }
+        return true
+    }
+
+
+    /**
+     * @throws MissingPropertyException if any element of propertyPath fails
+     *         to resolve for the given extension object
+     */
+    private static Object getNestedValue(
+            Object topObject, String propertyPath) {
+        Object object = topObject
+        propertyPath.replace('\\.', '\u001F').split('\\.', -1).each {
+            object = object[it.replace('\u001F', '.')]
+        }
+        return object
     }
 }

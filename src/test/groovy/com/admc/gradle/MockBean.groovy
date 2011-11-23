@@ -1,6 +1,16 @@
 package com.admc.gradle
 
 class MockBean {
+    class ThreadHolder {
+        Thread heldThread
+        String aString
+        ThreadHolder(String aString) {
+             this.aString = aString
+             heldThread = new Thread('name:' + aString)
+        }
+    }
+
+    ThreadHolder tHolder1, tHolder2
     String autoStr1, autoStr2, autoStr3, autoStr4
     private String str1, str2, str3, str4
     File autoFile1, autoFile2
@@ -32,9 +42,10 @@ class MockBean {
         file1 = new File('file1.txt')
         autoFile1 = new File('/auto/file01.txt')
         strCol = ['one', 'two', 'three']
-        strSet = ['one', 'two', 'three'] as HashSet
-        strList = ['one', 'two', 'three'] as ArrayList
-        strArr = ['one', 'two', 'three'] as String[]
+        strSet = ['One', 'Two', 'Three'] as HashSet
+        strList = ['ONE', 'TWO', 'THREE'] as ArrayList
+        strArr = ['oNe', 'tWo', 'tHree'] as String[]
+        tHolder1 = new ThreadHolder('uno')
     }
 
     String toString() {
