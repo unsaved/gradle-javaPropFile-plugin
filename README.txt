@@ -62,7 +62,7 @@ MOTIVATION
     + '.' may be used both as a character in a property name like
           xfer.max(Float)=30.0
       and to dereference object properties, like:
-          compile.Java.options.debug(Boolean) = false
+          compileJava.options.debug(Boolean) = false
       The behavior is toggled by whether or not the property file definition
       has a space after the key.  Note the space before "=" above.
 
@@ -340,7 +340,7 @@ Some examples:
 
     output(File)=/path/to/file.txt
     (Long)xferTime.max=31.25
-    compile.Java.options.debug(Boolean) = false
+    compileJava.options.debug(Boolean) = false
     monitor(com.admc.net.NetworMonitor)=Custom Network Monitor
 
 To assign a null, do the same thing, but give no value at all for class name
