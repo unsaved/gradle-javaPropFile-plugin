@@ -12,8 +12,7 @@ defaultTasks 'displaySomeProps', 'displaySomeSysProps'
 buildscript {
     repositories { mavenCentral() }
     dependencies {
-        //classpath 'com.admc:gradle-javaPropFile-plugin:latest.milestone'
-        classpath files('../build/libs/gradle-javaPropFile-plugin-0.3.0-SNAPSHOT.jar')
+        classpath 'com.admc:gradle-javaPropFile-plugin:latest.milestone'
     }
 }
 apply plugin: 'java'
@@ -53,7 +52,6 @@ propFileLoader.load(file('app.properties'))
 propFileLoader.overwriteThrow = false
 propFileLoader.unsatisfiedRefBehavior = JavaPropFile.Behavior.NO_SET
 propFileLoader.typeCasting = true
-propFileLoader.systemPropPrefix = 'sys|'
 // Load option personal properties file, if present.
 // If you have no opposing constraint, consider using file name
 // 'local.properties' for this purpose.  For this example, I am sharing the

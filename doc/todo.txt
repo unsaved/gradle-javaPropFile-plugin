@@ -1,5 +1,3 @@
-implement load(extObjName, File)
-
 DOCUMENT
     Require sys property prefix for references!
     Escaping

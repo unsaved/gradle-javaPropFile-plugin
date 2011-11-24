@@ -295,14 +295,13 @@ mid2   m2 ${bottom1}
     @org.junit.Test
     void setSysProps() {
         Project project = prepProject(
-            'alpha', 'systemProp|file.separator', 'systemProp|alpha'
+            'alpha', 'sys|file.separator', 'sys|alpha'
         )
         assert !project.hasProperty('file.separator'):
             '''Project has property 'file.separator' set before we start test'''
         
         File f = JavaPropFilePluginTest.mkTestFile()
-        f.write('systemProp|alpha=eins\nsystemProp|file.separator=*')
-        project.propFileLoader.systemPropPrefix = 'systemProp|'
+        f.write('sys|alpha=eins\nsys|file.separator=*')
         project.propFileLoader.load(f)
         assertFalse(project.hasProperty('alpha'))
         assertFalse(project.hasProperty('file.separator'))

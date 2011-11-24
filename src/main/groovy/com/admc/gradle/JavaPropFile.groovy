@@ -28,7 +28,7 @@ class JavaPropFile implements Action<Plugin> {
     boolean overwrite = true
     boolean overwriteThrow
     boolean typeCasting
-    String systemPropPrefix
+    String systemPropPrefix = 'sys|'
     private Map<String, Map<String, Object>> deferrals =
             new HashMap<String, Map<String, Object>>()
     private Map<String, Map<String, Object>> deferralDotDerefs =

@@ -19,21 +19,18 @@
  * publish to a Maven repository.
  */
 
-assert fileTree(
-        dir: 'build/libs',
-        excludes: ['*-sources.jar', '*-javadoc.jar'],
-        include: 'gradle-javaPropFile-plugin-*.jar'
-    ).files.size() == 1:
+assert cpFileTree.files.size() == 1:
     '''Due to boot-strapping issue, you must build the jar with 'build.gradle'
 before you can use build file 'build-dist.gradle'.
 '''
-buildscript { dependencies {
-    classpath fileTree(
-        dir: 'build/libs',
-        excludes: ['*-sources.jar', '*-javadoc.jar'],
-        include: 'gradle-javaPropFile-plugin-*.jar'
+buildscript {
+    cpFileTree = fileTree(
+            dir: 'build/libs',
+            excludes: ['*-sources.jar', '*-javadoc.jar'],
+            include: 'gradle-javaPropFile-plugin-*.jar'
     )
-} }
+    dependencies { classpath cpFileTree }
+}
 
 apply plugin: 'maven'
 apply plugin: 'signing'
@@ -53,6 +50,7 @@ artifacts {
 
 configurations { deployJars }
 
+propFileLoader.systemPropPrefix='sys|'
 propFileLoader.traditionalPropertiesInit()
 
 if (project.hasProperty('mavenRepository.dest.url')
