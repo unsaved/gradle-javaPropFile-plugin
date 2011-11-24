@@ -342,6 +342,7 @@ Some examples:
     (Long)xferTime.max=31.25
     compileJava.options.debug(Boolean) = false
     monitor(com.admc.net.NetworMonitor)=Custom Network Monitor
+    mavenRepository.dest.url(URL)=file:/tmp/fakeMvn
 
 To assign a null, do the same thing, but give no value at all for class name
 nor property value:
