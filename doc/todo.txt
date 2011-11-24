@@ -1,4 +1,7 @@
+implement load(extObjName, File)
+
 DOCUMENT
+    Require sys property prefix for references!
     Escaping
     New features
     Multiple definitions in a single property would be useless, and are

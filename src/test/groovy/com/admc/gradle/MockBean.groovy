@@ -1,7 +1,7 @@
 package com.admc.gradle
 
 class MockBean {
-    class ThreadHolder {
+    static class ThreadHolder {
         Thread heldThread
         String aString
         ThreadHolder(String aString) {

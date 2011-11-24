@@ -25,15 +25,18 @@ class JavaPropFile implements Action<Plugin> {
 
     private Project gp
     Behavior unsatisfiedRefBehavior = Behavior.THROW
-    boolean expandSystemProps = true
     boolean overwrite = true
     boolean overwriteThrow
     boolean typeCasting
     String systemPropPrefix
     private Map<String, Map<String, Object>> deferrals =
             new HashMap<String, Map<String, Object>>()
+    private Map<String, Map<String, Object>> deferralDotDerefs =
+            new HashMap<String, Map<String, Boolean>>()
     boolean defer = true
     private boolean callbackRegistered
+    private List<String> orderedKeyList
+    private Map<String, Boolean> dotDerefMap
 
     /**
      * Return a COPY of this internal structure
@@ -51,22 +54,28 @@ class JavaPropFile implements Action<Plugin> {
         gp = p
     }
 
+    /**
+     * Wrapper for #load(File, String)
+     */
     void load(File propFile) {
+        load(propFile, null)
+    }
+
+    void load(File propFile, String defaultExtObjName) {
         assert unsatisfiedRefBehavior != null:
             '''unsatisfiedRefBehavior may not be set to null
 '''
         assert propFile.isFile() && propFile.canRead():
             """Specified properties file inaccessible:  $propFile.absolutePath
 """
-        assert systemPropPrefix == null || systemPropPrefix.indexOf('.') < 0:
-            """Specified systemPropPrefix conflicts with nested property delimiter '.':
-$systemPropPrefix
+        assert systemPropPrefix == null || (systemPropPrefix.indexOf('.') < 0
+                && systemPropPrefix.indexOf('$') < 0):
+            """Specified systemPropPrefix conflicts with dereferencer or extension object
+delimiter ('.' or '\$'): $systemPropPrefix
 """
-        assert (!typeCasting || systemPropPrefix == null
-                || systemPropPrefix.indexOf('$') < 0):
-            """To avoid ambiguity, when typeCasting is on systemPropPrefix may not contain '\$':
-$systemPropPrefix
-"""
+        orderedKeyList = null
+        dotDerefMap = null
+
         Set<String> handled = []  // Checking for conflicting assignments
         Properties propsIn = new Properties()
         propFile.withInputStream { propsIn.load(it) }
@@ -82,7 +91,7 @@ $systemPropPrefix
         gp.logger.info(
                 'Loaded ' + props.size() + ' from ' + propFile.absolutePath)
         def duplicateDefs = [:]
-        List<String> orderedKeyList = orderedKeyList(propFile)
+        populateKeyLists(propFile)
         props.keySet().each {
             def count = orderedKeyList.count(it)
             if (count != 1) duplicateDefs[it] = count
@@ -90,24 +99,36 @@ $systemPropPrefix
         if (duplicateDefs.size() > 0)
             throw new GradleException(
                     'Duplicate definitions present: ' + duplicateDefs)
+        assert orderedKeyList.size() == dotDerefMap.size()
         String newValString
         boolean haveNewVal
+        Matcher matcher
         int prevCount = props.size()
         List<String> unresolveds = []
         List<String> toRemove = []
         Pattern systemPropPattern = ((systemPropPrefix == null) 
                 ? null
-                : Pattern.compile("^\\Q" + systemPropPrefix + "\\E(.+)"))
+                : Pattern.compile('^\\Q' + systemPropPrefix + '\\E(.+)'))
         while (prevCount > 0) {
             unresolveds.clear()
             toRemove.clear()
-            orderedKeyList.each {
-                def pk = it
-                def pv = props.get(pk)
+            orderedKeyList.each { pk ->
+                String pv = props.get(pk)
+                Boolean dotDeref = dotDerefMap[pk]
                 int dollarIndex
                 haveNewVal = true
                 newValString = pv.replaceAll(curlyRefGrpPattern) { matchGrps ->
                     // This block resolves ${references} in property values
+                    if (systemPropPattern != null) {
+                        matcher = systemPropPattern.matcher(matchGrps[1])
+                        if (matcher.matches()) {
+                            if (System.properties.containsKey(matcher.group(1)))
+                                return System.properties[matcher.group(1)]
+                            unresolveds << matchGrps[1]
+                            haveNewVal = false
+                            return matchGrps.first()
+                        }
+                    }
                     dollarIndex = matchGrps[1].indexOf('$')
                     if (dollarIndex > 0
                             && dollarIndex < matchGrps[1].length() - 1) {
@@ -115,7 +136,7 @@ $systemPropPrefix
                                 matchGrps[1].substring(0, dollarIndex)
                         String propName = matchGrps[1].substring(dollarIndex+1)
                         try {
-                            return JavaPropFile.getNestedValue(
+                            return JavaPropFile.getNestedValue(dotDeref,
                                     gp.extensions.getByName(extObjName),
                                     propName)
                         } catch (UnknownDomainObjectException udoe) {
@@ -129,13 +150,10 @@ $systemPropPrefix
                                 + "for Domain Extension Object '$extObjName'",
                                 mpe)
                         }
-                    } else {
-                        if (JavaPropFile.hasNestedValue(gp, matchGrps[1]))
-                            return JavaPropFile.getNestedValue(
-                                    gp, matchGrps[1]).toString()
-                        if (expandSystemProps
-                                && System.properties.containsKey(matchGrps[1]))
-                            return System.properties[matchGrps[1]]
+                    } else if (JavaPropFile.hasNestedValue(
+                            dotDeref, gp, matchGrps[1])) {
+                        return JavaPropFile.getNestedValue(
+                                dotDeref, gp, matchGrps[1]).toString()
                     }
                     unresolveds << matchGrps[1]
                     haveNewVal = false
@@ -145,12 +163,16 @@ $systemPropPrefix
                     if (handled.contains(pk))
                         throw new GradleException(
                                 "Conflicting assignments for property '$pk'")
-                    assignOrDefer(null, pk, newValString, systemPropPattern)
+                    assignOrDefer(dotDeref, defaultExtObjName,
+                            pk, newValString, systemPropPattern)
                     handled << pk
                     toRemove << pk
                 }
             }
-            toRemove.each { props.remove(it) }
+            toRemove.each {
+                props.remove(it)
+                dotDerefMap.remove(it)
+            }
             orderedKeyList -= toRemove
             if (prevCount == props.size()) break
             prevCount = props.size()
@@ -167,20 +189,24 @@ $systemPropPrefix
                     + '.\nWill handle according to unsatisifiedRefBehavior: '
                     + unsatisfiedRefBehavior)
             if (unsatisfiedRefBehavior == Behavior.NO_SET) return
-            new HashMap(props).each() { pk, pv ->
+            orderedKeyList.each { pk ->
+                String pv = props.get(pk)
+                Boolean dotDeref = dotDerefMap[pk]
                 switch (unsatisfiedRefBehavior) {
                   case Behavior.LITERAL:
-                    assignOrDefer(null, pk, pv, systemPropPattern)
+                    assignOrDefer(dotDeref,
+                            defaultExtObjName, pk, pv, systemPropPattern)
                     break
                   case Behavior.EMPTY:
-                    assignOrDefer(null, pk, pv.replaceAll(curlyRefPattern, ''),
+                    assignOrDefer(dotDeref, defaultExtObjName, pk,
+                            pv.replaceAll(curlyRefPattern, ''),
                             systemPropPattern)
                     break
-                  /* See not above about Behavior.UNSET.
-                  case Behavior.UNSET:
-                    gp.properties.remove(pk)
-                    break
-                 */
+                  /* See note above about Behavior.UNSET.
+                   case Behavior.UNSET:
+                     gp.properties.remove(pk)
+                     break
+                  */
                   default:
                     assert false:
                         "Unexpected Behavior value:  $unsatisfiedRefBehavior"
@@ -271,7 +297,7 @@ $systemPropPrefix
         Method m = null
         Constructor<?> cons = null
         try {
-            m = c.getDeclaredMethod("valueOf", String.class)
+            m = c.getDeclaredMethod('valueOf', String.class)
         } catch (Exception e) {
             try {
                 cons = c.getDeclaredConstructor(String.class)
@@ -315,12 +341,14 @@ $systemPropPrefix
     public static Class resolveClass(String className) {
         if (className.indexOf('.') < 0) {
             for (pkg in JavaPropFile.defaultGroovyPackages) try {
-                return Class.forName(pkg + '.' + className)
+                return Class.forName(pkg + '.' + className,
+                        true, Thread.currentThread().contextClassLoader)
             } catch (Exception e) {
                 // intentionally empty
             }
         } else try {
-            return Class.forName(className)
+            return Class.forName(className,
+                    true, Thread.currentThread().contextClassLoader)
         } catch (Exception e) {
             // intentionally empty
         }
@@ -330,14 +358,14 @@ $systemPropPrefix
     /**
      * @return true if assignment made, false if assignment deferred
      */
-    private boolean assignOrDefer(Object extensionObject,
+    private boolean assignOrDefer(Boolean dotDeref, Object extObjName,
             String rawName, String rawValue, Pattern systemPropPattern) {
         boolean setSysProp = false
         Matcher matcher = null
         String cExpr = null
         String midName = null
         String valString = rawValue.replace('\u0004', '$')
-        String extObjName = null
+        Object extensionObject = null
 
         String escapedName = (rawName.replace('\\$', '\u0001')
                 .replace('\\(', '\u0002').replace('\\)', '\u0003'))
@@ -347,6 +375,7 @@ $systemPropPrefix
         }
         if (setSysProp) {
             midName = matcher.group(1)
+            extObjName = null   // sysProps have nothing to do with extObjs
         } else if (typeCasting) {
             if (escapedName.charAt(0) == '('
                     && escapedName.charAt(escapedName.length()-1) == ')')
@@ -387,22 +416,23 @@ $systemPropPrefix
         }
         assert midName != null
         if (!setSysProp) {
-            if (extensionObject == null) {
-                int dollarIndex = midName.indexOf('$')
-                if (dollarIndex > 0 && dollarIndex < midName.length() - 1) try {
-                    extObjName = (midName.substring(0, dollarIndex)
-                            .replace('\u0001', '$')
-                            .replace('\u0002', '(').replace('\u0003', ')'))
-                    midName = midName.substring(dollarIndex+1)
-                    extensionObject = gp.extensions.getByName(extObjName)
-                    extObjName = null  // Clear to prevent deferral
-                } catch (UnknownDomainObjectException udoe) {
-                    if (!defer) throw new GradleException(
-                            "Domain Extension Object '$extObjName' "
-                            + "specified by property name '$rawName'"
-                            + ' is inaccessible', udoe)
-                    // Non-null extObjName will be retained, triggering deferral
-                }
+            int dollarIndex = midName.indexOf('$')
+            if (dollarIndex > 0 && dollarIndex < midName.length() - 1) {
+                // Override due to explicit ext Obj
+                extObjName = (midName.substring(0, dollarIndex)
+                        .replace('\u0001', '$')
+                        .replace('\u0002', '(').replace('\u0003', ')'))
+                midName = midName.substring(dollarIndex+1)
+            }
+            if (extObjName != null) try {
+                extensionObject = gp.extensions.getByName(extObjName)
+                extObjName = null  // Clear to prevent deferral
+            } catch (UnknownDomainObjectException udoe) {
+                if (!defer) throw new GradleException(
+                        "Domain Extension Object '$extObjName' "
+                        + "specified by property name '$rawName'"
+                        + ' is inaccessible', udoe)
+                // Non-null extObjName will be retained, triggering deferral
             }
         }
         String propName = (midName.replace('\u0001', '$')
@@ -412,10 +442,10 @@ $systemPropPrefix
                 cExpr.replace('\u0001', '$')
                 .replace('\u0002', '(').replace('\u0003', ')')))
         if (extObjName == null) {
-            assign(extensionObject, setSysProp, propName, newVal)
+            assign(dotDeref, extensionObject, setSysProp, propName, newVal)
             return true
         }
-        deferFor(extObjName,  propName, newVal)
+        deferFor(dotDeref, extObjName,  propName, newVal)
         return false;
     }
 
@@ -429,6 +459,7 @@ $systemPropPrefix
     void executeDeferrals() {
         if (deferrals.size() < 1) return
         Set<String> satisfieds = [] as Set
+        Map<String, Boolean> ddrMap
         deferrals.each { objName, propMap ->
             Object extObj = null
             try {
@@ -436,9 +467,10 @@ $systemPropPrefix
             } catch (UnknownDomainObjectException udoe) {
                 return
             }
+            ddrMap = deferralDotDerefs[objName]
             propMap.each { name, value ->
                 try {
-                    setNestedValue(extObj, name, value)
+                    setNestedValue(ddrMap[name], extObj, name, value)
                 } catch (MissingPropertyException mpe) {
                     throw new GradleException(
                         "No such property '$name' available "
@@ -448,7 +480,7 @@ $systemPropPrefix
             satisfieds << objName
         }
         if (satisfieds.size() == 0) return
-        satisfieds.each { deferrals.remove(it) }
+        satisfieds.each { deferrals.remove(it); deferralDotDerefs.remove(it) }
         if (deferrals.size() == 0)
             gp.logger.info(
                     'All JavaPropFile extension object deferrals satisfied')
@@ -457,28 +489,36 @@ $systemPropPrefix
                     + ' extension objects to appear as deferral targets')
     }
 
-    private void deferFor(
+    private void deferFor(Boolean dotDeref,
             String extensionObjName, String propName, Object propVal) {
-        if (!deferrals.containsKey(extensionObjName))
+        if (!deferrals.containsKey(extensionObjName)) {
             deferrals[extensionObjName] = new HashMap<String, Object>()
+            deferralDotDerefs[extensionObjName] = new HashMap<String, Boolean>()
+        }
         deferrals[extensionObjName].put(propName, propVal)
+        deferralDotDerefs[extensionObjName].put(propName, dotDeref)
+        assert (deferrals[extensionObjName].keySet()
+                == deferralDotDerefs[extensionObjName].keySet())
+        assert deferralDotDerefs.keySet() == deferrals.keySet()
     }
 
-    private assign(Object extObj, boolean isSys, String pName, Object val) {
+    private assign(Boolean dotDeref,
+            Object extObj, boolean isSys, String pName, Object val) {
         if (extObj != null
                 || (isSys && System.properties.containsKey(pName))
-                || (!isSys && JavaPropFile.hasNestedValue(gp, pName))) {
+                || (!isSys
+                        && JavaPropFile.hasNestedValue(dotDeref, gp, pName))) {
             Object oldVal = null;
             if (isSys) {
                 oldVal = System.properties[pName]
             } else if (extObj != null) try {
-                oldVal = JavaPropFile.getNestedValue(extObj, pName)
+                oldVal = JavaPropFile.getNestedValue(dotDeref, extObj, pName)
             } catch (MissingPropertyException mpe) {
                 throw new GradleException(
                         "No such property '$pName' available "
                         + 'for Domain Extension Object', mpe)
             } else {
-                oldVal = JavaPropFile.getNestedValue(gp, pName)
+                oldVal = JavaPropFile.getNestedValue(dotDeref, gp, pName)
             }
             // We will do absolutely nothing if either
             // (!overwrite && !overwriteThrow)
@@ -495,29 +535,30 @@ $systemPropPrefix
                 // Property value really changing
                 if (oldVal != null && val != null
                         && !oldVal.class.equals(val.class))
-                    throw new GradleException("Incompatible type "
-                            + "for change of property " + "'$pName'.  From "
+                    throw new GradleException('Incompatible type '
+                            + "for change of property '$pName'.  From "
                             + oldVal.class.name + ' to ' + val.class.name)
-                writeValue(pName, val, isSys, extObj)
+                writeValue(dotDeref, pName, val, isSys, extObj)
             }
         } else {
             // New property
-            writeValue(pName, val, isSys, extObj)
+            writeValue(dotDeref, pName, val, isSys, extObj)
         }
     }
 
     /**
      * Writes the value to Project property, Java property, or Extension object
      */
-    private void writeValue(String name,
+    private void writeValue(Boolean dotDeref, String name,
             Object value, boolean isSysProp, Object extensionObject) {
         try {
             if (isSysProp)
                 System.setProperty(name, value)
             else if (extensionObject != null)
-                JavaPropFile.setNestedValue(extensionObject, name, value)
+                JavaPropFile.setNestedValue(
+                        dotDeref, extensionObject, name, value)
             else
-                JavaPropFile.setNestedValue(gp, name, value)
+                JavaPropFile.setNestedValue(dotDeref, gp, name, value)
         } catch (Exception e) {
             throw new GradleException(
                 "Assignment to '$name' of value '$value' failed", e)
@@ -529,12 +570,15 @@ $systemPropPrefix
      * This does not correspond exactly to java.util.Properties read from the
      * file, because this list preserves multiple elements for duplicate keys.
      */
-    List<String> orderedKeyList(File f) {
+    private void populateKeyLists(File f) {
         Properties workPs = new Properties();
         StringBuilder sb = new StringBuilder()
-        List<String> keyList = []
+        orderedKeyList = []
+        dotDerefMap = [:]
         String nextKey, pText
         List<String> tmpList
+        int firstNonWs
+        char firstDelim
         f.readLines('ISO-8859-1').each {
             sb.append(it).append('\n')
             pText = sb + '\u0003=\n'
@@ -549,18 +593,41 @@ $systemPropPrefix
                 ('Parsing error.  Got 2 properties but not EOT from:  '
                         + "$pText\n$tmpList")
             tmpList.remove('\u0003')
-            keyList << tmpList.first()
+            orderedKeyList << tmpList.first()
+            firstNonWs = -1
+            while (++firstNonWs < sb.length())
+                if (!Character.isWhitespace(sb.charAt(firstNonWs))) break
+            assert firstNonWs < sb.length()
+            firstDelim = '\0'
+            for (i in (firstNonWs + 1) .. sb.length()) {
+                workPs.clear()
+                workPs.load(new StringReader(sb.substring(firstNonWs, i)
+                        + '\u0003\n'))
+                if (workPs.size() == 1
+                        && workPs.getProperty(workPs.propertyNames()
+                        .toList().first()) == '\u0003') {
+                        firstDelim = sb.charAt(i-1)
+                    break
+                }
+            }
+            if (firstDelim == '\0')
+                throw new GradleException(
+                    "Failed to determine property delimiter for record: $sb")
+            dotDerefMap[tmpList.first()] = Character.isWhitespace(firstDelim)
             sb.length = 0
         }
-        return keyList
     }
 
     /**
      * @throws MissingPropertyException if any element of propertyPath fails
      *         to resolve for the given extension object
      */
-    private static void setNestedValue(
+    private static void setNestedValue(Boolean dotDeref,
             Object topObject, String propertyPath, Object newValue) {
+        if (!dotDeref) {
+            topObject[propertyPath] = newValue
+            return
+        }
         List<String> tokens =
                 propertyPath.replace('\\.', '\u001F').split('\\.', -1) as List
         String propertyName = tokens.pop()
@@ -575,9 +642,9 @@ $systemPropPrefix
      * Throws only from internal problems accessing the value
      */
     private static boolean hasNestedValue(
-            Object topObject, String propertyPath) {
+            Boolean dotDeref, Object topObject, String propertyPath) {
         try {
-           JavaPropFile.getNestedValue(topObject, propertyPath)
+           JavaPropFile.getNestedValue(dotDeref, topObject, propertyPath)
         } catch (MissingPropertyException mpe) {
             return false
         }
@@ -590,7 +657,8 @@ $systemPropPrefix
      *         to resolve for the given extension object
      */
     private static Object getNestedValue(
-            Object topObject, String propertyPath) {
+            Boolean dotDeref, Object topObject, String propertyPath) {
+        if (!dotDeref) return topObject[propertyPath]
         Object object = topObject
         propertyPath.replace('\\.', '\u001F').split('\\.', -1).each {
             object = object[it.replace('\u001F', '.')]

@@ -12,18 +12,25 @@ defaultTasks 'displaySomeProps', 'displaySomeSysProps'
 buildscript {
     repositories { mavenCentral() }
     dependencies {
-        classpath 'com.admc:gradle-javaPropFile-plugin:latest.milestone'
+        //classpath 'com.admc:gradle-javaPropFile-plugin:latest.milestone'
+        classpath files('../build/libs/gradle-javaPropFile-plugin-0.3.0-SNAPSHOT.jar')
     }
 }
+apply plugin: 'java'
 apply plugin: 'javaPropFile'
-//apply plugin: 'java'   To keep simpe, I'm not loading other plugins
 
-// 'apply' but don't use execute non-configuration methods of other plugins
-// before you load().  This way you can effect the other plugins with
-// settings in your .properties files.
+// Don't execute a non-configuration method of another plugin before you
+// load() if you want the properties file to effect the plugin method.
+// There is no problem with doing propFileLoader loads before applying plugins
+// that it configures (it will apply the settings when the target plugin comes
+// online), but of course no properties file can effect anything before that
+// properties file is loaded.
 
 // We will change this Gradle property with a properties file.
 startAsFile = file('x.txt')
+
+println('compileJava.options.debug, a ' + compileJava.options.debug.class
+        + " has default value of: $compileJava.options.debug")
 
 // You only need this import if you will change the default
 // unsatisfiedRefBehavior.
@@ -46,7 +53,7 @@ propFileLoader.load(file('app.properties'))
 propFileLoader.overwriteThrow = false
 propFileLoader.unsatisfiedRefBehavior = JavaPropFile.Behavior.NO_SET
 propFileLoader.typeCasting = true
-propFileLoader.systemPropPrefix = 'sys$'
+propFileLoader.systemPropPrefix = 'sys|'
 // Load option personal properties file, if present.
 // If you have no opposing constraint, consider using file name
 // 'local.properties' for this purpose.  For this example, I am sharing the
@@ -55,12 +62,28 @@ propFileLoader.systemPropPrefix = 'sys$'
 def localPropFile = file('sample-local.properties')
 if (localPropFile.isFile()) propFileLoader.load(localPropFile)
 
+println('compileJava.options.debug is now a ' + compileJava.options.debug.class
+        + " with value of: $compileJava.options.debug")
+
+
+/* Now, independent of the other examples here, I'll show you how to load a
+ * properties file targeted to one specific Gradle extension object.
+ * Since this sample depende only on the propFileLoader extension object,
+ * that's what we'll configure (though we won't actually use it afterwards,
+ * because we don't want to complicate the data from the examples above). */
+
+propFileLoader.load(file('targeted.properties'), 'propFileLoader')
+
+/* The 2nd parameter says that non-system-properties settings in that file
+ * will apply to the propFileLoader extenaion object by default, instead of
+ * to the Gradle Project.  See "targeted.properties" for details.  */
+
 
 task displaySomeProps << {
     Object o;
     ['jdbcImpl.default', 'alpha', 'title', 'group', 'dest.file', 'preferences',
-    'backup.file', 'xfer.maxTime', 'javac.debug', 'dest.path', 'nested.var',
-    'startAsFile', 'nestee', 'nester1', 'nester2'
+    'backup.file', 'xfer.maxTime', 'dest.path', 'nested.var', 'is.typecasting',
+    'startAsFile', 'nestee', 'nester1', 'nester2', 'buildFileBaseName'
     ].each {
         println "Property '$it':"
         if (project.hasProperty(it)) {

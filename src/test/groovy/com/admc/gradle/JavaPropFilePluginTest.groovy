@@ -7,8 +7,7 @@ import static org.junit.Assert.*
 
 class JavaPropFilePluginTest {
     private static File mkTestFile() {
-        File newFile = File.createTempFile(
-                getClass().simpleName + '', ".properties")
+        File newFile = File.createTempFile(getClass().simpleName, '.properties')
         newFile.deleteOnExit()
         return newFile
     }
@@ -43,8 +42,9 @@ class JavaPropFilePluginTest {
         Project project = JavaPropFilePluginTest.prepProject('me')
 
         project.propFileLoader.overwriteThrow = true
+        project.propFileLoader.systemPropPrefix = 'sp|'
         File f = JavaPropFilePluginTest.mkTestFile()
-        f.write('me=I am ${user.name}', 'ISO-8859-1')
+        f.write('me=I am ${sp|user.name}', 'ISO-8859-1')
         project.propFileLoader.load(f)
 
         assertTrue(project.hasProperty('me'))
@@ -213,10 +213,10 @@ class JavaPropFilePluginTest {
 
         project.propFileLoader.overwriteThrow = true
         File f = JavaPropFilePluginTest.mkTestFile()
-        f.write('alpha=${notset}\nsp$beta=pre${alsoNotSet}post', 'ISO-8859-1')
+        f.write('alpha=${notset}\nsp|beta=pre${alsoNotSet}post', 'ISO-8859-1')
         project.propFileLoader.unsatisfiedRefBehavior =
                 JavaPropFile.Behavior.EMPTY
-        project.propFileLoader.systemPropPrefix = 'sp$'
+        project.propFileLoader.systemPropPrefix = 'sp|'
         project.propFileLoader.load(f)
         assertTrue(project.hasProperty('alpha'))
         assertFalse(project.hasProperty('beta'))
@@ -295,14 +295,14 @@ mid2   m2 ${bottom1}
     @org.junit.Test
     void setSysProps() {
         Project project = prepProject(
-            'alpha', 'systemProp$file.separator', 'systemProp$slpha'
+            'alpha', 'systemProp|file.separator', 'systemProp|alpha'
         )
         assert !project.hasProperty('file.separator'):
             '''Project has property 'file.separator' set before we start test'''
         
         File f = JavaPropFilePluginTest.mkTestFile()
-        f.write('systemProp$alpha=eins\nsystemProp$file.separator=*')
-        project.propFileLoader.systemPropPrefix = 'systemProp$'
+        f.write('systemProp|alpha=eins\nsystemProp|file.separator=*')
+        project.propFileLoader.systemPropPrefix = 'systemProp|'
         project.propFileLoader.load(f)
         assertFalse(project.hasProperty('alpha'))
         assertFalse(project.hasProperty('file.separator'))
@@ -562,7 +562,7 @@ systemProp|gamma()=
         project.setProperty('al.pha', 'one')
         project.propFileLoader.overwriteThrow = true
         File f = JavaPropFilePluginTest.mkTestFile()
-        f.write('beta=pre${al\\\\.pha}post')
+        f.write('beta =pre${al\\\\.pha}post')
         project.propFileLoader.typeCasting = true
         project.propFileLoader.load(f)
         assertTrue(project.hasProperty('al.pha'))
@@ -589,7 +589,7 @@ systemProp|gamma()=
 
         project.propFileLoader.overwriteThrow = true
         File f = JavaPropFilePluginTest.mkTestFile()
-        f.write('al\\\\.pha=one')
+        f.write('al\\\\.pha =one')
         project.propFileLoader.typeCasting = true
         project.propFileLoader.load(f)
         assertTrue(project.hasProperty('al.pha'))
@@ -646,6 +646,24 @@ systemProp|gamma()=
         //project.propFileLoader.executeDeferrals()
         assertEquals('val', project.mockBean.str2)
         assertEquals(0, project.propFileLoader.deferredExtensionProps.size())
+    }
+
+    @org.junit.Test
+    void deferredExtObjNestAssignment() {
+        Project project = JavaPropFilePluginTest.prepProject()
+
+        File f = JavaPropFilePluginTest.mkTestFile()
+        f.write('''
+mockBean$tHolder2(com.admc.gradle.MockBean$ThreadHolder) =New Thread Name
+mockBean$tHolder2.heldThread.name =Renamed Thread
+        ''')
+        project.propFileLoader.typeCasting = true
+        project.propFileLoader.load(f)
+        assertEquals(1, project.propFileLoader.deferredExtensionProps.size())
+        project.apply plugin: com.admc.gradle.MockPlugin
+        assertEquals(0, project.propFileLoader.deferredExtensionProps.size())
+        //assertEquals('name:New Thread Name',
+        assertEquals('Renamed Thread', project.mockBean.tHolder2.heldThread.name)
     }
 
     @org.junit.Test
@@ -707,7 +725,7 @@ systemProp|gamma()=
         project.propFileLoader.overwriteThrow = true
 
         File f = JavaPropFilePluginTest.mkTestFile()
-        f.write('alpha=pre${mockBean$tHolder1.heldThread.name}post')
+        f.write('alpha =pre${mockBean$tHolder1.heldThread.name}post')
         project.apply plugin: com.admc.gradle.MockPlugin
         project.mockBean.assignSome()
         project.propFileLoader.load(f)
@@ -733,7 +751,7 @@ systemProp|gamma()=
         Project project = JavaPropFilePluginTest.prepProject()
 
         File f = JavaPropFilePluginTest.mkTestFile()
-        f.write('mockBean$tHolder1.heldThread.name=New Thread Name')
+        f.write('mockBean$tHolder1.heldThread.name =New Thread Name')
         project.apply plugin: com.admc.gradle.MockPlugin
         project.mockBean.assignSome()
         project.propFileLoader.load(f)
@@ -821,9 +839,47 @@ systemProp|gamma()=
         project.propFileLoader.typeCasting = true
 
         File f = JavaPropFilePluginTest.mkTestFile()
-        f.write('t1(Thread)=one\nt1.name=two')
+        f.write('t1(Thread)=one\nt1.name =two')
         project.propFileLoader.load(f)
         assertTrue(project.hasProperty('t1'))
         assertEquals('two', project.t1.name)
+    }
+
+    @org.junit.Test
+    void nonDerefDot() {
+        Project project = JavaPropFilePluginTest.prepProject(
+            'alpha.beta.gamma', 'delta.epsilon.mu', 'nu')
+        project.propFileLoader.typeCasting = true
+        project.setProperty('alpha.beta.gamma', 'eins')
+
+        File f = JavaPropFilePluginTest.mkTestFile()
+        f.write('delta.epsilon.mu=zwei\nnu=pre${alpha.beta.gamma}post')
+        project.propFileLoader.load(f)
+        assertTrue(project.hasProperty('delta.epsilon.mu'))
+        assertTrue(project.hasProperty('nu'))
+        assertEquals('zwei', project.property('delta.epsilon.mu'))
+        assertEquals('preeinspost', project.property('nu'))
+    }
+
+    @org.junit.Test
+    void targetedPropertiesWithDeferrals() {
+        /* Also tests that sys prop settings in the target file work */
+        Project project = JavaPropFilePluginTest.prepProject('aSysProp')
+
+        File f = JavaPropFilePluginTest.mkTestFile()
+        f.write('''
+tHolder2(com.admc.gradle.MockBean$ThreadHolder) =New Thread Name
+tHolder2.heldThread.name =Renamed Thread
+sp|aSysProp=werd
+        ''')
+        project.propFileLoader.typeCasting = true
+        project.propFileLoader.systemPropPrefix = 'sp|'
+        project.propFileLoader.load(f, 'mockBean')
+        assertEquals(1, project.propFileLoader.deferredExtensionProps.size())
+        project.apply plugin: com.admc.gradle.MockPlugin
+        assertEquals(0, project.propFileLoader.deferredExtensionProps.size())
+        assertEquals('Renamed Thread', project.mockBean.tHolder2.heldThread.name)
+        assertTrue(System.properties.containsKey('aSysProp'))
+        assertEquals('werd', System.properties['aSysProp'])
     }
 }
