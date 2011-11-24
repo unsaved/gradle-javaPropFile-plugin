@@ -79,7 +79,8 @@ MOTIVATION
 
     + Extension object properties may be set before the target extension object
       becomes available.  Settings deferred in this way will be applied as soon
-      as the extension object comes online.
+      as the extension object comes online.  May be disabled if you want to
+      ensure that target extension objects are available ahead of time.
 
 USAGE
 
