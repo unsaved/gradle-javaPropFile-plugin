@@ -41,7 +41,7 @@ class JavaPropFile implements Action<Plugin> {
     /**
      * Return a COPY of this internal structure
      */
-    Map<String, String> getDeferredExtensionProps() {
+    Map<String, Map<String, Object>> getDeferredExtensionProps() {
         return new HashMap(deferrals)
     }
 
@@ -332,6 +332,8 @@ delimiter ('.' or '\$'): $systemPropPrefix
     }
 
     /**
+     * Context classloader lookup, applying Groovy's default package rules.
+     *
      * @param className A qualified class name, or an unqualified class name
      *                  that will be searched for according to Groovy default
      *                  package rules.
