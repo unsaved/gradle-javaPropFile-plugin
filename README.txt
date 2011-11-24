@@ -340,7 +340,7 @@ Some examples:
 
     output(File)=/path/to/file.txt
     (Long)xferTime.max=31.25
-    javac.debug(Boolean)=false
+    compile.Java.options.debug(Boolean) = false
     monitor(com.admc.net.NetworMonitor)=Custom Network Monitor
 
 To assign a null, do the same thing, but give no value at all for class name
