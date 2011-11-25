@@ -14,7 +14,7 @@ class JavaPropFilePluginTest {
 
     private static Project prepProject(String... checkProps) {
         Project proj = ProjectBuilder.builder().build()
-        proj.apply plugin: com.admc.gradle.JavaPropFilePlugin
+        proj.apply plugin: JavaPropFilePlugin
 
         checkProps.each {
             assert !proj.hasProperty(it):
@@ -314,7 +314,7 @@ mid2   m2 ${bottom1}
         // Can't test much specifically, but we know that the method can at
         // least be called.
         Project project = ProjectBuilder.builder().build()
-        project.apply plugin: com.admc.gradle.JavaPropFilePlugin
+        project.apply plugin: JavaPropFilePlugin
         project.propFileLoader.traditionalPropertiesInit()
     }
 
@@ -639,7 +639,7 @@ systemProp|gamma()=
         f.write('mockBean$str2=val')
         project.propFileLoader.load(f)
         assertEquals(1, project.propFileLoader.deferredExtensionProps.size())
-        project.apply plugin: com.admc.gradle.MockPlugin
+        project.apply plugin: MockPlugin
         //assertNull(project.mockBean.str2)
         // If executeDeferrals not invoked via callback, do:
         //project.propFileLoader.executeDeferrals()
@@ -659,7 +659,7 @@ mockBean$tHolder2.heldThread.name =Renamed Thread
         project.propFileLoader.typeCasting = true
         project.propFileLoader.load(f)
         assertEquals(1, project.propFileLoader.deferredExtensionProps.size())
-        project.apply plugin: com.admc.gradle.MockPlugin
+        project.apply plugin: MockPlugin
         assertEquals(0, project.propFileLoader.deferredExtensionProps.size())
         //assertEquals('name:New Thread Name',
         assertEquals('Renamed Thread', project.mockBean.tHolder2.heldThread.name)
@@ -671,7 +671,7 @@ mockBean$tHolder2.heldThread.name =Renamed Thread
 
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('mockBean$str2=val')
-        project.apply plugin: com.admc.gradle.MockPlugin
+        project.apply plugin: MockPlugin
         assertNull(project.mockBean.str2)
         project.propFileLoader.load(f)
         assertEquals('val', project.mockBean.str2)
@@ -683,7 +683,7 @@ mockBean$tHolder2.heldThread.name =Renamed Thread
 
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('alpha=pre${mockBean$str1}post')
-        project.apply plugin: com.admc.gradle.MockPlugin
+        project.apply plugin: MockPlugin
         project.mockBean.assignSome()
         project.propFileLoader.load(f)
         assertTrue(project.hasProperty('alpha'))
@@ -697,7 +697,7 @@ mockBean$tHolder2.heldThread.name =Renamed Thread
 
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('alpha=pre${mockBean$str1}post')
-        project.apply plugin: com.admc.gradle.MockPlugin
+        project.apply plugin: MockPlugin
         project.mockBean.assignSome()
         project.propFileLoader.load(f)
         assertTrue(project.hasProperty('alpha'))
@@ -710,7 +710,7 @@ mockBean$tHolder2.heldThread.name =Renamed Thread
 
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('alpha=pre${mockBean$strList}post')
-        project.apply plugin: com.admc.gradle.MockPlugin
+        project.apply plugin: MockPlugin
         project.mockBean.assignSome()
         project.propFileLoader.load(f)
         assertTrue(project.hasProperty('alpha'))
@@ -725,7 +725,7 @@ mockBean$tHolder2.heldThread.name =Renamed Thread
 
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('alpha =pre${mockBean$tHolder1.heldThread.name}post')
-        project.apply plugin: com.admc.gradle.MockPlugin
+        project.apply plugin: MockPlugin
         project.mockBean.assignSome()
         project.propFileLoader.load(f)
         assertTrue(project.hasProperty('alpha'))
@@ -740,7 +740,7 @@ mockBean$tHolder2.heldThread.name =Renamed Thread
 
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('mockBean$intList(Integer[\\\\|]ArrayList)=91|72|101')
-        project.apply plugin: com.admc.gradle.MockPlugin
+        project.apply plugin: MockPlugin
         project.propFileLoader.load(f)
         assertEquals([91, 72, 101], project.mockBean.intList)
     }
@@ -751,7 +751,7 @@ mockBean$tHolder2.heldThread.name =Renamed Thread
 
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('mockBean$tHolder1.heldThread.name =New Thread Name')
-        project.apply plugin: com.admc.gradle.MockPlugin
+        project.apply plugin: MockPlugin
         project.mockBean.assignSome()
         project.propFileLoader.load(f)
         assertEquals('New Thread Name',
@@ -875,7 +875,7 @@ sp|aSysProp=werd
         project.propFileLoader.systemPropPrefix = 'sp|'
         project.propFileLoader.load(f, 'mockBean')
         assertEquals(1, project.propFileLoader.deferredExtensionProps.size())
-        project.apply plugin: com.admc.gradle.MockPlugin
+        project.apply plugin: MockPlugin
         assertEquals(0, project.propFileLoader.deferredExtensionProps.size())
         assertEquals('Renamed Thread', project.mockBean.tHolder2.heldThread.name)
         assertTrue(System.properties.containsKey('aSysProp'))
