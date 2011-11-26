@@ -80,9 +80,7 @@ delimiter ('.' or '\$'): $systemPropPrefix
         Properties propsIn = new Properties()
         propFile.withInputStream { propsIn.load(it) }
         Map<String, String> props =
-                // Enumeration.toSet() not available until Groovy v. 1.8.0
-                //propsIn.propertyNames().toSet().collectEntries {
-                propsIn.propertyNames().toList().collectEntries {
+                propsIn.propertyNames().toSet().collectEntries {
             [(it): propsIn.getProperty(it).replace('\\$', '\u0004')]
         }
         assert props.size() == propsIn.size():
