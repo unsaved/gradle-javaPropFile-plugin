@@ -1,6 +1,7 @@
 defaultTasks 'jar'
 
 apply plugin: 'groovy'
+test.testLogging.showStandardStreams = true
 
 def localGradleFile = file('local.gradle')
 if (localGradleFile.isFile()) {

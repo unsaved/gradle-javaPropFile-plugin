@@ -6,27 +6,30 @@ import org.gradle.testfixtures.ProjectBuilder
 import static org.junit.Assert.*
 
 class JavaPropFilePluginTest {
+    private Project project
+
+    {
+        project = ProjectBuilder.builder().build()
+        project.apply plugin: JavaPropFilePlugin
+    }
+
     private static File mkTestFile() {
         File newFile = File.createTempFile(getClass().simpleName, '.properties')
         newFile.deleteOnExit()
         return newFile
     }
 
-    private static Project prepProject(String... checkProps) {
-        Project proj = ProjectBuilder.builder().build()
-        proj.apply plugin: JavaPropFilePlugin
-
-        checkProps.each {
-            assert !proj.hasProperty(it):
+    private void checkProps(String... cProps) {
+        cProps.each {
+            assert !project.hasProperty(it):
                 "Gradle project has property '$it' set before test begins"
             System.clearProperty(it)
         }
-        return proj
     }
 
     @org.junit.Test
     void trivialPropertySet() {
-        Project project = JavaPropFilePluginTest.prepProject('alpha')
+        checkProps('alpha')
 
         project.propFileLoader.overwriteThrow = true
         File f = JavaPropFilePluginTest.mkTestFile()
@@ -39,7 +42,7 @@ class JavaPropFilePluginTest {
 
     @org.junit.Test
     void sysProperty() {
-        Project project = JavaPropFilePluginTest.prepProject('me')
+        checkProps('me')
 
         project.propFileLoader.overwriteThrow = true
         project.propFileLoader.systemPropPrefix = 'sp|'
@@ -54,7 +57,7 @@ class JavaPropFilePluginTest {
 
     @org.junit.Test
     void refNest() {
-        Project project = JavaPropFilePluginTest.prepProject('alpha', 'beta')
+        checkProps('alpha', 'beta')
 
         project.propFileLoader.overwriteThrow = true
         File f = JavaPropFilePluginTest.mkTestFile()
@@ -69,7 +72,7 @@ class JavaPropFilePluginTest {
 
     @org.junit.Test(expected=GradleException.class)
     void typeCollision() {
-        Project project = JavaPropFilePluginTest.prepProject('aFile')
+        checkProps('aFile')
 
         project.aFile = new File('x.txt')
         project.propFileLoader.overwriteThrow = true
@@ -80,7 +83,7 @@ class JavaPropFilePluginTest {
 
     @org.junit.Test
     void changeToNull() {
-        Project project = JavaPropFilePluginTest.prepProject('aNull')
+        checkProps('aNull')
         project.setProperty('aNull', (String) null)
 
         File f = JavaPropFilePluginTest.mkTestFile()
@@ -92,8 +95,7 @@ class JavaPropFilePluginTest {
 
     @org.junit.Test(expected=GradleException.class)
     void unsetLoneThrow() {
-        Project project =
-                JavaPropFilePluginTest.prepProject('notset', 'alpha')
+        checkProps('notset', 'alpha')
 
         project.propFileLoader.overwriteThrow = true
         File f = JavaPropFilePluginTest.mkTestFile()
@@ -103,7 +105,7 @@ class JavaPropFilePluginTest {
 
     @org.junit.Test(expected=GradleException.class)
     void unsetSandwichedThrow() {
-        Project project = JavaPropFilePluginTest.prepProject('alpha')
+        checkProps('alpha')
 
         project.propFileLoader.overwriteThrow = true
         File f = JavaPropFilePluginTest.mkTestFile()
@@ -113,7 +115,7 @@ class JavaPropFilePluginTest {
 
     @org.junit.Test
     void unsetLoneNoSet() {
-        Project project = JavaPropFilePluginTest.prepProject('alpha')
+        checkProps('alpha')
 
         project.propFileLoader.overwriteThrow = true
         File f = JavaPropFilePluginTest.mkTestFile()
@@ -130,7 +132,7 @@ class JavaPropFilePluginTest {
 
     @org.junit.Test
     void unsetSandwichedNoSet() {
-        Project project = JavaPropFilePluginTest.prepProject('alpha')
+        checkProps('alpha')
 
         project.propFileLoader.overwriteThrow = true
         File f = JavaPropFilePluginTest.mkTestFile()
@@ -148,7 +150,7 @@ class JavaPropFilePluginTest {
     /*  See comment about Behavior.UNSET in JavaPropFile.java.
     @org.junit.Test
     void unsetLoneUnSet() {
-        Project project = JavaPropFilePluginTest.prepProject('alpha')
+        checkProps('alpha')
 
         project.propFileLoader.overwriteThrow = true
         File f = JavaPropFilePluginTest.mkTestFile()
@@ -164,7 +166,7 @@ class JavaPropFilePluginTest {
 
     @org.junit.Test
     void unsetSandwichedUnSet() {
-        Project project = JavaPropFilePluginTest.prepProject('alpha')
+        checkProps('alpha')
 
         project.propFileLoader.overwriteThrow = true
         File f = JavaPropFilePluginTest.mkTestFile()
@@ -181,7 +183,7 @@ class JavaPropFilePluginTest {
 
     @org.junit.Test
     void unsetLoneLiteral() {
-        Project project = JavaPropFilePluginTest.prepProject('alpha')
+        checkProps('alpha')
 
         project.propFileLoader.overwriteThrow = true
         File f = JavaPropFilePluginTest.mkTestFile()
@@ -195,7 +197,7 @@ class JavaPropFilePluginTest {
 
     @org.junit.Test
     void unsetSandwichedLiteral() {
-        Project project = JavaPropFilePluginTest.prepProject('alpha')
+        checkProps('alpha')
 
         project.propFileLoader.overwriteThrow = true
         File f = JavaPropFilePluginTest.mkTestFile()
@@ -209,7 +211,7 @@ class JavaPropFilePluginTest {
 
     @org.junit.Test
     void unsetLoneEmpties() {
-        Project project = JavaPropFilePluginTest.prepProject('alpha', 'beta')
+        checkProps('alpha', 'beta')
 
         project.propFileLoader.overwriteThrow = true
         File f = JavaPropFilePluginTest.mkTestFile()
@@ -228,7 +230,7 @@ class JavaPropFilePluginTest {
 
     @org.junit.Test
     void unsetSandwichedEmpty() {
-        Project project = JavaPropFilePluginTest.prepProject('alpha')
+        checkProps('alpha')
 
         project.propFileLoader.overwriteThrow = true
         File f = JavaPropFilePluginTest.mkTestFile()
@@ -242,8 +244,7 @@ class JavaPropFilePluginTest {
 
     @org.junit.Test
     void deepRefNest() {
-        Project project = JavaPropFilePluginTest.prepProject(
-                'bottom1', 'mid2', 'mid3a', 'mid3b', 'top4')
+        checkProps('bottom1', 'mid2', 'mid3a', 'mid3b', 'top4')
 
         project.propFileLoader.overwriteThrow = true
         File f = JavaPropFilePluginTest.mkTestFile()
@@ -263,7 +264,7 @@ mid2   m2 ${bottom1}
 
     @org.junit.Test
     void overwrite() {
-        Project project = JavaPropFilePluginTest.prepProject('alpha', 'beta')
+        checkProps('alpha', 'beta')
 
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('alpha=replacement\nbeta=${beta} addition')
@@ -278,7 +279,7 @@ mid2   m2 ${bottom1}
 
     @org.junit.Test
     void noOverwrite() {
-        Project project = JavaPropFilePluginTest.prepProject('alpha', 'beta')
+        checkProps('alpha', 'beta')
 
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('alpha=replacement\nbeta=${beta} addition')
@@ -294,9 +295,7 @@ mid2   m2 ${bottom1}
 
     @org.junit.Test
     void setSysProps() {
-        Project project = prepProject(
-            'alpha', 'sys|file.separator', 'sys|alpha'
-        )
+        checkProps('alpha', 'sys|file.separator', 'sys|alpha')
         assert !project.hasProperty('file.separator'):
             '''Project has property 'file.separator' set before we start test'''
         
@@ -313,14 +312,12 @@ mid2   m2 ${bottom1}
     void traditionalSanityCheck() {
         // Can't test much specifically, but we know that the method can at
         // least be called.
-        Project project = ProjectBuilder.builder().build()
-        project.apply plugin: JavaPropFilePlugin
         project.propFileLoader.traditionalPropertiesInit()
     }
 
     @org.junit.Test(expected=GradleException.class)
     void overwriteThrow() {
-        Project project = JavaPropFilePluginTest.prepProject('alpha')
+        checkProps('alpha')
 
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('alpha=zwei', 'ISO-8859-1')
@@ -331,7 +328,7 @@ mid2   m2 ${bottom1}
 
     @org.junit.Test
     void nochangeOverwrite() {
-        Project project = JavaPropFilePluginTest.prepProject('alpha')
+        checkProps('alpha')
 
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('alpha=eins', 'ISO-8859-1')
@@ -344,8 +341,7 @@ mid2   m2 ${bottom1}
 
     @org.junit.Test
     void nullAssignments() {
-        Project project = JavaPropFilePluginTest.prepProject(
-                'alpha', 'beta', 'gamma', 'delta')
+        checkProps('alpha', 'beta', 'gamma', 'delta')
 
         project.propFileLoader.overwriteThrow = true
         File f = JavaPropFilePluginTest.mkTestFile()
@@ -370,8 +366,7 @@ delta()=
 
     @org.junit.Test
     void castedNochangeOverwrite() {
-        Project project = JavaPropFilePluginTest.prepProject(
-                'alpha', 'beta', 'gamma', 'delta')
+        checkProps('alpha', 'beta', 'gamma', 'delta')
 
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('alpha(File)=eins\n(File)beta=zwei\ngamma()=', 'ISO-8859-1')
@@ -393,7 +388,7 @@ delta()=
 
     @org.junit.Test
     void typeCasting() {
-        Project project = JavaPropFilePluginTest.prepProject('aFile', 'aLong')
+        checkProps('aFile', 'aLong')
 
         File f = JavaPropFilePluginTest.mkTestFile()
         // One using String cons. + one using valueOf methods
@@ -409,7 +404,7 @@ delta()=
 
     @org.junit.Test
     void nonCastingParens() {
-        Project project = JavaPropFilePluginTest.prepProject(
+        checkProps(
                 'alpha(File)x', 'x(File)beta', 'alpha', 'beta',
                 'alpha()x', 's()alpha')
 
@@ -430,8 +425,7 @@ delta()=
 
     @org.junit.Test(expected=GradleException.class)
     void overCasted1() {
-        Project project = JavaPropFilePluginTest.prepProject(
-                'epsilon()', '(File)epsilon()')
+        checkProps('epsilon()', '(File)epsilon()')
 
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('(File)epsilon()=sechs', 'ISO-8859-1')
@@ -442,8 +436,7 @@ delta()=
 
     @org.junit.Test(expected=GradleException.class)
     void overCasted2() {
-        Project project =
-                JavaPropFilePluginTest.prepProject('(File)delta(junk)')
+        checkProps('(File)delta(junk)')
 
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('(File)delta(junk)=vier', 'ISO-8859-1')
@@ -454,8 +447,7 @@ delta()=
 
     @org.junit.Test(expected=GradleException.class)
     void overCasted3() {
-        Project project =
-                JavaPropFilePluginTest.prepProject('gamma', '(gamma)')
+        checkProps('gamma', '(gamma)')
 
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('(File)delta(junk)=vier', 'ISO-8859-1')
@@ -466,7 +458,7 @@ delta()=
 
     @org.junit.Test(expected=GradleException.class)
     void emptyCast() {
-        Project project = JavaPropFilePluginTest.prepProject('()')
+        checkProps('()')
 
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('()=', 'ISO-8859-1')
@@ -477,7 +469,7 @@ delta()=
 
     @org.junit.Test(expected=GradleException.class)
     void malformattedNull() {
-        Project project = JavaPropFilePluginTest.prepProject('alpha')
+        checkProps('alpha')
 
         project.propFileLoader.overwriteThrow = true
         project.propFileLoader.typeCasting = true
@@ -488,7 +480,7 @@ delta()=
 
     @org.junit.Test(expected=GradleException.class)
     void conflictingAssignments() {
-        Project project = JavaPropFilePluginTest.prepProject('alpha', 'beta')
+        checkProps('alpha', 'beta')
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('alpha=1\nalpha=2', 'ISO-8859-1')
         project.propFileLoader.load(f)
@@ -496,7 +488,7 @@ delta()=
 
     @org.junit.Test(expected=GradleException.class)
     void missingCastingClass() {
-        Project project = JavaPropFilePluginTest.prepProject('alpha')
+        checkProps('alpha')
 
         project.propFileLoader.overwriteThrow = true
         project.propFileLoader.typeCasting = true
@@ -507,7 +499,7 @@ delta()=
 
     @org.junit.Test
     void parenthesizedSysProps() {
-        Project project = JavaPropFilePluginTest.prepProject(
+        checkProps(
                 '(File)systemProp|alpha', 'beta(File)', 'gamma()', 'alpha',
                 'beta', 'gamma', 'systemProp|alpha', 'systemProp|beta(File)',
                 'systemProp|gamma()')
@@ -543,7 +535,7 @@ systemProp|gamma()=
 
     @org.junit.Test
     void escapeRef() {
-        Project project = JavaPropFilePluginTest.prepProject('alpha')
+        checkProps('alpha')
 
         project.propFileLoader.overwriteThrow = true
         File f = JavaPropFilePluginTest.mkTestFile()
@@ -556,7 +548,7 @@ systemProp|gamma()=
 
     @org.junit.Test
     void escapedDotRef() {
-        Project project = JavaPropFilePluginTest.prepProject('al.pha', 'beta')
+        checkProps('al.pha', 'beta')
 
         project.setProperty('al.pha', 'one')
         project.propFileLoader.overwriteThrow = true
@@ -571,7 +563,7 @@ systemProp|gamma()=
 
     @org.junit.Test
     void escapeNameDollar() {
-        Project project = JavaPropFilePluginTest.prepProject('al$pha')
+        checkProps('al$pha')
 
         project.propFileLoader.overwriteThrow = true
         File f = JavaPropFilePluginTest.mkTestFile()
@@ -584,7 +576,7 @@ systemProp|gamma()=
 
     @org.junit.Test
     void escapedDotSet() {
-        Project project = JavaPropFilePluginTest.prepProject('al.pha')
+        checkProps('al.pha')
 
         project.propFileLoader.overwriteThrow = true
         File f = JavaPropFilePluginTest.mkTestFile()
@@ -597,7 +589,7 @@ systemProp|gamma()=
 
     @org.junit.Test
     void escapeNameOpenParen() {
-        Project project = JavaPropFilePluginTest.prepProject('(al)pha')
+        checkProps('(al)pha')
 
         project.propFileLoader.overwriteThrow = true
         File f = JavaPropFilePluginTest.mkTestFile()
@@ -610,7 +602,7 @@ systemProp|gamma()=
 
     @org.junit.Test
     void escapeNameCloseParen() {
-        Project project = JavaPropFilePluginTest.prepProject('(al)pha')
+        checkProps('(al)pha')
 
         project.propFileLoader.overwriteThrow = true
         File f = JavaPropFilePluginTest.mkTestFile()
@@ -623,8 +615,6 @@ systemProp|gamma()=
 
     @org.junit.Test(expected=GradleException.class)
     void noDefer() {
-        Project project = JavaPropFilePluginTest.prepProject()
-
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('mockBean$str2=val')
         project.propFileLoader.defer = false
@@ -633,8 +623,6 @@ systemProp|gamma()=
 
     @org.junit.Test
     void deferredExtObjAssignment() {
-        Project project = JavaPropFilePluginTest.prepProject()
-
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('mockBean$str2=val')
         project.propFileLoader.load(f)
@@ -649,8 +637,6 @@ systemProp|gamma()=
 
     @org.junit.Test
     void deferredExtObjNestAssignment() {
-        Project project = JavaPropFilePluginTest.prepProject()
-
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('''
 mockBean$tHolder2(com.admc.gradle.MockBean$ThreadHolder) =New Thread Name
@@ -667,8 +653,6 @@ mockBean$tHolder2.heldThread.name =Renamed Thread
 
     @org.junit.Test
     void extObjAssignment() {
-        Project project = JavaPropFilePluginTest.prepProject()
-
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('mockBean$str2=val')
         project.apply plugin: MockPlugin
@@ -679,7 +663,7 @@ mockBean$tHolder2.heldThread.name =Renamed Thread
 
     @org.junit.Test
     void extObjRef() {
-        Project project = JavaPropFilePluginTest.prepProject('alpha')
+        checkProps('alpha')
 
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('alpha=pre${mockBean$str1}post')
@@ -692,7 +676,7 @@ mockBean$tHolder2.heldThread.name =Renamed Thread
 
     @org.junit.Test
     void objNestRef() {
-        Project project = JavaPropFilePluginTest.prepProject('alpha')
+        checkProps('alpha')
         project.propFileLoader.overwriteThrow = true
 
         File f = JavaPropFilePluginTest.mkTestFile()
@@ -706,7 +690,7 @@ mockBean$tHolder2.heldThread.name =Renamed Thread
 
     @org.junit.Test
     void castColObjNestRef() {
-        Project project = JavaPropFilePluginTest.prepProject('alpha')
+        checkProps('alpha')
 
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('alpha=pre${mockBean$strList}post')
@@ -720,7 +704,7 @@ mockBean$tHolder2.heldThread.name =Renamed Thread
 
     @org.junit.Test
     void ObjDeepNestRef() {
-        Project project = JavaPropFilePluginTest.prepProject('alpha')
+        checkProps('alpha')
         project.propFileLoader.overwriteThrow = true
 
         File f = JavaPropFilePluginTest.mkTestFile()
@@ -735,7 +719,6 @@ mockBean$tHolder2.heldThread.name =Renamed Thread
 
     @org.junit.Test
     void castColObjNestSet() {
-        Project project = JavaPropFilePluginTest.prepProject()
         project.propFileLoader.typeCasting = true
 
         File f = JavaPropFilePluginTest.mkTestFile()
@@ -747,8 +730,6 @@ mockBean$tHolder2.heldThread.name =Renamed Thread
 
     @org.junit.Test
     void objDeepNestSet() {
-        Project project = JavaPropFilePluginTest.prepProject()
-
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('mockBean$tHolder1.heldThread.name =New Thread Name')
         project.apply plugin: MockPlugin
@@ -760,7 +741,7 @@ mockBean$tHolder2.heldThread.name =Renamed Thread
 
     @org.junit.Test
     void arrayCast() {
-        Project project = JavaPropFilePluginTest.prepProject('alpha')
+        checkProps('alpha')
 
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('alpha(Integer[\\ ])=94 3 12')
@@ -775,7 +756,7 @@ mockBean$tHolder2.heldThread.name =Renamed Thread
 
     @org.junit.Test
     void listCast() {
-        Project project = JavaPropFilePluginTest.prepProject('alpha')
+        checkProps('alpha')
 
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('alpha(Integer[\\ ]ArrayList)=94 3 12')
@@ -789,7 +770,7 @@ mockBean$tHolder2.heldThread.name =Renamed Thread
 
     @org.junit.Test
     void setCast() {
-        Project project = JavaPropFilePluginTest.prepProject('alpha')
+        checkProps('alpha')
 
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('alpha(Integer[\\ ]HashSet)=94 3 12')
@@ -803,8 +784,7 @@ mockBean$tHolder2.heldThread.name =Renamed Thread
 
     @org.junit.Test
     void modifyExistingSeeChange() {
-        Project project = JavaPropFilePluginTest.prepProject(
-                'alpha', 'beta', 'gamma')
+        checkProps('alpha', 'beta', 'gamma')
 
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('beta=two${alpha}\nalpha=eins\ngamma=three${alpha}\n')
@@ -820,7 +800,7 @@ mockBean$tHolder2.heldThread.name =Renamed Thread
 
     @org.junit.Test
     void modifyExistingNoSeeChange() {
-        Project project = JavaPropFilePluginTest.prepProject('alpha', 'beta')
+        checkProps('alpha', 'beta')
 
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('alpha=eins\nbeta=two${alpha}\n')
@@ -834,7 +814,7 @@ mockBean$tHolder2.heldThread.name =Renamed Thread
 
     @org.junit.Test
     void projCastObjNesting() {
-        Project project = JavaPropFilePluginTest.prepProject('t1')
+        checkProps('t1')
         project.propFileLoader.typeCasting = true
 
         File f = JavaPropFilePluginTest.mkTestFile()
@@ -846,8 +826,7 @@ mockBean$tHolder2.heldThread.name =Renamed Thread
 
     @org.junit.Test
     void nonDerefDot() {
-        Project project = JavaPropFilePluginTest.prepProject(
-            'alpha.beta.gamma', 'delta.epsilon.mu', 'nu')
+        checkProps('alpha.beta.gamma', 'delta.epsilon.mu', 'nu')
         project.propFileLoader.typeCasting = true
         project.setProperty('alpha.beta.gamma', 'eins')
 
@@ -863,7 +842,7 @@ mockBean$tHolder2.heldThread.name =Renamed Thread
     @org.junit.Test
     void targetedPropertiesWithDeferrals() {
         /* Also tests that sys prop settings in the target file work */
-        Project project = JavaPropFilePluginTest.prepProject('aSysProp')
+        checkProps('aSysProp')
 
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('''
