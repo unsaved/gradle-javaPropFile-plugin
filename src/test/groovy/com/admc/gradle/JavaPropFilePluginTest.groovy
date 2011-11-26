@@ -19,7 +19,7 @@ class JavaPropFilePluginTest {
         checkProps.each {
             assert !proj.hasProperty(it):
                 "Gradle project has property '$it' set before test begins"
-            System.properties.remove(it)
+            System.clearProperty(it)
         }
         return proj
     }
