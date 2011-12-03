@@ -86,7 +86,7 @@ Use the 1-parameter load method if your intention is to assign no key prefix.
      *
      * Wrapper for #generalLoad(File, String, String, Map)
      */
-    void load(File propFile, Map targetMap) {
+    Map load(File propFile, Map targetMap) {
         assert targetMap != null:
             '''Value of targetMap must be non-null to disambiguate parameter types.
 Use the 1-parameter load method if your intention is to assign no key prefix.
@@ -102,7 +102,7 @@ Use the 1-parameter load method if your intention is to assign no key prefix.
      *
      * Wrapper for #generalLoad(File, String, String, Map)
      */
-    void load(File propFile, String keyAssignPrefix, Map targetMap) {
+    Map load(File propFile, String keyAssignPrefix, Map targetMap) {
         assert targetMap != null:
             '''Value of targetMap must be non-null to disambiguate parameter types.
 Use the appropriate 2-parameter load method if you don't want to set targetMap.
@@ -111,20 +111,29 @@ Use the appropriate 2-parameter load method if you don't want to set targetMap.
     }
 
     /**
-     * Load a properties file an extension object.
+     * Load a properties file into an extension object.
+     *
+     * Wrapper for #generalLoad(File, String, String)
+     */
+    void loadIntoExtensionObject(File propFile, String defaultExtObjName) {
+        load(propFile, null, defaultExtObjName)
+    }
+
+    /**
+     * Load a properties file into an extension object.
      *
      * Wrapper for #generalLoad(File, String, String, Map)
      */
     void load(File propFile, String keyAssignPrefix, String defaultExtObjName) {
         assert defaultExtObjName != null:
             '''Value of defaultExtObjName must be non-null to disambiguate parameter types.
-Use the 1-parameter load method if your intention is to assign no
+Use the appropriate load method if your intention is to assign no
 defaultExtObjName.
 '''
         generalLoad(propFile, null, defaultExtObjName, null)
     }
 
-    synchronized private void generalLoad(File propFile, String keyAssignPrefix,
+    synchronized private Map generalLoad(File propFile, String keyAssignPrefix,
             String defaultExtObjName, Map targetMap) {
         assert unsatisfiedRefBehavior != null:
             '''unsatisfiedRefBehavior may not be set to null
@@ -259,7 +268,7 @@ delimiter ('.' or '\$'): $systemPropPrefix
                     + '\ndue to unresolved references to: ' + unresolveds
                     + '.\nWill handle according to unsatisifiedRefBehavior: '
                     + unsatisfiedRefBehavior)
-            if (unsatisfiedRefBehavior == Behavior.NO_SET) return
+            if (unsatisfiedRefBehavior == Behavior.NO_SET) return targMap
             orderedKeyList.each { pk ->
                 String pv = props.get(pk)
                 Boolean dotDeref = dotDerefMap[pk]
@@ -293,6 +302,7 @@ delimiter ('.' or '\$'): $systemPropPrefix
             gp.logger.info('Waiting for ' + deferrals.size()
                     + ' extension objects to appear as deferral targets')
         }
+        return targMap
     }
 
     void traditionalPropertiesInit() {
