@@ -1,9 +1,12 @@
 JavaPropFile Gradle Plugin
 
-Load Gradle Project or extension objects (and objects nested beneath them),
-with properties from Java properties file.
+Load a Map, a Gradle Project or extension object (and objects nested beneath
+them), with properties from Java properties file.
 Most classes are supported, so that you can write JDK objects, custom objects,
-array, and collections in addition to String values.
+array, and collections in addition to String values (using a simply 'casting'
+syntax like "file.txt(File)").
+Several mechanisms provided make it easy use a differentiated property name
+space for propery file loads (when your use case allows for this).
 
 What's wrong with Gradle's "gradle.properties" system?
 You are restricted to a single properties in your home directory and one for
@@ -16,16 +19,22 @@ or some nested item in your Project), you can't.
 If you want to set even a basic JDK object like a Boolean or File value, you
 will have to change your Gradle Groovy code to convert from the String property
 value.
+If you want to load or merge new properties from a properties file into an
+exiting map, perhaps automatically prefixing these properties with a
+distinguishing prefix, you have to do that manually.
+If you want to do all of these things at once... settle down for a week of
+coding.
 
-A sample build is provided in subdirectory "doc".
+A sample build setup is provided in subdirectory "doc".
 Even if you don't care to run the demo, you would probably benefit by looking
 at the .properties files in there, if not the "build.gradle" file.
 If you want to run the example and are pulling this project from Git, then cd
 to the doc subdirectory and run "../gradlew" ("..\gradlew" on Windows).  You
-do not need to have Gradle installed to run the demonstration.
+do not need to have Gradle installed to run the demonstration (if you pull the
+entire project from Git).
 
 
-MOTIVATION
+FEATURES
 
     + Nested property definitions like users of Ant and Log4j are used to.
       I.e. use references like ${this} in your property values.
@@ -82,6 +91,11 @@ MOTIVATION
       as the extension object comes online.  May be disabled if you want to
       ensure that target extension objects are available ahead of time.
 
+    + User specifiable load-specific automatic prefix.  This allows you to
+      load properties from multiple sources into your Project or Map, without
+      risking name collisions, and being able to clearly and definitively tell
+      the source of each property.
+
 USAGE
 
 Pull plugin from Internet.
@@ -102,6 +116,9 @@ Pull plugin from Internet.
         // https://github.com/unsaved/gradle-javaPropFile-plugin/tree/master/doc
         // for examples of specifying your own file names and settings,
         // including usage of typeCasting.
+
+        // Create a new Map by loading a properties file:
+        someMap = propFileLoader(load(file('mail.properties'), [:])
 
 Use plugin jar file locally.
 
@@ -128,6 +145,9 @@ Use plugin jar file locally.
         // https://github.com/unsaved/gradle-javaPropFile-plugin/tree/master/doc
         // for examples of specifying your own file names and settings,
         // including usage of typeCasting.
+
+        // Create a new Map by loading a properties file:
+        someMap = propFileLoader(load(file('mail.properties'), [:])
 
 
 DETAILS
