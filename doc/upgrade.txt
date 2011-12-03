@@ -1,0 +1,28 @@
+Important information for users upgrading JavaPropFile
+    
+GOTCHAS
+
+    * Version 0.4.* and later require Gradle 1.0-milestone-6 or later.
+      (This is due to compatibility-killing Groovy upgrade in Gradle).
+    * If you upgrade gradle to milestone-6, completely wipe out your Gradle
+      cache at $HOME/.gradle.  Nasty, confusing problems may result if you do
+      not.  This has nothing to do with JavaPropFile, but with Gradle caching.
+
+
+Recent functional changes.
+
+    Excepting the items listed below, recent changes are all backwards
+    compatible, and the many unit tests assure this.
+
+    ! To allow for the new 'keyAssignPrefix', the method signature to
+      do a load into an extension object has changed from
+
+        propFileLoader.load(File, String)
+
+      to
+
+        propFileLoader.load(File, keyAssignPrefix, String)
+        // where 'keyAssignPrefix' may be null
+
+      Calling "propFileLoader.load(File, String)" will load the file to the
+      Gradle Properties object with the specified keyAssignPrefix.
