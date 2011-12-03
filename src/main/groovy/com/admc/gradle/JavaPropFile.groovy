@@ -38,8 +38,8 @@ class JavaPropFile implements Action<Plugin> {
     private boolean callbackRegistered
     private List<String> orderedKeyList
     private Map<String, Boolean> dotDerefMap
-    private Map<String, Object> targetMap
-    private String defaultExtObjName
+    private Map<String, Object> targMap
+    private String dfltExtObjName
 
     /**
      * Return a COPY of this internal structure
@@ -58,24 +58,81 @@ class JavaPropFile implements Action<Plugin> {
     }
 
     /**
-     * Wrapper for #load(File, Object, String)
+     * Load a properties file into Gradle Project
+     *
+     * Wrapper for #generalLoad(File, String, String, Map)
      */
     void load(File propFile) {
-        load(propFile, null, null)
+        generalLoad(propFile, null, null, null)
     }
 
     /**
-     * Wrapper for #load(File, Object, String)
+     * Load a properties file into Gradle Project, using specified property
+     * name prefix for each loaded property.
+     *
+     * Wrapper for #generalLoad(File, String, String, Map)
      */
-    void load(File propFile, Object defaultExtObjNameOrTargetMap) {
-        load(propFile, defaultExtObjNameOrTargetMap, null)
+    void load(File propFile, String keyAssignPrefix) {
+        assert keyAssignPrefix != null:
+            '''Value of keyAssignPrefix must be non-null to disambiguate parameter types.
+Use the 1-parameter load method if your intention is to assign no key prefix.
+'''
+        generalLoad(propFile, keyAssignPrefix, null, null)
     }
 
-    synchronized void load(File propFile,
-            Object defaultExtObjNameOrTargetMap, String keyAssignPrefix) {
+    /**
+     * Load a properties file into Map.  If you want to instantiate a new map,
+     * just specify <CODE>[:]</CODE> as the map parameter value.
+     *
+     * Wrapper for #generalLoad(File, String, String, Map)
+     */
+    void load(File propFile, Map targetMap) {
+        assert targetMap != null:
+            '''Value of targetMap must be non-null to disambiguate parameter types.
+Use the 1-parameter load method if your intention is to assign no key prefix.
+'''
+        generalLoad(propFile, null, null, targetMap)
+    }
+
+    /**
+     * Load a properties file into Map, using specified property
+     * name prefix for each loaded property.
+     If you want to instantiate a new map,
+     * just specify <CODE>[:]</CODE> as the map parameter value.
+     *
+     * Wrapper for #generalLoad(File, String, String, Map)
+     */
+    void load(File propFile, String keyAssignPrefix, Map targetMap) {
+        assert targetMap != null:
+            '''Value of targetMap must be non-null to disambiguate parameter types.
+Use the appropriate 2-parameter load method if you don't want to set targetMap.
+'''
+        generalLoad(propFile, keyAssignPrefix, null, targetMap)
+    }
+
+    /**
+     * Load a properties file an extension object.
+     *
+     * Wrapper for #generalLoad(File, String, String, Map)
+     */
+    void load(File propFile, String keyAssignPrefix, String defaultExtObjName) {
+        assert defaultExtObjName != null:
+            '''Value of defaultExtObjName must be non-null to disambiguate parameter types.
+Use the 1-parameter load method if your intention is to assign no
+defaultExtObjName.
+'''
+        generalLoad(propFile, null, defaultExtObjName, null)
+    }
+
+    synchronized private void generalLoad(File propFile, String keyAssignPrefix,
+            String defaultExtObjName, Map targetMap) {
         assert unsatisfiedRefBehavior != null:
             '''unsatisfiedRefBehavior may not be set to null
 '''
+        assert propFile != null:
+            """'propFile' parameter may not be null
+"""
+
         assert propFile.isFile() && propFile.canRead():
             """Specified properties file inaccessible:  $propFile.absolutePath
 """
@@ -84,20 +141,11 @@ class JavaPropFile implements Action<Plugin> {
             """Specified systemPropPrefix conflicts with dereferencer or extension object
 delimiter ('.' or '\$'): $systemPropPrefix
 """
-        targetMap = null
-        defaultExtObjName = null
+        targMap = targetMap
+        dfltExtObjName = defaultExtObjName
+        assert targMap == null || dfltExtObjName == null:
+        '''Settings 'targetMap and 'defaultExtObjName' are mutually exclusive'''
         keyPrefix = keyAssignPrefix
-        if (defaultExtObjNameOrTargetMap == null)
-            true // Intentionally empty
-        else if (defaultExtObjNameOrTargetMap instanceof String)
-            defaultExtObjName = (String) defaultExtObjNameOrTargetMap
-        else if (defaultExtObjNameOrTargetMap instanceof Map)
-            targetMap = (Map) defaultExtObjNameOrTargetMap
-        else
-            assert false:
-                '''load() param 'defaultExtObjNameOrTargetMap' is neither a String nor a Map, but:
-''' + defaultExtObjNameOrTargetMap.class.name + '''
-'''
 
         orderedKeyList = null
         dotDerefMap = null
@@ -384,7 +432,7 @@ delimiter ('.' or '\$'): $systemPropPrefix
      */
     private boolean assignOrDefer(Boolean dotDeref,
             String rawName, String rawValue, Pattern systemPropPattern) {
-        String extObjName = defaultExtObjName
+        String extObjName = dfltExtObjName
         boolean setSysProp = false
         Matcher matcher = null
         String cExpr = null
@@ -393,7 +441,7 @@ delimiter ('.' or '\$'): $systemPropPrefix
         Object extensionObject = null
 
         // System property assignments not honored if a Map is targeted
-        if (targetMap != null) {
+        if (targMap != null) {
             systemPropPattern = null
             extObjName = null
         }
@@ -448,7 +496,7 @@ delimiter ('.' or '\$'): $systemPropPrefix
         assert midName != null
         // extensionObject assignments not supported if target is a Map or a
         // System property.
-        if (targetMap == null && !setSysProp) {
+        if (targMap == null && !setSysProp) {
             int dollarIndex = midName.indexOf('$')
             if (dollarIndex > 0 && dollarIndex < midName.length() - 1) {
                 // Override due to explicit ext Obj
@@ -524,7 +572,7 @@ delimiter ('.' or '\$'): $systemPropPrefix
 
     private void deferFor(Boolean dotDeref,
             String extensionObjName, String propName, Object propVal) {
-        assert targetMap == null:
+        assert targMap == null:
             'deferFor method invoked even though targetMap is assigned'
         if (!deferrals.containsKey(extensionObjName)) {
             deferrals[extensionObjName] = new HashMap<String, Object>()
@@ -542,7 +590,7 @@ delimiter ('.' or '\$'): $systemPropPrefix
         if (extObj != null
                 || (isSys && System.properties.containsKey(pName))
                 || (!isSys && hasPossiblyNestedValue(
-                        targetMap == null && dotDeref, gp,
+                        targMap == null && dotDeref, gp,
                         (keyPrefix == null) ? pName : (keyPrefix + pName)))) {
             Object oldVal = null
             if (isSys) {
@@ -555,7 +603,7 @@ delimiter ('.' or '\$'): $systemPropPrefix
                         "No such property '$pName' available "
                         + 'for Domain Extension Object', mpe)
             } else {
-                oldVal = getPossiblyNestedValue(targetMap == null && dotDeref,
+                oldVal = getPossiblyNestedValue(targMap == null && dotDeref,
                         gp, (keyPrefix == null) ? pName : (keyPrefix + pName))
             }
             // We will do absolutely nothing if either
@@ -592,9 +640,9 @@ delimiter ('.' or '\$'): $systemPropPrefix
             Object value, boolean isSysProp, Object extensionObject) {
         if (keyPrefix != null) name = keyPrefix + name
         try {
-            if (targetMap != null)
+            if (targMap != null)
                 JavaPropFile.setPossiblyNestedValue(
-                        false, targetMap, name, value)
+                        false, targMap, name, value)
             else if (isSysProp)
                 System.setProperty(name, value)
             else if (extensionObject != null)
@@ -683,12 +731,12 @@ delimiter ('.' or '\$'): $systemPropPrefix
 
     /**
      * If ALL of these conditions are true then the specified Project topObject
-     * is ignored and the targetMap will be read instead.<UL>
-     *  <LI>Instance variable targetMap is non-null
+     * is ignored and the targMap will be read instead.<UL>
+     *  <LI>Instance variable targMap is non-null
      *  <LI>Specified topObject is the gp of this instance
      *  <LI>param dotDeref is false
      * </UL>
-     * Therefore, you must dot-deref project references when a targetMap is
+     * Therefore, you must dot-deref project references when a targMap is
      * used, and must do \\.-escaping to prevent that.
      * 
      * @throws RuntimeException only from internal problems accessing the value
@@ -705,12 +753,12 @@ delimiter ('.' or '\$'): $systemPropPrefix
 
     /**
      * If ALL of these conditions are true then the specified Project topObject
-     * is ignored and the targetMap will be read instead.<UL>
-     *  <LI>Instance variable targetMap is non-null
+     * is ignored and the targMap will be read instead.<UL>
+     *  <LI>Instance variable targMap is non-null
      *  <LI>Specified topObject is the gp of this instance
      *  <LI>param dotDeref is false
      * </UL>
-     * Therefore, you must dot-deref project references when a targetMap is
+     * Therefore, you must dot-deref project references when a targMap is
      * used, and must do \\.-escaping to prevent that.
      * 
      * @throws MissingPropertyException if any element of propertyPath fails
@@ -719,12 +767,12 @@ delimiter ('.' or '\$'): $systemPropPrefix
     private Object getPossiblyNestedValue(
             Boolean dotDeref, Object topObject, String propertyPath) {
         if (!dotDeref) {
-            if (targetMap == null || topObject != gp)
+            if (targMap == null || topObject != gp)
                 return topObject[propertyPath]
-            if (!targetMap.containsKey(propertyPath))
+            if (!targMap.containsKey(propertyPath))
                 throw new MissingPropertyException(
                     "Specified map has no property key '$propetyPath'")
-            return targetMap[propertyPath]
+            return targMap[propertyPath]
         }
         Object object = topObject
         propertyPath.replace('\\.', '\u001F').split('\\.', -1).each {

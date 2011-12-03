@@ -47,7 +47,7 @@ class JavaPropFilePluginTest {
         project.propFileLoader.overwriteThrow = true
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('alpha=one', 'ISO-8859-1')
-        project.propFileLoader.load(f, null, 'pref.')
+        project.propFileLoader.load(f, 'pref.')
 
         assertTrue(project.hasProperty('pref.alpha'))
         assertEquals('one', project.property('pref.alpha'))
@@ -60,7 +60,7 @@ class JavaPropFilePluginTest {
         project.propFileLoader.overwriteThrow = true
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('alpha=one', 'ISO-8859-1')
-        project.propFileLoader.load(f, null, 'pref.')
+        project.propFileLoader.load(f, 'pref.')
     }
 
     @org.junit.Test
@@ -69,7 +69,7 @@ class JavaPropFilePluginTest {
 
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('alpha=one', 'ISO-8859-1')
-        project.propFileLoader.load(f, null, 'pref.')
+        project.propFileLoader.load(f, 'pref.')
 
         assertTrue(project.hasProperty('pref.alpha'))
         assertEquals('one', project.property('pref.alpha'))
@@ -79,7 +79,7 @@ class JavaPropFilePluginTest {
     void prefNestRef() {
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('alpha=pre${pref.beta}post\nbeta=one', 'ISO-8859-1')
-        project.propFileLoader.load(f, null, 'pref.')
+        project.propFileLoader.load(f, 'pref.')
 
         assertTrue(project.hasProperty('pref.alpha'))
         assertTrue(project.hasProperty('pref.beta'))
@@ -899,7 +899,7 @@ sp|aSysProp=werd
         ''')
         project.propFileLoader.typeCasting = true
         project.propFileLoader.systemPropPrefix = 'sp|'
-        project.propFileLoader.load(f, 'mockBean')
+        project.propFileLoader.load(f, null, 'mockBean')
         assertEquals(1, project.propFileLoader.deferredExtensionProps.size())
         project.apply plugin: MockPlugin
         assertEquals(0, project.propFileLoader.deferredExtensionProps.size())
@@ -1018,7 +1018,7 @@ sp|aSysProp=werd
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('gamma.ga=pre${alpha.al}|${pref.beta.be}|${pref.delta.de}post\ndelta.de=four', 'ISO-8859-1')
         def aMap = [('alpha.al'): 'one', ('pref.beta.be'): 'two']
-        project.propFileLoader.load(f, aMap, 'pref.')
+        project.propFileLoader.load(f, 'pref.', aMap)
         
         assertEquals([
             ('alpha.al'): 'one',
