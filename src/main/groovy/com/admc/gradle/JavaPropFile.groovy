@@ -547,7 +547,8 @@ delimiter ('.' or '\$'): $systemPropPrefix
     }
 
     /**
-     * Writes the value to Project property, Java property, or Extension object
+     * Writes the value to Project property, Java system property,
+     * or Extension object
      */
     private void writeValue(Boolean dotDeref, String name,
             Object value, boolean isSysProp, Object extensionObject) {
