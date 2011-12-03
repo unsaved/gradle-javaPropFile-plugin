@@ -12,8 +12,7 @@ defaultTasks 'displaySomeProps', 'displaySomeSysProps', 'displayLoadedMap'
 buildscript {
     repositories { mavenCentral() }
     dependencies {
-        classpath files('../build/libs/gradle-javaPropFile-plugin-0.4.0-SNAPSHOT.jar')
-        //classpath 'com.admc:gradle-javaPropFile-plugin:latest.milestone'
+        classpath 'com.admc:gradle-javaPropFile-plugin:latest.milestone'
     }
 }
 apply plugin: 'java'
