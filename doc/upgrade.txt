@@ -11,6 +11,11 @@ GOTCHAS
 
 Recent functional changes.
 
+    Version 4.x introduces two new major features, 'keyAssignPrefix'es, and
+    loading of Maps (in addition to Projects and extension objects).  Both
+    are implemented by new load method signatures, so see the main "README.txt"
+    file, sub-section DETAILS / Provided Public Methods.
+
     Excepting the items listed below, recent changes are all backwards
     compatible, and the many unit tests assure this.
 
@@ -21,8 +26,7 @@ Recent functional changes.
 
       to
 
-        propFileLoader.load(File, keyAssignPrefix, String)
-        // where 'keyAssignPrefix' may be null
+        propFileLoader.loadIntoExtensionObject(File, String)
 
       Calling "propFileLoader.load(File, String)" will load the file to the
       Gradle Properties object with the specified keyAssignPrefix.

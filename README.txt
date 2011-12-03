@@ -1,7 +1,12 @@
 JavaPropFile Gradle Plugin
 
-Load a Map, a Gradle Project or extension object (and objects nested beneath
-them), with properties from Java properties file.
+
+Version 0.4.* and later require Gradle 1.0-milestone-6 or later.
+IMPORTANT:  User who are upgrading Gradle or upgrading JavaPropFile should read
+the file "upgrade.txt" in the "doc" subdirectory.
+
+This plugin is for loading a Map, a Gradle Project or extension object (and
+objects nested beneath them), with properties from Java properties file.
 Most classes are supported, so that you can write JDK objects, custom objects,
 array, and collections in addition to String values (using a simply 'casting'
 syntax like "file.txt(File)").
@@ -238,16 +243,37 @@ DETAILS
 
     Provided Public Methods:
 
-        void propFileLoader.load(File)
-            Obviously, loads a properties file.  That's the whole point of this
-            plugin.  This is implemented as a wrapper for the following method.
+        void propFileLoader.load(File propertiesFile)
+            Loads a properties file and writes Gradle Project properties with
+            those values.
 
-        void propFileLoader.load(File, String)
+        void propFileLoader.load(File propertiesFile, String keyAssignPrefix)
+            Exact same as previous, except that each property written to the
+            Project is prefixed with the supplied String.
+            If you ran "propFileLoader.load(file('a.properties'), 'pref')" and
+            you have a line in "a.properties" like:
+                key=val
+            then JavaPropFile would end up doing
+                gradleProject.setProperty('prefkey', 'val)
+
+        Map propFileLoader.load(File propertiesFile, Map aMap)
+            Loads a properties file and writes map properties with those values.
+            You must specify a Map to be populated, so if you want to load a
+            new Map, just specify value [:] as the map.
+            The given 'aMap' reference will be returned.
+
+        void propFileLoader.load(
+                File propertiesFile, String keyAssignPrefix, Map aMap)
+            Exact same as previous, except that each property written to the
+            Map is prefixed with the supplied String.  See description for the
+            load(File, String) method above for details about how the prefix
+            value is applied.
+
+        void propFileLoader.loadIntoExensionObject(
+                File, String defaultExtObjName)
             The String is an extension object name.  This is the default object
             to apply property values to (or with as-dereference-operator, this
             is where the dereferencing begins).
-            If null is supplied as the extension object name, then the default
-            object is the Gradle Project.
 
         void propFileLoader.traditionalPropertiesInit()
             Loads 'app.properties' (if it is present), prohibiting use of

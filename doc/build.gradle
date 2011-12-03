@@ -7,12 +7,13 @@
  * plugin.
  */
 
-defaultTasks 'displaySomeProps', 'displaySomeSysProps'
+defaultTasks 'displaySomeProps', 'displaySomeSysProps', 'displayLoadedMap'
 
 buildscript {
     repositories { mavenCentral() }
     dependencies {
-        classpath 'com.admc:gradle-javaPropFile-plugin:latest.milestone'
+        classpath files('../build/libs/gradle-javaPropFile-plugin-0.4.0-SNAPSHOT.jar')
+        //classpath 'com.admc:gradle-javaPropFile-plugin:latest.milestone'
     }
 }
 apply plugin: 'java'
@@ -66,11 +67,12 @@ println('compileJava.options.debug is now a ' + compileJava.options.debug.class
 
 /* Now, independent of the other examples here, I'll show you how to load a
  * properties file targeted to one specific Gradle extension object.
- * Since this sample depende only on the propFileLoader extension object,
+ * Since this sample depends only on the propFileLoader extension object,
  * that's what we'll configure (though we won't actually use it afterwards,
  * because we don't want to complicate the data from the examples above). */
 
-propFileLoader.load(file('targeted.properties'), 'propFileLoader')
+propFileLoader.loadIntoExtensionObject(
+        file('targeted.properties'), 'propFileLoader')
 
 /* The 2nd parameter says that non-system-properties settings in that file
  * will apply to the propFileLoader extenaion object by default, instead of
@@ -119,3 +121,11 @@ task displaySomeSysProps << {
 }
 displaySomeSysProps.description =
         'Display values of my pre-defined set of system properties'
+
+task displayLoadedMap << {
+    // The property-name-prefix parameter is optional.  Omit the parameter
+    // to use property names just as specified in the properties file.
+    println propFileLoader.load(file('amap.properties'), 'myNamespace|', [:])
+}
+displayLoadedMap.description =
+        'Display a Map loaded from a map file with specified name-prefix'
