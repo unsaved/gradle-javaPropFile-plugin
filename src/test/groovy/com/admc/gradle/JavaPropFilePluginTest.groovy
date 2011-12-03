@@ -41,6 +41,53 @@ class JavaPropFilePluginTest {
     }
 
     @org.junit.Test
+    void prefixedPropertySet() {
+        checkProps('pref.alpha')
+
+        project.propFileLoader.overwriteThrow = true
+        File f = JavaPropFilePluginTest.mkTestFile()
+        f.write('alpha=one', 'ISO-8859-1')
+        project.propFileLoader.load(f, null, 'pref.')
+
+        assertTrue(project.hasProperty('pref.alpha'))
+        assertEquals('one', project.property('pref.alpha'))
+    }
+
+    @org.junit.Test(expected=GradleException.class)
+    void prefProhibitOverwrite() {
+        project.setProperty('pref.alpha', 'eins')
+
+        project.propFileLoader.overwriteThrow = true
+        File f = JavaPropFilePluginTest.mkTestFile()
+        f.write('alpha=one', 'ISO-8859-1')
+        project.propFileLoader.load(f, null, 'pref.')
+    }
+
+    @org.junit.Test
+    void prefOverwrite() {
+        project.setProperty('pref.alpha', 'eins')
+
+        File f = JavaPropFilePluginTest.mkTestFile()
+        f.write('alpha=one', 'ISO-8859-1')
+        project.propFileLoader.load(f, null, 'pref.')
+
+        assertTrue(project.hasProperty('pref.alpha'))
+        assertEquals('one', project.property('pref.alpha'))
+    }
+
+    @org.junit.Test
+    void prefNestRef() {
+        File f = JavaPropFilePluginTest.mkTestFile()
+        f.write('alpha=pre${pref.beta}post\nbeta=one', 'ISO-8859-1')
+        project.propFileLoader.load(f, null, 'pref.')
+
+        assertTrue(project.hasProperty('pref.alpha'))
+        assertTrue(project.hasProperty('pref.beta'))
+        assertEquals('preonepost', project.property('pref.alpha'))
+        assertEquals('one', project.property('pref.beta'))
+    }
+
+    @org.junit.Test
     void sysProperty() {
         checkProps('me')
 
@@ -859,5 +906,125 @@ sp|aSysProp=werd
         assertEquals('Renamed Thread', project.mockBean.tHolder2.heldThread.name)
         assertTrue(System.properties.containsKey('aSysProp'))
         assertEquals('werd', System.properties['aSysProp'])
+    }
+
+    @org.junit.Test
+    void simpleMap() {
+        project.propFileLoader.overwriteThrow = true
+        File f = JavaPropFilePluginTest.mkTestFile()
+        f.write('alpha=one\nbeta=two', 'ISO-8859-1')
+        def aMap = [:]
+        project.propFileLoader.load(f, aMap)
+
+        assertEquals([alpha: 'one', beta: 'two'], aMap)
+    }
+
+    @org.junit.Test
+    void appendMap() {
+        project.propFileLoader.overwriteThrow = true
+        File f = JavaPropFilePluginTest.mkTestFile()
+        f.write('alpha=one\nbeta=two', 'ISO-8859-1')
+        def aMap = [gamma: 'three']
+        project.propFileLoader.load(f, aMap)
+
+        assertEquals([alpha: 'one', gamma: 'three', beta: 'two'], aMap)
+    }
+
+    @org.junit.Test(expected=GradleException.class)
+    void prohibitOverwriteMap() {
+        project.propFileLoader.overwriteThrow = true
+        File f = JavaPropFilePluginTest.mkTestFile()
+        f.write('alpha=one\nbeta=two', 'ISO-8859-1')
+        def aMap = [beta: 'three']
+        project.propFileLoader.load(f, aMap)
+    }
+
+    @org.junit.Test
+    void overwriteMap() {
+        File f = JavaPropFilePluginTest.mkTestFile()
+        f.write('alpha=one\nbeta=two', 'ISO-8859-1')
+        def aMap = [beta: 'three']
+        project.propFileLoader.load(f, aMap)
+
+        assertEquals([alpha: 'one', beta: 'two'], aMap)
+    }
+
+    @org.junit.Test
+    void castingMap() {
+        project.propFileLoader.overwriteThrow = true
+        project.propFileLoader.typeCasting = true
+        File f = JavaPropFilePluginTest.mkTestFile()
+        f.write('alpha(File)=one.txt\nbeta(Float)=9.715', 'ISO-8859-1')
+        def aMap = [:]
+        project.propFileLoader.load(f, aMap)
+
+        assertEquals(
+                [alpha: new File('one.txt'), beta: Float.valueOf(9.715)], aMap)
+    }
+
+    @org.junit.Test
+    void mapDotAssign() {
+        project.propFileLoader.overwriteThrow = true
+        File f = JavaPropFilePluginTest.mkTestFile()
+        f.write('alpha.al =one\nbeta.be =two', 'ISO-8859-1')
+        def aMap = [:]
+        project.propFileLoader.load(f, aMap)
+
+        assertEquals([('alpha.al'): 'one', ('beta.be'): 'two'], aMap)
+    }
+
+    @org.junit.Test
+    void mapDotMapRef() {
+        project.propFileLoader.overwriteThrow = true
+        File f = JavaPropFilePluginTest.mkTestFile()
+        f.write('gamma=pre${alpha.al}post\ndelta=pre${beta.be}post', 'ISO-8859-1')
+        def aMap = [('alpha.al'): 'one', ('beta.be'): 'two']
+        project.propFileLoader.load(f, aMap)
+
+        assertEquals([('alpha.al'): 'one', ('beta.be'): 'two',
+                gamma: 'preonepost', delta: 'pretwopost'], aMap)
+        
+    }
+
+    @org.junit.Test
+    void mapProjRef() {
+        project.propFileLoader.overwriteThrow = true
+        project.setProperty('alpha', 'one')
+        project.setProperty('beta', 'two')
+        File f = JavaPropFilePluginTest.mkTestFile()
+        f.write('gamma =pre${alpha}post\ndelta =pre${beta}post', 'ISO-8859-1')
+        def aMap = [:]
+        project.propFileLoader.load(f, aMap)
+        
+        assertEquals([gamma: 'preonepost', delta: 'pretwopost'], aMap)
+    }
+
+    @org.junit.Test
+    void mapEscapedDotProjRef() {
+        project.propFileLoader.overwriteThrow = true
+        project.setProperty('alpha.al', 'one')
+        project.setProperty('beta.be', 'two')
+        File f = JavaPropFilePluginTest.mkTestFile()
+        f.write('gamma =pre${alpha\\\\.al}post\ndelta =pre${beta\\\\.be}post', 'ISO-8859-1')
+        def aMap = [:]
+        project.propFileLoader.load(f, aMap)
+        
+        assertEquals([gamma: 'preonepost', delta: 'pretwopost'], aMap)
+    }
+
+    @org.junit.Test
+    void mapPrefDottedRef() {
+        project.propFileLoader.overwriteThrow = true
+        File f = JavaPropFilePluginTest.mkTestFile()
+        f.write('gamma.ga=pre${alpha.al}|${pref.beta.be}|${pref.delta.de}post\ndelta.de=four', 'ISO-8859-1')
+        def aMap = [('alpha.al'): 'one', ('pref.beta.be'): 'two']
+        project.propFileLoader.load(f, aMap, 'pref.')
+        
+        assertEquals([
+            ('alpha.al'): 'one',
+            ('pref.beta.be'): 'two',
+            ('pref.gamma.ga'): 'preone|two|fourpost',
+            ('pref.delta.de'): 'four',
+        ], aMap)
     }
 }

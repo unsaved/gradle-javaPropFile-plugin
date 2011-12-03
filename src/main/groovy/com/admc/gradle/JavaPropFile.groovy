@@ -29,6 +29,7 @@ class JavaPropFile implements Action<Plugin> {
     boolean overwriteThrow
     boolean typeCasting
     String systemPropPrefix = 'sys|'
+    private String keyPrefix
     private Map<String, Map<String, Object>> deferrals =
             new HashMap<String, Map<String, Object>>()
     private Map<String, Map<String, Object>> deferralDotDerefs =
@@ -37,6 +38,8 @@ class JavaPropFile implements Action<Plugin> {
     private boolean callbackRegistered
     private List<String> orderedKeyList
     private Map<String, Boolean> dotDerefMap
+    private Map<String, Object> targetMap
+    private String defaultExtObjName
 
     /**
      * Return a COPY of this internal structure
@@ -55,13 +58,21 @@ class JavaPropFile implements Action<Plugin> {
     }
 
     /**
-     * Wrapper for #load(File, String)
+     * Wrapper for #load(File, Object, String)
      */
     void load(File propFile) {
-        load(propFile, null)
+        load(propFile, null, null)
     }
 
-    void load(File propFile, String defaultExtObjName) {
+    /**
+     * Wrapper for #load(File, Object, String)
+     */
+    void load(File propFile, Object defaultExtObjNameOrTargetMap) {
+        load(propFile, defaultExtObjNameOrTargetMap, null)
+    }
+
+    synchronized void load(File propFile,
+            Object defaultExtObjNameOrTargetMap, String keyAssignPrefix) {
         assert unsatisfiedRefBehavior != null:
             '''unsatisfiedRefBehavior may not be set to null
 '''
@@ -73,6 +84,21 @@ class JavaPropFile implements Action<Plugin> {
             """Specified systemPropPrefix conflicts with dereferencer or extension object
 delimiter ('.' or '\$'): $systemPropPrefix
 """
+        targetMap = null
+        defaultExtObjName = null
+        keyPrefix = keyAssignPrefix
+        if (defaultExtObjNameOrTargetMap == null)
+            true // Intentionally empty
+        else if (defaultExtObjNameOrTargetMap instanceof String)
+            defaultExtObjName = (String) defaultExtObjNameOrTargetMap
+        else if (defaultExtObjNameOrTargetMap instanceof Map)
+            targetMap = (Map) defaultExtObjNameOrTargetMap
+        else
+            assert false:
+                '''load() param 'defaultExtObjNameOrTargetMap' is neither a String nor a Map, but:
+''' + defaultExtObjNameOrTargetMap.class.name + '''
+'''
+
         orderedKeyList = null
         dotDerefMap = null
 
@@ -81,7 +107,7 @@ delimiter ('.' or '\$'): $systemPropPrefix
         propFile.withInputStream { propsIn.load(it) }
         Map<String, String> props =
                 propsIn.propertyNames().toSet().collectEntries {
-            [(it): propsIn.getProperty(it).replace('\\$', '\u0004')]
+            [(it) : propsIn.getProperty(it).replace('\\$', '\u0004')]
         }
         assert props.size() == propsIn.size():
             ('Transformed ' + propsIn.size() + ' input properties into '
@@ -134,7 +160,7 @@ delimiter ('.' or '\$'): $systemPropPrefix
                                 matchGrps[1].substring(0, dollarIndex)
                         String propName = matchGrps[1].substring(dollarIndex+1)
                         try {
-                            return JavaPropFile.getNestedValue(dotDeref,
+                            return getPossiblyNestedValue(dotDeref,
                                     gp.extensions.getByName(extObjName),
                                     propName)
                         } catch (UnknownDomainObjectException udoe) {
@@ -148,9 +174,9 @@ delimiter ('.' or '\$'): $systemPropPrefix
                                 + "for Domain Extension Object '$extObjName'",
                                 mpe)
                         }
-                    } else if (JavaPropFile.hasNestedValue(
+                    } else if (hasPossiblyNestedValue(
                             dotDeref, gp, matchGrps[1])) {
-                        return JavaPropFile.getNestedValue(
+                        return getPossiblyNestedValue(
                                 dotDeref, gp, matchGrps[1]).toString()
                     }
                     unresolveds << matchGrps[1]
@@ -161,8 +187,7 @@ delimiter ('.' or '\$'): $systemPropPrefix
                     if (handled.contains(pk))
                         throw new GradleException(
                                 "Conflicting assignments for property '$pk'")
-                    assignOrDefer(dotDeref, defaultExtObjName,
-                            pk, newValString, systemPropPattern)
+                    assignOrDefer(dotDeref, pk, newValString, systemPropPattern)
                     handled << pk
                     toRemove << pk
                 }
@@ -192,11 +217,10 @@ delimiter ('.' or '\$'): $systemPropPrefix
                 Boolean dotDeref = dotDerefMap[pk]
                 switch (unsatisfiedRefBehavior) {
                   case Behavior.LITERAL:
-                    assignOrDefer(dotDeref,
-                            defaultExtObjName, pk, pv, systemPropPattern)
+                    assignOrDefer(dotDeref, pk, pv, systemPropPattern)
                     break
                   case Behavior.EMPTY:
-                    assignOrDefer(dotDeref, defaultExtObjName, pk,
+                    assignOrDefer(dotDeref, pk,
                             pv.replaceAll(curlyRefPattern, ''),
                             systemPropPattern)
                     break
@@ -270,7 +294,7 @@ delimiter ('.' or '\$'): $systemPropPrefix
             throw new GradleException(
                     "Malformatted splitter pattern:  $splitterStr", pse)
         }
-        Collection colInstance = null;
+        Collection colInstance = null
         if (colName != null) {
             Class colClass
             if (colName == '') {
@@ -300,7 +324,7 @@ delimiter ('.' or '\$'): $systemPropPrefix
             try {
                 cons = c.getDeclaredConstructor(String.class)
             } catch (Exception nestedE) {
-                throw new GradleException("TypeCasting class $cName has neither a static static .valueOf(String) method nor a (String) constructor", nestedE)
+                throw new GradleException("TypeCasting class $cName has neither a static .valueOf(String) method nor a (String) constructor", nestedE)
             }
         }
         assert (m == null && cons != null) || (m != null && cons == null)
@@ -358,14 +382,21 @@ delimiter ('.' or '\$'): $systemPropPrefix
     /**
      * @return true if assignment made, false if assignment deferred
      */
-    private boolean assignOrDefer(Boolean dotDeref, Object extObjName,
+    private boolean assignOrDefer(Boolean dotDeref,
             String rawName, String rawValue, Pattern systemPropPattern) {
+        String extObjName = defaultExtObjName
         boolean setSysProp = false
         Matcher matcher = null
         String cExpr = null
         String midName = null
         String valString = rawValue.replace('\u0004', '$')
         Object extensionObject = null
+
+        // System property assignments not honored if a Map is targeted
+        if (targetMap != null) {
+            systemPropPattern = null
+            extObjName = null
+        }
 
         String escapedName = (rawName.replace('\\$', '\u0001')
                 .replace('\\(', '\u0002').replace('\\)', '\u0003'))
@@ -415,7 +446,9 @@ delimiter ('.' or '\$'): $systemPropPrefix
             midName = escapedName
         }
         assert midName != null
-        if (!setSysProp) {
+        // extensionObject assignments not supported if target is a Map or a
+        // System property.
+        if (targetMap == null && !setSysProp) {
             int dollarIndex = midName.indexOf('$')
             if (dollarIndex > 0 && dollarIndex < midName.length() - 1) {
                 // Override due to explicit ext Obj
@@ -446,7 +479,7 @@ delimiter ('.' or '\$'): $systemPropPrefix
             return true
         }
         deferFor(dotDeref, extObjName,  propName, newVal)
-        return false;
+        return false
     }
 
     /**
@@ -470,7 +503,7 @@ delimiter ('.' or '\$'): $systemPropPrefix
             ddrMap = deferralDotDerefs[objName]
             propMap.each { name, value ->
                 try {
-                    setNestedValue(ddrMap[name], extObj, name, value)
+                    setPossiblyNestedValue(ddrMap[name], extObj, name, value)
                 } catch (MissingPropertyException mpe) {
                     throw new GradleException(
                         "No such property '$name' available "
@@ -491,6 +524,8 @@ delimiter ('.' or '\$'): $systemPropPrefix
 
     private void deferFor(Boolean dotDeref,
             String extensionObjName, String propName, Object propVal) {
+        assert targetMap == null:
+            'deferFor method invoked even though targetMap is assigned'
         if (!deferrals.containsKey(extensionObjName)) {
             deferrals[extensionObjName] = new HashMap<String, Object>()
             deferralDotDerefs[extensionObjName] = new HashMap<String, Boolean>()
@@ -506,19 +541,22 @@ delimiter ('.' or '\$'): $systemPropPrefix
             Object extObj, boolean isSys, String pName, Object val) {
         if (extObj != null
                 || (isSys && System.properties.containsKey(pName))
-                || (!isSys
-                        && JavaPropFile.hasNestedValue(dotDeref, gp, pName))) {
-            Object oldVal = null;
+                || (!isSys && hasPossiblyNestedValue(
+                        targetMap == null && dotDeref, gp,
+                        (keyPrefix == null) ? pName : (keyPrefix + pName)))) {
+            Object oldVal = null
             if (isSys) {
                 oldVal = System.properties[pName]
             } else if (extObj != null) try {
-                oldVal = JavaPropFile.getNestedValue(dotDeref, extObj, pName)
+                oldVal = getPossiblyNestedValue(dotDeref, extObj,
+                    (keyPrefix == null) ? pName : (keyPrefix + pName))
             } catch (MissingPropertyException mpe) {
                 throw new GradleException(
                         "No such property '$pName' available "
                         + 'for Domain Extension Object', mpe)
             } else {
-                oldVal = JavaPropFile.getNestedValue(dotDeref, gp, pName)
+                oldVal = getPossiblyNestedValue(targetMap == null && dotDeref,
+                        gp, (keyPrefix == null) ? pName : (keyPrefix + pName))
             }
             // We will do absolutely nothing if either
             // (!overwrite && !overwriteThrow)
@@ -547,19 +585,23 @@ delimiter ('.' or '\$'): $systemPropPrefix
     }
 
     /**
-     * Writes the value to Project property, Java system property,
+     * Writes the value to Project property, Java system property, target Map,
      * or Extension object
      */
     private void writeValue(Boolean dotDeref, String name,
             Object value, boolean isSysProp, Object extensionObject) {
+        if (keyPrefix != null) name = keyPrefix + name
         try {
-            if (isSysProp)
+            if (targetMap != null)
+                JavaPropFile.setPossiblyNestedValue(
+                        false, targetMap, name, value)
+            else if (isSysProp)
                 System.setProperty(name, value)
             else if (extensionObject != null)
-                JavaPropFile.setNestedValue(
+                JavaPropFile.setPossiblyNestedValue(
                         dotDeref, extensionObject, name, value)
             else
-                JavaPropFile.setNestedValue(dotDeref, gp, name, value)
+                JavaPropFile.setPossiblyNestedValue(dotDeref, gp, name, value)
         } catch (Exception e) {
             throw new GradleException(
                 "Assignment to '$name' of value '$value' failed", e)
@@ -572,7 +614,7 @@ delimiter ('.' or '\$'): $systemPropPrefix
      * file, because this list preserves multiple elements for duplicate keys.
      */
     private void populateKeyLists(File f) {
-        Properties workPs = new Properties();
+        Properties workPs = new Properties()
         StringBuilder sb = new StringBuilder()
         orderedKeyList = []
         dotDerefMap = [:]
@@ -623,7 +665,7 @@ delimiter ('.' or '\$'): $systemPropPrefix
      * @throws MissingPropertyException if any element of propertyPath fails
      *         to resolve for the given extension object
      */
-    private static void setNestedValue(Boolean dotDeref,
+    private static void setPossiblyNestedValue(Boolean dotDeref,
             Object topObject, String propertyPath, Object newValue) {
         if (!dotDeref) {
             topObject[propertyPath] = newValue
@@ -640,26 +682,50 @@ delimiter ('.' or '\$'): $systemPropPrefix
     }
 
     /**
-     * Throws only from internal problems accessing the value
+     * If ALL of these conditions are true then the specified Project topObject
+     * is ignored and the targetMap will be read instead.<UL>
+     *  <LI>Instance variable targetMap is non-null
+     *  <LI>Specified topObject is the gp of this instance
+     *  <LI>param dotDeref is false
+     * </UL>
+     * Therefore, you must dot-deref project references when a targetMap is
+     * used, and must do \\.-escaping to prevent that.
+     * 
+     * @throws RuntimeException only from internal problems accessing the value
      */
-    private static boolean hasNestedValue(
+    private boolean hasPossiblyNestedValue(
             Boolean dotDeref, Object topObject, String propertyPath) {
         try {
-           JavaPropFile.getNestedValue(dotDeref, topObject, propertyPath)
+           getPossiblyNestedValue(dotDeref, topObject, propertyPath)
         } catch (MissingPropertyException mpe) {
             return false
         }
         return true
     }
 
-
     /**
+     * If ALL of these conditions are true then the specified Project topObject
+     * is ignored and the targetMap will be read instead.<UL>
+     *  <LI>Instance variable targetMap is non-null
+     *  <LI>Specified topObject is the gp of this instance
+     *  <LI>param dotDeref is false
+     * </UL>
+     * Therefore, you must dot-deref project references when a targetMap is
+     * used, and must do \\.-escaping to prevent that.
+     * 
      * @throws MissingPropertyException if any element of propertyPath fails
      *         to resolve for the given extension object
      */
-    private static Object getNestedValue(
+    private Object getPossiblyNestedValue(
             Boolean dotDeref, Object topObject, String propertyPath) {
-        if (!dotDeref) return topObject[propertyPath]
+        if (!dotDeref) {
+            if (targetMap == null || topObject != gp)
+                return topObject[propertyPath]
+            if (!targetMap.containsKey(propertyPath))
+                throw new MissingPropertyException(
+                    "Specified map has no property key '$propetyPath'")
+            return targetMap[propertyPath]
+        }
         Object object = topObject
         propertyPath.replace('\\.', '\u001F').split('\\.', -1).each {
             object = object[it.replace('\u001F', '.')]
