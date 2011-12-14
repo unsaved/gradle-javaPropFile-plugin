@@ -73,3 +73,5 @@ task javadocJar(type: Jar, dependsOn:javadoc) {
      from javadoc.destinationDir
 }
 javadocJar.description = 'Build javadoc jar file'
+
+test { systemProperties 'RETAIN_WORK': 'true' }
