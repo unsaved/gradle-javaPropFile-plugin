@@ -109,10 +109,12 @@ FEATURES
       AND TESTED IN THE SOURCE CODE REPOSITORY, BUT ARE NOT IN A PUBLIC RELEASE
       YET.
 
-CONSTRAINT
+CONSTRAINTS
     Property names references may not begin the following characters ! - .
     E.g., you may define a property with name "!varName", but you can't
     reference it with ${!varName}.
+    Variable names may not contain the } character.  I will allow \\} escaping
+    for this purpose shortly.
 
 USAGE
 
@@ -258,6 +260,8 @@ DETAILS
             t1.name=two
 
     ESCAPING
+    As of today, variable names may not contain the } character.
+    I will allow \\} escaping for this purpose shortly.
     You escape with backslash \, whether escaping is required by Java
     properties file format, java.util.regex.Pattern format, or JavaPropFile.
     As is very well documented at
