@@ -6,12 +6,17 @@ IMPORTANT:  Users who are upgrading Gradle or upgrading JavaPropFile should
 read the file "upgrade.txt" in the "doc" subdirectory.
 
 This plugin is for loading a Map, a Gradle Project or extension object (and
-objects nested beneath them), with properties from Java properties file.
+objects nested beneath them), with properties from Java properties file;
+plus a general Gradle Copy Filter is provided.
 Most classes are supported, so that you can write JDK objects, custom objects,
 array, and collections in addition to String values (using a simply 'casting'
 syntax like "file.txt(File)").
 Several mechanisms provided make it easy use a differentiated property name
 space for propery file loads (when your use case allows for this).
+The Copy Filter is very similar to the Gradle built-in operator:
+     filter { String line -> output one line }
+but eliminating the performance and limitations due to processing
+a-line-at-a-time.
 
 What's wrong with Gradle's "gradle.properties" system?
 You are restricted to a single properties in your home directory and one for
@@ -30,6 +35,12 @@ distinguishing prefix, you have to do that manually.
 If you want to do all of these things at once... settle down for a week of
 coding.
 
+What's wrong with Gradle's "filter { Sring line -> ... }"?
+Nothing if you really want to work on each input file "line" independently.
+Otherwise, your app will suffer from a massive performance penalty from
+executing the closure once for every input file line stead of just once;
+and you are subject to regular expression and EOL-transformation limitations.
+
 A sample build setup is provided in subdirectory "doc".
 Even if you don't care to run the demo, you would probably benefit by looking
 at the .properties files in there, if not the "build.gradle" file.
@@ -37,6 +48,10 @@ If you want to run the example and are pulling this project from Git, then cd
 to the doc subdirectory and run "../gradlew" ("..\gradlew" on Windows).  You
 do not need to have Gradle installed to run the demonstration (if you pull the
 entire project from Git).
+WARNING:  If you pull from Git trunk, you will be working with pre-production
+code.  The sample may be in the process of being updated.  If you experience
+problems running the sample, work with a Git tag instead of trunk, or open a
+Github Issue to get help.
 
 
 FEATURES
@@ -109,6 +124,13 @@ FEATURES
       AND TESTED IN THE SOURCE CODE REPOSITORY TRUNK , BUT IS NOT IN A PUBLIC
       RELEASE YET.
 
+    + Provides Gradle Copy Filter that works just like Gradle's
+          filter { String line -> output one line }
+      but with good performance and without the limitations.
+      See 'ContentAsStringFilter' below.
+      THIS FILTER IS FULLY IMPLEMENTED AND TESTED IN THE SOURCE CODE REPOSITORY
+      TRUNK , BUT IS NOT IN A PUBLIC RELEASE YET.
+
 CONSTRAINTS
     Property names references may not begin the following characters ! - .
     E.g., you may define a property with name "!varName", but you can't
@@ -138,6 +160,17 @@ Pull plugin from Internet.
         // Create a new Map by loading a properties file:
         someMap = propFileLoader(load(file('mail.properties'), [:])
 
+        // To use the ContentAsStringFilter, you don't need to 'apply' anything.
+        import com.admc.gradle.ContentAsStringFilter
+        task anyCopyTask(type: Copy) {
+            from 'src/main/resources'
+            into 'build/tmp/x'
+            filter(ContentAsStringFilter, closure: { it.toLowerCase() })
+        }
+        // See
+        // https://github.com/unsaved/gradle-javaPropFile-plugin/tree/master/doc
+        // for some other very useful examples using ContentAsStringFilter.
+
 Use plugin jar file locally.
 
     Just use your browser to go to the JavaPropFile directory at Maven
@@ -166,6 +199,17 @@ Use plugin jar file locally.
 
         // Create a new Map by loading a properties file:
         someMap = propFileLoader(load(file('mail.properties'), [:])
+
+        // To use the ContentAsStringFilter, you don't need to 'apply' anything.
+        import com.admc.gradle.ContentAsStringFilter
+        task anyCopyTask(type: Copy) {
+            from 'src/main/resources'
+            into 'build/tmp/x'
+            filter(ContentAsStringFilter, closure: { it.toLowerCase() })
+        }
+        // See
+        // https://github.com/unsaved/gradle-javaPropFile-plugin/tree/master/doc
+        // for some other very useful examples using ContentAsStringFilter.
 
 
 DETAILS
@@ -486,3 +530,15 @@ Type Validation
     property value from one non-null type to another non-null type.
     If you really want to, you can get around htis constraint by assigning null
     and then assign to the new value.
+
+ContentAsStringFilter
+    Set attribute 'closure' to a closure that transforms the entire input
+    file text into output file text.
+    As noted above, the advantages of ContentAsStringFilter are, it invokes
+    the supplied closure only once for each input file, and it has no
+    limitations on regex support or EOL-handling.
+    See "doc/build.gradle" for useful examples with Copy task configuration,
+    functional "copy {...}" calls, and filtering a just subset of a predefined
+    file collection.
+    THIS BEHAVIOR IS FULLY IMPLEMENTED AND TESTED IN THE SOURCE CODE REPOSITORY
+    TRUNK , BUT IS NOT IN A PUBLIC RELEASE YET.

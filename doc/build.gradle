@@ -1,5 +1,11 @@
 /**
- * Demonstrates usage of the JavaPropFile Gradle Plugin
+ * Demonstrates usage of the JavaPropFile Gradle Plugin.
+ * The default tasks exemplify and exercise property loading.
+ * The following tasks use JavaPropFile's ContentAsStringFilter copy filter:
+ *     jar, processResources, anyCopyTask, myTask
+ * Filter-processed output for the first two will go to
+ * build/resources/main/ and into build/libs/*.jar; and to build/tmp/x and
+ * build/tmp/y correspondingly for the last 2.
  *
  * See the JavaPropFile README.txt file at
  * https://github.com/unsaved/gradle-javaPropFile-plugin/raw/master/README.txt
@@ -10,10 +16,15 @@
 defaultTasks 'displaySomeProps', 'displaySomeSysProps', 'displayLoadedMap'
 
 buildscript {
+/*
     repositories { mavenCentral() }
     dependencies {
         classpath 'com.admc:gradle-javaPropFile-plugin:latest.milestone'
     }
+*/
+    buildscript { dependencies {
+        classpath fileTree(dir: '../build/libs', excludes: ['**/*javadoc*, **/*sources*'], include: '**/*.jar')
+    } }
 }
 apply plugin: 'java'
 apply plugin: 'javaPropFile'
@@ -128,3 +139,32 @@ task displayLoadedMap << {
 }
 displayLoadedMap.description =
         'Display a Map loaded from a map file with specified name-prefix'
+
+import com.admc.gradle.ContentAsStringFilter
+processResources {
+    exclude '**/.*/**'
+    // The eachFile intermediary here is how you filter a subset of a
+    // plugin-provided input file collection (in this case, the resource
+    // file collection provided by the java plugin).
+    eachFile { fcd ->
+        // Unlike Gradles plain {... } filter, our closure here will get
+        // executed just one time for each matching file.
+        if (fcd.name.startsWith('numbers'))
+            fcd.filter(ContentAsStringFilter, closure: { it.toUpperCase() })
+    }
+}
+
+task anyCopyTask(type: Copy) {
+    from 'src/main/resources'
+    into 'build/tmp/x'
+    filter(ContentAsStringFilter, closure: { it.toLowerCase() })
+}
+
+task myTask << {
+    // Do anything you want, +...
+    copy {
+        from 'src/main/resources'
+        into 'build/tmp/y'
+        filter(ContentAsStringFilter, closure: { it.toLowerCase() })
+    }
+}

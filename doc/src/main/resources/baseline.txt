@@ -1,0 +1,7 @@
+This is just here to prove that, due to file name matching in 'build.gradle',
+this file is not filtered at all.
+
+The "baseline.txt" file(s) under build/... should have the exact same contents
+"as src/main/resources/baseline.txt".
+
+These ${...} references should not get expaneded: ${name} ${sys|username}.
