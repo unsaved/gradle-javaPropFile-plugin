@@ -13,7 +13,15 @@ import org.gradle.api.UnknownDomainObjectException
 
 class JavaPropFile implements Action<Plugin> {
     private static final Pattern curlyRefGrpPattern =
-            Pattern.compile(/\$\{([^}]+)\}/)
+            Pattern.compile(/\$\{[-!\.]?([^}]+)\}/)
+    private static final Pattern curlyRefGrpPatternDflt =
+            Pattern.compile(/\$\{([^-!\.}][^}]*)\}/)
+    private static final Pattern curlyRefGrpPatternDot =
+            Pattern.compile(/\$\{\.([^}]+)\}/)
+    private static final Pattern curlyRefGrpPatternBang =
+            Pattern.compile(/\$\{\!([^}]+)\}/)
+    private static final Pattern curlyRefGrpPatternHyphen =
+            Pattern.compile(/\$\{-([^}]+)\}/)
     private static final Pattern curlyRefPattern =
             Pattern.compile(/\$\{[^}]+\}/)
     private static final Pattern castFirstPattern =
@@ -182,22 +190,20 @@ delimiter ('.' or '\$'): $systemPropPrefix
                     'Duplicate definitions present: ' + duplicateDefs)
         assert orderedKeyList.size() == dotDerefMap.size()
         String newValString
-        boolean haveNewVal
+        boolean satisfied
         Matcher matcher
         int prevCount = props.size()
-        List<String> unresolveds = []
         List<String> toRemove = []
         Pattern systemPropPattern = ((systemPropPrefix == null) 
                 ? null
                 : Pattern.compile('^\\Q' + systemPropPrefix + '\\E(.+)'))
         while (prevCount > 0) {
-            unresolveds.clear()
             toRemove.clear()
             orderedKeyList.each { pk ->
                 String pv = props.get(pk)
                 Boolean dotDeref = dotDerefMap[pk]
                 int dollarIndex
-                haveNewVal = true
+                satisfied = true
                 newValString = pv.replaceAll(curlyRefGrpPattern) { matchGrps ->
                     // This block resolves ${references} in property values
                     if (systemPropPattern != null) {
@@ -205,8 +211,7 @@ delimiter ('.' or '\$'): $systemPropPrefix
                         if (matcher.matches()) {
                             if (System.properties.containsKey(matcher.group(1)))
                                 return System.properties[matcher.group(1)]
-                            unresolveds << matchGrps[1]
-                            haveNewVal = false
+                            satisfied = false
                             return matchGrps.first()
                         }
                     }
@@ -232,15 +237,13 @@ delimiter ('.' or '\$'): $systemPropPrefix
                                 mpe)
                         }
                     } else if (hasPossiblyNestedValue(
-                            dotDeref, gp, matchGrps[1])) {
+                            dotDeref, gp, matchGrps[1]))
                         return getPossiblyNestedValue(
                                 dotDeref, gp, matchGrps[1]).toString()
-                    }
-                    unresolveds << matchGrps[1]
-                    haveNewVal = false
+                    satisfied = false
                     return matchGrps.first()
                 }
-                if (haveNewVal) {
+                if (satisfied) {
                     if (handled.contains(pk))
                         throw new GradleException(
                                 "Conflicting assignments for property '$pk'")
@@ -259,38 +262,227 @@ delimiter ('.' or '\$'): $systemPropPrefix
         }
         if (prevCount != 0) {
             // If we get here, then we have unsatisfied references
-            if (unsatisfiedRefBehavior == Behavior.THROW)
-                throw new GradleException(
-                    'Unable to resolve top-level properties: ' + props.keySet()
-                    + '\ndue to unresolved references to: ' + unresolveds)
-            gp.logger.warn(
-                    'Unable to resolve top-level properties: ' + props.keySet()
-                    + '\ndue to unresolved references to: ' + unresolveds
-                    + '.\nWill handle according to unsatisifiedRefBehavior: '
-                    + unsatisfiedRefBehavior)
-            if (unsatisfiedRefBehavior == Behavior.NO_SET) return targMap
+            Set throwKeys = []
+            Set throwRefs = []
+            Set zeroKeys = []
+            Set zeroRefs = []
+            Set literalKeys = []
+            Set literalRefs = []
+            Set nosetKeys = []
+            Set nosetRefs = []
+
             orderedKeyList.each { pk ->
+                // Each unsatisfied property definition
                 String pv = props.get(pk)
                 Boolean dotDeref = dotDerefMap[pk]
-                switch (unsatisfiedRefBehavior) {
-                  case Behavior.LITERAL:
-                    assignOrDefer(dotDeref, pk, pv, systemPropPattern)
-                    break
-                  case Behavior.EMPTY:
-                    assignOrDefer(dotDeref, pk,
-                            pv.replaceAll(curlyRefPattern, ''),
-                            systemPropPattern)
-                    break
-                  /* See note above about Behavior.UNSET.
-                   case Behavior.UNSET:
-                     gp.properties.remove(pk)
-                     break
-                  */
-                  default:
-                    assert false:
-                        "Unexpected Behavior value:  $unsatisfiedRefBehavior"
+                int dollarIndex
+                boolean doNotSet = false
+
+                // 1:  Handle unresolved ${ref} values
+                newValString = pv.replaceAll(curlyRefGrpPatternDflt) {
+                        matchGrps ->
+                    if (systemPropPattern != null) {
+                        matcher = systemPropPattern.matcher(matchGrps[1])
+                        if (matcher.matches()) {
+                            if (System.properties.containsKey(matcher.group(1)))
+                                return System.properties[matcher.group(1)]
+                            switch (unsatisfiedRefBehavior) {
+                              // case Behavior.UNSET:  See note above re. UNSET
+                              case Behavior.LITERAL:
+                                literalKeys << pk
+                                literalRefs << matcher.group(1)
+                                return matchGrps.first()
+                              case Behavior.EMPTY:
+                                zeroKeys << pk
+                                zeroRefs << matcher.group(1)
+                                return ''
+                              case Behavior.NO_SET:
+                                nosetKeys << pk
+                                nosetRefs << matcher.group(1)
+                                doNotSet = true
+                                return '*'  // Dummy return val
+                              case Behavior.THROW:
+                                throwKeys << pk
+                                throwRefs << matcher.group(1)
+                                return '*'  // Dummy return val
+                              default:
+                                assert false:
+                                    "Unexpected Behavior value:  $unsatisfiedRefBehavior"
+                            }
+                        }
+                    }
+                    dollarIndex = matchGrps[1].indexOf('$')
+                    if (dollarIndex > 0
+                            && dollarIndex < matchGrps[1].length() - 1) {
+                        String extObjName =
+                                matchGrps[1].substring(0, dollarIndex)
+                        String propName = matchGrps[1].substring(dollarIndex+1)
+                        try {
+                            return getPossiblyNestedValue(dotDeref,
+                                    gp.extensions.getByName(extObjName),
+                                    propName)
+                        } catch (Exception e) {
+                            assert false: '''
+Failed to resolve DomainExtensionObject ref though succeeded earlier:
+\'$''' + extObjName + '\' reference ${' + matchGrps[1] + '): ' + e
+                        }
+                    }
+                    if (hasPossiblyNestedValue(dotDeref, gp, matchGrps[1]))
+                        return getPossiblyNestedValue(
+                                dotDeref, gp, matchGrps[1]).toString()
+                    switch (unsatisfiedRefBehavior) {
+                      // case Behavior.UNSET:  See note above re. UNSET
+                      case Behavior.LITERAL:
+                        literalKeys << pk
+                        literalRefs << matchGrps[1]
+                        return matchGrps.first()
+                      case Behavior.EMPTY:
+                        zeroKeys << pk
+                        zeroRefs << matchGrps[1]
+                        return ''
+                      case Behavior.NO_SET:
+                        nosetKeys << pk
+                        nosetRefs << matchGrps[1]
+                        doNotSet = true
+                        return '*'  // Dummy return val
+                      case Behavior.THROW:
+                        throwKeys << pk
+                        throwRefs << matchGrps[1]
+                        return '*'  // Dummy return val
+                      default:
+                        assert false:
+                            "Unexpected Behavior value:  $unsatisfiedRefBehavior"
+                    }
                 }
+                // 2:  Handle unresolved ${!ref} values
+                newValString = newValString.replaceAll(curlyRefGrpPatternBang) {
+                        matchGrps ->
+                    if (systemPropPattern != null) {
+                        matcher = systemPropPattern.matcher(matchGrps[1])
+                        if (matcher.matches()) {
+                            if (System.properties.containsKey(matcher.group(1)))
+                                return System.properties[matcher.group(1)]
+                            throwKeys << pk
+                            throwRefs << matcher.group(1)
+                            return '*'  // Dummy return val
+                        }
+                    }
+                    dollarIndex = matchGrps[1].indexOf('$')
+                    if (dollarIndex > 0
+                            && dollarIndex < matchGrps[1].length() - 1) {
+                        String extObjName =
+                                matchGrps[1].substring(0, dollarIndex)
+                        String propName = matchGrps[1].substring(dollarIndex+1)
+                        try {
+                            return getPossiblyNestedValue(dotDeref,
+                                    gp.extensions.getByName(extObjName),
+                                    propName)
+                        } catch (Exception e) {
+                            assert false: '''
+Failed to resolve DomainExtensionObject ref though succeeded earlier:
+\'$''' + extObjName + '\' reference ${' + matchGrps[1] + '): ' + e
+                        }
+                    }
+                    if (hasPossiblyNestedValue(dotDeref, gp, matchGrps[1]))
+                        return getPossiblyNestedValue(
+                                dotDeref, gp, matchGrps[1]).toString()
+                    throwKeys << pk
+                    throwRefs << matchGrps[1]
+                    return '*'  // Dummy return val
+                }
+                // 3:  Handle unresolved ${-ref} values
+                newValString = newValString.replaceAll(curlyRefGrpPatternHyphen) {
+                        matchGrps ->
+                    if (systemPropPattern != null) {
+                        matcher = systemPropPattern.matcher(matchGrps[1])
+                        if (matcher.matches()) {
+                            if (System.properties.containsKey(matcher.group(1)))
+                                return System.properties[matcher.group(1)]
+                            zeroKeys << pk
+                            zeroRefs << matcher.group(1)
+                            return ''
+                        }
+                    }
+                    dollarIndex = matchGrps[1].indexOf('$')
+                    if (dollarIndex > 0
+                            && dollarIndex < matchGrps[1].length() - 1) {
+                        String extObjName =
+                                matchGrps[1].substring(0, dollarIndex)
+                        String propName = matchGrps[1].substring(dollarIndex+1)
+                        try {
+                            return getPossiblyNestedValue(dotDeref,
+                                    gp.extensions.getByName(extObjName),
+                                    propName)
+                        } catch (Exception e) {
+                            assert false: '''
+Failed to resolve DomainExtensionObject ref though succeeded earlier:
+\'$''' + extObjName + '\' reference ${' + matchGrps[1] + '): ' + e
+                        }
+                    }
+                    if (hasPossiblyNestedValue(dotDeref, gp, matchGrps[1]))
+                        return getPossiblyNestedValue(
+                                dotDeref, gp, matchGrps[1]).toString()
+                    zeroKeys << pk
+                    zeroRefs << matchGrps[1]
+                    return ''
+                }
+                // 4:  Handle unresolved ${.ref} values
+                newValString = newValString.replaceAll(curlyRefGrpPatternDot) {
+                        matchGrps ->
+                    if (systemPropPattern != null) {
+                        matcher = systemPropPattern.matcher(matchGrps[1])
+                        if (matcher.matches()) {
+                            if (System.properties.containsKey(matcher.group(1)))
+                                return System.properties[matcher.group(1)]
+                            literalKeys << pk
+                            literalRefs << matcher.group(1)
+                            return matchGrps.first()
+                        }
+                    }
+                    dollarIndex = matchGrps[1].indexOf('$')
+                    if (dollarIndex > 0
+                            && dollarIndex < matchGrps[1].length() - 1) {
+                        String extObjName =
+                                matchGrps[1].substring(0, dollarIndex)
+                        String propName = matchGrps[1].substring(dollarIndex+1)
+                        try {
+                            return getPossiblyNestedValue(dotDeref,
+                                    gp.extensions.getByName(extObjName),
+                                    propName)
+                        } catch (Exception e) {
+                            assert false: '''
+Failed to resolve DomainExtensionObject ref though succeeded earlier:
+\'$''' + extObjName + '\' reference ${' + matchGrps[1] + '): ' + e
+                        }
+                    }
+                    if (hasPossiblyNestedValue(dotDeref, gp, matchGrps[1]))
+                        return getPossiblyNestedValue(
+                                dotDeref, gp, matchGrps[1]).toString()
+                    literalKeys << pk
+                    literalRefs << matchGrps[1]
+                    return matchGrps.first()
+                }
+
+                if (!doNotSet)
+                    assignOrDefer(dotDeref, pk, newValString, systemPropPattern)
             }
+
+            if (throwKeys.size() > 0)
+                throw new GradleException(
+                    'Unable to resolve top-level properties: ' + throwKeys
+                    + '\ndue to unresolved references to: ' + throwRefs)
+            if (zeroKeys.size() > 0)
+                gp.logger.warn(
+                        'Top-level properties include empty-strings: ' + zeroKeys
+                        + '\ndue to unresolved references to: ' + zeroRefs)
+            if (literalKeys.size() > 0)
+                gp.logger.warn(
+                        'Top-level properties include non-expanded refs: ' + literalKeys
+                        + '\ndue to unresolved references to: ' + literalRefs)
+            if (literalKeys.size() > 0)
+                gp.logger.warn(
+                        'Top-level properties not set: ' + nosetKeys
+                        + '\ndue to unresolved references to: ' + nosetRefs)
         }
         if (deferrals.size() > 0) {
             if (!callbackRegistered) {

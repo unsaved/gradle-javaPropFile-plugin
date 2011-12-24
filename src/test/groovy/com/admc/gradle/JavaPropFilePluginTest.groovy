@@ -1027,4 +1027,41 @@ sp|aSysProp=werd
             ('pref.delta.de'): 'four',
         ], aMap)
     }
+
+    @org.junit.Test
+    void behaviorRefPrefixes() {
+        checkProps('pref.alpha',
+                'pref.beta', 'pref.gamma', 'pref.delta', 'pref.mu')
+        File f = JavaPropFilePluginTest.mkTestFile()
+        f.write('''
+alpha=pre${pref.beta}post
+beta=one
+gamma=pre${-nosuch}post
+delta=pre${.nosuch}post
+mu=pre${!pref.beta}post
+                ''', 'ISO-8859-1')
+        project.propFileLoader.load(f, 'pref.')
+
+        assertTrue(project.hasProperty('pref.alpha'))
+        assertTrue(project.hasProperty('pref.beta'))
+        assertTrue(project.hasProperty('pref.gamma'))
+        assertTrue(project.hasProperty('pref.delta'))
+        assertTrue(project.hasProperty('pref.mu'))
+        assertEquals('preonepost', project.property('pref.alpha'))
+        assertEquals('one', project.property('pref.beta'))
+        assertEquals('prepost', project.property('pref.gamma'))
+        assertEquals('pre${.nosuch}post', project.property('pref.delta'))
+        assertEquals('preonepost', project.property('pref.mu'))
+    }
+
+    @org.junit.Test(expected=GradleException.class)
+    void throwRefPrefix() {
+        checkProps('alpha')
+        File f = JavaPropFilePluginTest.mkTestFile()
+        f.write('alpha=pre${!unset}post', 'ISO-8859-1')
+
+        project.propFileLoader.unsatisfiedRefBehavior =
+                JavaPropFile.Behavior.NO_SET
+        project.propFileLoader.load(f, 'pref.')
+    }
 }

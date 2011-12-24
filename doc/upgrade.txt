@@ -30,3 +30,6 @@ Recent functional changes.
 
       Calling "propFileLoader.load(File, String)" will load the file to the
       Gradle Properties object with the specified keyAssignPrefix.
+
+      BehaviorRefPrefixes, as described in "README.TXT", are fully implemented
+      in the source code repository, and will be in the next public release.

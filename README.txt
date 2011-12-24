@@ -30,6 +30,20 @@ distinguishing prefix, you have to do that manually.
 If you want to do all of these things at once... settle down for a week of
 coding.
 
+ASSUMPTIONS
+To provide for ultimate control over property scopes and expansion behavior,
+we make the following assumptions which hold for every application I have ever
+seen, but which could disqualify usage of JavaPropFile for some unusual use
+cases.
+Property names (not values) may not begin the following characters  ! - .
+and they may not contain the following characters  $ ( )
+There are situations where some of these are ok when used just when defining
+a variable, or when just referencing a variable, but to keep the rules simple,
+you are safe if you honor these prohibitions in all definitions and references.
+You may use . in property names, but just make sure you have no space character
+immediately after the key name (as described below, so JavaPropFile knows not
+to dereference nested properties).
+
 A sample build setup is provided in subdirectory "doc".
 Even if you don't care to run the demo, you would probably benefit by looking
 at the .properties files in there, if not the "build.gradle" file.
@@ -93,13 +107,21 @@ FEATURES
 
     + Extension object properties may be set before the target extension object
       becomes available.  Settings deferred in this way will be applied as soon
-      as the extension object comes online.  May be disabled if you want to
-      ensure that target extension objects are available ahead of time.
+      as the extension object comes online.  Deferral behavior may  be disabled
+      if you want to enforce that target extension objects are available ahead
+      of time.
 
     + User specifiable load-specific automatic prefix.  This allows you to
       load properties from multiple sources into your Project or Map, without
       risking name collisions, and being able to clearly and definitively tell
       the source of each property.
+
+    + Individual ${references} may use property name prefix characters to
+      override the unset-reference-property behavior, so that in a single
+      properties file or String or text file to be expanded, some references
+      may be required and others optional.  THIS BEHAVIOR IS FULLY IMPLEMENTED
+      AND TESTED IN THE SOURCE CODE REPOSITORY, BUT ARE NOT IN A PUBLIC RELEASE
+      YET.
 
 USAGE
 
@@ -181,6 +203,44 @@ DETAILS
         x=Value includes a reference to ${property.with.name.containg.dots}
     vs.
         x =Value includes a reference to ${subObject1.subObject2.propertyName}
+
+    REFERENCE SYNTAX
+    References are not allowed on the left-hand side of property file records.
+    They may be used on the value (right-hand) side of property file records,
+    and in Strings and Files that are expand()ed.
+    These are the variants:
+        ${propName}          # Simple property 'propName' of the target
+                             # object (which defaults to the Gradle Project).
+        ${sys|propName}      # For Java system property 'propName', using
+                             # default systemPropPrefix of 'sys|'.
+        ${extObj$propName}   # Property 'propName' of extension object 'extObj'
+        ${obj1.obj2.propName}  # If '.'-as deference operator is not active,
+                               # then this is just property
+                               # 'obj1.obj2.propName' of the target object
+                               # like the first case above.
+                               # If '.'-as deference operator is active,
+                               # then this is property 'projName' of property
+                               # obj2 of property obj1 or the target object.
+                               # In the second case, it is an error to
+                               # reference a non-defined property.
+        # In all cases above (except nested properties, as noted), references
+        # to properties that are missing are handled according to the default
+        # or specified unsatisfiedRefBehavior.
+       THIS FOLLOWING ALTERNATIVES ARE FULLY IMPLEMENTED AND TESTED IN THE
+       SOURCE CODE REPOSITORY, BUT ARE NOT IN A PUBLIC RELEASE YET.
+        ${!propName}         # For all variants above, if the reference
+        ${!sys|propName}     # property name is immediately preceded by !,
+        etc.                 # then the unsatisfiedRefBehavior is thereby
+                             # overridden so that if the referenced property
+                             # is not set, JavaPropFile wil throw.
+        ${-propName}, etc.   # Just like previous case, but if the property is
+                             # not set, the ${-...} expression will be replace
+                             # with nothing at all (an empty string).
+        ${.propName}, etc.   # Just like previous case, but if the proeprty is
+                             # not set, the ${....} expression will be left
+                             # exactly as it is.
+        # The !, -, . prefixes, which override unsatisfiedRefBehavior, are
+        # known as 'behaviorRefPrefixes'.
 
     SEQUENCE OF ASSIGNMENTS AND REFERENCES
     In all cases, sequence is consistent and understandable.
@@ -323,6 +383,12 @@ DETAILS
                 JavaPropFile.EMPTY    Replace ${x} with the empty string
                 JavaPropFile.NO_SET   Don't set the property at all
                 JavaPropFile.THROW    Here only for completeness.  See above.
+            unsatisfiedRef behavior does not apply to references to missing
+             extension object references like ${x$y} (on the value side of
+             assignments or in expand() Strings/files).  This situation will
+             always throw.  The only reason for this exception is the amount
+             of coding and complexity needed for a capability with unknown
+             user demand.
 
         boolean propFileLoader.overwriteThrow
             Property file loading will throw and abort immediately if a
