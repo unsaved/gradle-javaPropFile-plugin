@@ -2,8 +2,8 @@ JavaPropFile Gradle Plugin
 
 
 Version 0.4.* and later require Gradle 1.0-milestone-6 or later.
-IMPORTANT:  User who are upgrading Gradle or upgrading JavaPropFile should read
-the file "upgrade.txt" in the "doc" subdirectory.
+IMPORTANT:  Users who are upgrading Gradle or upgrading JavaPropFile should
+read the file "upgrade.txt" in the "doc" subdirectory.
 
 This plugin is for loading a Map, a Gradle Project or extension object (and
 objects nested beneath them), with properties from Java properties file.
@@ -106,15 +106,13 @@ FEATURES
       override the unset-reference-property behavior, so that in a single
       properties file or String or text file to be expanded, some references
       may be required and others optional.  THIS BEHAVIOR IS FULLY IMPLEMENTED
-      AND TESTED IN THE SOURCE CODE REPOSITORY, BUT ARE NOT IN A PUBLIC RELEASE
-      YET.
+      AND TESTED IN THE SOURCE CODE REPOSITORY TRUNK , BUT IS NOT IN A PUBLIC
+      RELEASE YET.
 
 CONSTRAINTS
     Property names references may not begin the following characters ! - .
     E.g., you may define a property with name "!varName", but you can't
     reference it with ${!varName}.
-    Variable names may not contain the } character.  I will allow \\} escaping
-    for this purpose shortly.
 
 USAGE
 
@@ -219,8 +217,8 @@ DETAILS
         # In all cases above (except nested properties, as noted), references
         # to properties that are missing are handled according to the default
         # or specified unsatisfiedRefBehavior.
-       THIS FOLLOWING ALTERNATIVES ARE FULLY IMPLEMENTED AND TESTED IN THE
-       SOURCE CODE REPOSITORY, BUT ARE NOT IN A PUBLIC RELEASE YET.
+       THE FOLLOWING ALTERNATIVES ARE FULLY IMPLEMENTED AND TESTED IN THE
+       SOURCE CODE REPOSITORY TRUNK, BUT ARE NOT IN A PUBLIC RELEASE YET.
         ${!propName}         # For all variants above, if the reference
         ${!sys|propName}     # property name is immediately preceded by !,
         etc.                 # then the unsatisfiedRefBehavior is thereby
@@ -260,8 +258,6 @@ DETAILS
             t1.name=two
 
     ESCAPING
-    As of today, variable names may not contain the } character.
-    I will allow \\} escaping for this purpose shortly.
     You escape with backslash \, whether escaping is required by Java
     properties file format, java.util.regex.Pattern format, or JavaPropFile.
     As is very well documented at
@@ -288,9 +284,19 @@ DETAILS
         # But if you want to use '.'-as-dereference-operator for only part of
         # the definition, you will need to escape:
         owner\\.id=x5klh.${plugBean.user.name}
-        Property names (not values) may not begin the following characters
-        ! - .
-        Characters  $ ( ) } in property names must be escaped with \\.
+    Property names (not values) may not begin the following characters
+    ! - .
+    What characters must be escaped just for JavaPropFile?
+        In .properties name (left) sides:
+            \\$  Unless $ used to specify an extension object
+            \\(  Unless ( used to start a typecast
+            \\)  Unless ) used to end a typecast
+        Inside of ${...} (which are only allowed in .properties value (right)
+        sides and in expand() Strings or text files):
+            \\$  Unless $ used to specify an extension object
+            \\}  Otherwise it would end the ${...}
+        IMPORTANT:  } ESCAPING IS FULLY IMPLEMENTED AND TESTED IN THE SOURCE
+        CODE REPOSITORY TRUNK, BUT IS NOT IN A PUBLIC RELEASE YET.
 
 
     Precedence works intuitively, not freakishly like Ant properties.

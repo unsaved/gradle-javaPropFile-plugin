@@ -32,4 +32,8 @@ Recent functional changes.
       Gradle Properties object with the specified keyAssignPrefix.
 
       BehaviorRefPrefixes, as described in "README.TXT", are fully implemented
-      in the source code repository, and will be in the next public release.
+      in the source code repository trunk, and will be in the next public
+      release.
+
+      }-escaping, as described in "README.TXT", is fully implemented in the
+      source code repository trunk, and will be in the next public release.

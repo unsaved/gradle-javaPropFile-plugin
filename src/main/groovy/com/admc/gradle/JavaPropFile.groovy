@@ -172,7 +172,8 @@ delimiter ('.' or '\$'): $systemPropPrefix
         propFile.withInputStream { propsIn.load(it) }
         Map<String, String> props =
                 propsIn.propertyNames().toSet().collectEntries {
-            [(it) : propsIn.getProperty(it).replace('\\$', '\u0004')]
+            [(it) : propsIn.getProperty(it).replace('\\$', '\u0004')
+                    .replace('\\}', '\u0005')]
         }
         assert props.size() == propsIn.size():
             ('Transformed ' + propsIn.size() + ' input properties into '
@@ -189,7 +190,7 @@ delimiter ('.' or '\$'): $systemPropPrefix
             throw new GradleException(
                     'Duplicate definitions present: ' + duplicateDefs)
         assert orderedKeyList.size() == dotDerefMap.size()
-        String newValString
+        String newValString, mg0, mg1, mg1de
         boolean satisfied
         Matcher matcher
         int prevCount = props.size()
@@ -206,21 +207,23 @@ delimiter ('.' or '\$'): $systemPropPrefix
                 satisfied = true
                 newValString = pv.replaceAll(curlyRefGrpPattern) { matchGrps ->
                     // This block resolves ${references} in property values
+                    mg0 = matchGrps.first()
+                            .replace('\u0004', '$').replace('\u0005', '}')
+                    mg1 = matchGrps[1].replace('\u0005', '}')
+                    mg1de = mg1.replace('\u0004', '$') // dollar-escaped
                     if (systemPropPattern != null) {
-                        matcher = systemPropPattern.matcher(matchGrps[1])
+                        matcher = systemPropPattern.matcher(mg1de)
                         if (matcher.matches()) {
                             if (System.properties.containsKey(matcher.group(1)))
                                 return System.properties[matcher.group(1)]
                             satisfied = false
-                            return matchGrps.first()
+                            return mg0
                         }
                     }
-                    dollarIndex = matchGrps[1].indexOf('$')
-                    if (dollarIndex > 0
-                            && dollarIndex < matchGrps[1].length() - 1) {
-                        String extObjName =
-                                matchGrps[1].substring(0, dollarIndex)
-                        String propName = matchGrps[1].substring(dollarIndex+1)
+                    dollarIndex = mg1.indexOf('$')
+                    if (dollarIndex > 0 && dollarIndex < mg1.length() - 1) {
+                        String extObjName = mg1.substring(0, dollarIndex)
+                        String propName = mg1.substring(dollarIndex+1)
                         try {
                             return getPossiblyNestedValue(dotDeref,
                                     gp.extensions.getByName(extObjName),
@@ -228,7 +231,7 @@ delimiter ('.' or '\$'): $systemPropPrefix
                         } catch (UnknownDomainObjectException udoe) {
                             throw new GradleException(
                                 "Domain Extension Object '$extObjName' "
-                                + 'specified by reference ${' + matchGrps[1]
+                                + 'specified by reference ${' + mg1
                                 + '} is inaccessible', udoe)
                         } catch (MissingPropertyException mpe) {
                             throw new GradleException(
@@ -236,12 +239,12 @@ delimiter ('.' or '\$'): $systemPropPrefix
                                 + "for Domain Extension Object '$extObjName'",
                                 mpe)
                         }
-                    } else if (hasPossiblyNestedValue(
-                            dotDeref, gp, matchGrps[1]))
+                    }
+                    if (hasPossiblyNestedValue(dotDeref, gp, mg1de))
                         return getPossiblyNestedValue(
-                                dotDeref, gp, matchGrps[1]).toString()
+                                dotDeref, gp, mg1de).toString()
                     satisfied = false
-                    return matchGrps.first()
+                    return mg0
                 }
                 if (satisfied) {
                     if (handled.contains(pk))
@@ -281,8 +284,12 @@ delimiter ('.' or '\$'): $systemPropPrefix
                 // 1:  Handle unresolved ${ref} values
                 newValString = pv.replaceAll(curlyRefGrpPatternDflt) {
                         matchGrps ->
+                    mg0 = matchGrps.first()
+                            .replace('\u0004', '$').replace('\u0005', '}')
+                    mg1 = matchGrps[1].replace('\u0005', '}')
+                    mg1de = mg1.replace('\u0004', '$') // dollar-escaped
                     if (systemPropPattern != null) {
-                        matcher = systemPropPattern.matcher(matchGrps[1])
+                        matcher = systemPropPattern.matcher(mg1de)
                         if (matcher.matches()) {
                             if (System.properties.containsKey(matcher.group(1)))
                                 return System.properties[matcher.group(1)]
@@ -291,7 +298,7 @@ delimiter ('.' or '\$'): $systemPropPrefix
                               case Behavior.LITERAL:
                                 literalKeys << pk
                                 literalRefs << matcher.group(1)
-                                return matchGrps.first()
+                                return mg0
                               case Behavior.EMPTY:
                                 zeroKeys << pk
                                 zeroRefs << matcher.group(1)
@@ -311,12 +318,11 @@ delimiter ('.' or '\$'): $systemPropPrefix
                             }
                         }
                     }
-                    dollarIndex = matchGrps[1].indexOf('$')
+                    dollarIndex = mg1.indexOf('$')
                     if (dollarIndex > 0
-                            && dollarIndex < matchGrps[1].length() - 1) {
-                        String extObjName =
-                                matchGrps[1].substring(0, dollarIndex)
-                        String propName = matchGrps[1].substring(dollarIndex+1)
+                            && dollarIndex < mg1.length() - 1) {
+                        String extObjName = mg1.substring(0, dollarIndex)
+                        String propName = mg1.substring(dollarIndex+1)
                         try {
                             return getPossiblyNestedValue(dotDeref,
                                     gp.extensions.getByName(extObjName),
@@ -324,30 +330,30 @@ delimiter ('.' or '\$'): $systemPropPrefix
                         } catch (Exception e) {
                             assert false: '''
 Failed to resolve DomainExtensionObject ref though succeeded earlier:
-\'$''' + extObjName + '\' reference ${' + matchGrps[1] + '): ' + e
+\'$''' + extObjName + '\' reference ${' + mg1 + '}: ' + e
                         }
                     }
-                    if (hasPossiblyNestedValue(dotDeref, gp, matchGrps[1]))
+                    if (hasPossiblyNestedValue(dotDeref, gp, mg1de))
                         return getPossiblyNestedValue(
-                                dotDeref, gp, matchGrps[1]).toString()
+                                dotDeref, gp, mg1de).toString()
                     switch (unsatisfiedRefBehavior) {
                       // case Behavior.UNSET:  See note above re. UNSET
                       case Behavior.LITERAL:
                         literalKeys << pk
-                        literalRefs << matchGrps[1]
-                        return matchGrps.first()
+                        literalRefs << mg1de
+                        return mg0
                       case Behavior.EMPTY:
                         zeroKeys << pk
-                        zeroRefs << matchGrps[1]
+                        zeroRefs << mg1de
                         return ''
                       case Behavior.NO_SET:
                         nosetKeys << pk
-                        nosetRefs << matchGrps[1]
+                        nosetRefs << mg1de
                         doNotSet = true
                         return '*'  // Dummy return val
                       case Behavior.THROW:
                         throwKeys << pk
-                        throwRefs << matchGrps[1]
+                        throwRefs << mg1de
                         return '*'  // Dummy return val
                       default:
                         assert false:
@@ -355,10 +361,12 @@ Failed to resolve DomainExtensionObject ref though succeeded earlier:
                     }
                 }
                 // 2:  Handle unresolved ${!ref} values
-                newValString = newValString.replaceAll(curlyRefGrpPatternBang) {
+                .replaceAll(curlyRefGrpPatternBang) {
                         matchGrps ->
+                    mg1 = mg1
+                    mg1de = mg1.replace('\u0004', '$') // dollar-escaped
                     if (systemPropPattern != null) {
-                        matcher = systemPropPattern.matcher(matchGrps[1])
+                        matcher = systemPropPattern.matcher(mg1de)
                         if (matcher.matches()) {
                             if (System.properties.containsKey(matcher.group(1)))
                                 return System.properties[matcher.group(1)]
@@ -367,12 +375,10 @@ Failed to resolve DomainExtensionObject ref though succeeded earlier:
                             return '*'  // Dummy return val
                         }
                     }
-                    dollarIndex = matchGrps[1].indexOf('$')
-                    if (dollarIndex > 0
-                            && dollarIndex < matchGrps[1].length() - 1) {
-                        String extObjName =
-                                matchGrps[1].substring(0, dollarIndex)
-                        String propName = matchGrps[1].substring(dollarIndex+1)
+                    dollarIndex = mg1.indexOf('$')
+                    if (dollarIndex > 0 && dollarIndex < mg1.length() - 1) {
+                        String extObjName = mg1.substring(0, dollarIndex)
+                        String propName = mg1.substring(dollarIndex+1)
                         try {
                             return getPossiblyNestedValue(dotDeref,
                                     gp.extensions.getByName(extObjName),
@@ -380,21 +386,23 @@ Failed to resolve DomainExtensionObject ref though succeeded earlier:
                         } catch (Exception e) {
                             assert false: '''
 Failed to resolve DomainExtensionObject ref though succeeded earlier:
-\'$''' + extObjName + '\' reference ${' + matchGrps[1] + '): ' + e
+\'$''' + extObjName + '\' reference ${' + mg1 + '}: ' + e
                         }
                     }
-                    if (hasPossiblyNestedValue(dotDeref, gp, matchGrps[1]))
+                    if (hasPossiblyNestedValue(dotDeref, gp, mg1de))
                         return getPossiblyNestedValue(
-                                dotDeref, gp, matchGrps[1]).toString()
+                                dotDeref, gp, mg1de).toString()
                     throwKeys << pk
-                    throwRefs << matchGrps[1]
+                    throwRefs << mg1de
                     return '*'  // Dummy return val
                 }
                 // 3:  Handle unresolved ${-ref} values
-                newValString = newValString.replaceAll(curlyRefGrpPatternHyphen) {
+                .replaceAll(curlyRefGrpPatternHyphen) {
                         matchGrps ->
+                    mg1 = matchGrps[1]
+                    mg1de = mg1.replace('\u0004', '$') // dollar-escaped
                     if (systemPropPattern != null) {
-                        matcher = systemPropPattern.matcher(matchGrps[1])
+                        matcher = systemPropPattern.matcher(mg1de)
                         if (matcher.matches()) {
                             if (System.properties.containsKey(matcher.group(1)))
                                 return System.properties[matcher.group(1)]
@@ -403,12 +411,10 @@ Failed to resolve DomainExtensionObject ref though succeeded earlier:
                             return ''
                         }
                     }
-                    dollarIndex = matchGrps[1].indexOf('$')
-                    if (dollarIndex > 0
-                            && dollarIndex < matchGrps[1].length() - 1) {
-                        String extObjName =
-                                matchGrps[1].substring(0, dollarIndex)
-                        String propName = matchGrps[1].substring(dollarIndex+1)
+                    dollarIndex = mg1.indexOf('$')
+                    if (dollarIndex > 0 && dollarIndex < mg1.length() - 1) {
+                        String extObjName = mg1.substring(0, dollarIndex)
+                        String propName = mg1.substring(dollarIndex+1)
                         try {
                             return getPossiblyNestedValue(dotDeref,
                                     gp.extensions.getByName(extObjName),
@@ -416,35 +422,36 @@ Failed to resolve DomainExtensionObject ref though succeeded earlier:
                         } catch (Exception e) {
                             assert false: '''
 Failed to resolve DomainExtensionObject ref though succeeded earlier:
-\'$''' + extObjName + '\' reference ${' + matchGrps[1] + '): ' + e
+\'$''' + extObjName + '\' reference ${' + mg1 + '}: ' + e
                         }
                     }
-                    if (hasPossiblyNestedValue(dotDeref, gp, matchGrps[1]))
+                    if (hasPossiblyNestedValue(dotDeref, gp, mg1de))
                         return getPossiblyNestedValue(
-                                dotDeref, gp, matchGrps[1]).toString()
+                                dotDeref, gp, mg1de).toString()
                     zeroKeys << pk
-                    zeroRefs << matchGrps[1]
+                    zeroRefs << mg1de
                     return ''
                 }
                 // 4:  Handle unresolved ${.ref} values
-                newValString = newValString.replaceAll(curlyRefGrpPatternDot) {
+                .replaceAll(curlyRefGrpPatternDot) {
                         matchGrps ->
+                    mg1 = matchGrps[1]
+                    mg0 = matchGrps.first()
+                    mg1de = mg1.replace('\u0004', '$') // dollar-escaped
                     if (systemPropPattern != null) {
-                        matcher = systemPropPattern.matcher(matchGrps[1])
+                        matcher = systemPropPattern.matcher(mg1de)
                         if (matcher.matches()) {
                             if (System.properties.containsKey(matcher.group(1)))
                                 return System.properties[matcher.group(1)]
                             literalKeys << pk
                             literalRefs << matcher.group(1)
-                            return matchGrps.first()
+                            return mg0
                         }
                     }
-                    dollarIndex = matchGrps[1].indexOf('$')
-                    if (dollarIndex > 0
-                            && dollarIndex < matchGrps[1].length() - 1) {
-                        String extObjName =
-                                matchGrps[1].substring(0, dollarIndex)
-                        String propName = matchGrps[1].substring(dollarIndex+1)
+                    dollarIndex = mg1.indexOf('$')
+                    if (dollarIndex > 0 && dollarIndex < mg1.length() - 1) {
+                        String extObjName = mg1.substring(0, dollarIndex)
+                        String propName = mg1.substring(dollarIndex+1)
                         try {
                             return getPossiblyNestedValue(dotDeref,
                                     gp.extensions.getByName(extObjName),
@@ -452,15 +459,15 @@ Failed to resolve DomainExtensionObject ref though succeeded earlier:
                         } catch (Exception e) {
                             assert false: '''
 Failed to resolve DomainExtensionObject ref though succeeded earlier:
-\'$''' + extObjName + '\' reference ${' + matchGrps[1] + '): ' + e
+\'$''' + extObjName + '\' reference ${' + mg1 + '}: ' + e
                         }
                     }
-                    if (hasPossiblyNestedValue(dotDeref, gp, matchGrps[1]))
+                    if (hasPossiblyNestedValue(dotDeref, gp, mg1de))
                         return getPossiblyNestedValue(
-                                dotDeref, gp, matchGrps[1]).toString()
+                                dotDeref, gp, mg1de).toString()
                     literalKeys << pk
-                    literalRefs << matchGrps[1]
-                    return matchGrps.first()
+                    literalRefs << mg1de
+                    return mg0
                 }
 
                 if (!doNotSet)

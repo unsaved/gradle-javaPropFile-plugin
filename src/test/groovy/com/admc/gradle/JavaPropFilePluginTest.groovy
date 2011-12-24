@@ -6,6 +6,12 @@ import org.gradle.testfixtures.ProjectBuilder
 import static org.junit.Assert.*
 
 class JavaPropFilePluginTest {
+    /* Test authors:  Remember when testing \-escapes using File.write()s for
+        properties files, that you are writing text to be interpretedy by
+        java.util.Porperties, and you must therefore double up an extra time on
+        \ characters, like:
+        f.write('alpha=one\\\\${escaped}two')
+     */
     private Project project
 
     {
@@ -1063,5 +1069,33 @@ mu=pre${!pref.beta}post
         project.propFileLoader.unsatisfiedRefBehavior =
                 JavaPropFile.Behavior.NO_SET
         project.propFileLoader.load(f, 'pref.')
+    }
+
+    @org.junit.Test
+    void escapeRefDollar() {
+        checkProps('beta')
+
+        project.propFileLoader.overwriteThrow = true
+        File f = JavaPropFilePluginTest.mkTestFile()
+        f.write('beta=pre${al\\\\$pha}post')
+        project.setProperty('al$pha', 'one')
+        project.propFileLoader.typeCasting = true
+        project.propFileLoader.load(f)
+        assertTrue(project.hasProperty('beta'))
+        assertEquals('preonepost', project.property('beta'))
+    }
+
+    @org.junit.Test
+    void escapeRefCloseCurl() {
+        checkProps('beta')
+
+        project.propFileLoader.overwriteThrow = true
+        File f = JavaPropFilePluginTest.mkTestFile()
+        f.write('beta=pre${al\\\\}pha}post')
+        project.setProperty('al}pha', 'one')
+        project.propFileLoader.typeCasting = true
+        project.propFileLoader.load(f)
+        assertTrue(project.hasProperty('beta'))
+        assertEquals('preonepost', project.property('beta'))
     }
 }
