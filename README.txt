@@ -30,20 +30,6 @@ distinguishing prefix, you have to do that manually.
 If you want to do all of these things at once... settle down for a week of
 coding.
 
-ASSUMPTIONS
-To provide for ultimate control over property scopes and expansion behavior,
-we make the following assumptions which hold for every application I have ever
-seen, but which could disqualify usage of JavaPropFile for some unusual use
-cases.
-Property names (not values) may not begin the following characters  ! - .
-and they may not contain the following characters  $ ( )
-There are situations where some of these are ok when used just when defining
-a variable, or when just referencing a variable, but to keep the rules simple,
-you are safe if you honor these prohibitions in all definitions and references.
-You may use . in property names, but just make sure you have no space character
-immediately after the key name (as described below, so JavaPropFile knows not
-to dereference nested properties).
-
 A sample build setup is provided in subdirectory "doc".
 Even if you don't care to run the demo, you would probably benefit by looking
 at the .properties files in there, if not the "build.gradle" file.
@@ -122,6 +108,11 @@ FEATURES
       may be required and others optional.  THIS BEHAVIOR IS FULLY IMPLEMENTED
       AND TESTED IN THE SOURCE CODE REPOSITORY, BUT ARE NOT IN A PUBLIC RELEASE
       YET.
+
+CONSTRAINT
+    Property names references may not begin the following characters ! - .
+    E.g., you may define a property with name "!varName", but you can't
+    reference it with ${!varName}.
 
 USAGE
 
@@ -293,6 +284,10 @@ DETAILS
         # But if you want to use '.'-as-dereference-operator for only part of
         # the definition, you will need to escape:
         owner\\.id=x5klh.${plugBean.user.name}
+        Property names (not values) may not begin the following characters
+        ! - .
+        Characters  $ ( ) } in property names must be escaped with \\.
+
 
     Precedence works intuitively, not freakishly like Ant properties.
     The value of a property will be the last value that was assigned to it.
