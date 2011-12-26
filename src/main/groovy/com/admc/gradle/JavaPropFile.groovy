@@ -208,7 +208,6 @@ delimiter ('.' or '\$'): $systemPropPrefix
                 newValString = pv.replaceAll(curlyRefGrpPattern) { matchGrps ->
                     // This block resolves ${references} in property values
                     mg0 = matchGrps.first()
-                            .replace('\u0004', '$').replace('\u0005', '}')
                     mg1 = matchGrps[1].replace('\u0005', '}')
                     mg1de = mg1.replace('\u0004', '$') // dollar-escaped
                     if (systemPropPattern != null) {
@@ -285,7 +284,6 @@ delimiter ('.' or '\$'): $systemPropPrefix
                 newValString = pv.replaceAll(curlyRefGrpPatternDflt) {
                         matchGrps ->
                     mg0 = matchGrps.first()
-                            .replace('\u0004', '$').replace('\u0005', '}')
                     mg1 = matchGrps[1].replace('\u0005', '}')
                     mg1de = mg1.replace('\u0004', '$') // dollar-escaped
                     if (systemPropPattern != null) {
