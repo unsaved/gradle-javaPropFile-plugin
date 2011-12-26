@@ -131,11 +131,6 @@ FEATURES
       THIS FILTER IS FULLY IMPLEMENTED AND TESTED IN THE SOURCE CODE REPOSITORY
       TRUNK , BUT IS NOT IN A PUBLIC RELEASE YET.
 
-CONSTRAINTS
-    Property names references may not begin the following characters ! - .
-    E.g., you may define a property with name "!varName", but you can't
-    reference it with ${!varName}.
-
 USAGE
 
 Pull plugin from Internet.
@@ -328,8 +323,12 @@ DETAILS
         # But if you want to use '.'-as-dereference-operator for only part of
         # the definition, you will need to escape:
         owner\\.id=x5klh.${plugBean.user.name}
-    Property names (not values) may not begin the following characters
-    ! - .
+    Property names may begin with the characters ! - . but if you ${reference}
+    them, you must escape that character with \\, like:
+        nestingVar=${\\!nested!var}}  # References property '!nested!var'
+        # Note that you only escape these characters in references and only
+        # when they are the first character.  The 2nd ! above should and may
+        # not be escaped.
     What characters must be escaped just for JavaPropFile?
         In .properties name (left) sides:
             \\$  Unless $ used to specify an extension object

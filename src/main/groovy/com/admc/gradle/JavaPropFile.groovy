@@ -209,6 +209,8 @@ delimiter ('.' or '\$'): $systemPropPrefix
                     // This block resolves ${references} in property values
                     mg0 = matchGrps.first()
                     mg1 = matchGrps[1].replace('\u0005', '}')
+                    if (mg1.charAt(0) == '\\' && mg1.length() > 1)
+                        mg1 = mg1.substring(1)
                     mg1de = mg1.replace('\u0004', '$') // dollar-escaped
                     if (systemPropPattern != null) {
                         matcher = systemPropPattern.matcher(mg1de)
@@ -285,6 +287,8 @@ delimiter ('.' or '\$'): $systemPropPrefix
                         matchGrps ->
                     mg0 = matchGrps.first()
                     mg1 = matchGrps[1].replace('\u0005', '}')
+                    if (mg1.charAt(0) == '\\' && mg1.length() > 1)
+                        mg1 = mg1.substring(1)
                     mg1de = mg1.replace('\u0004', '$') // dollar-escaped
                     if (systemPropPattern != null) {
                         matcher = systemPropPattern.matcher(mg1de)

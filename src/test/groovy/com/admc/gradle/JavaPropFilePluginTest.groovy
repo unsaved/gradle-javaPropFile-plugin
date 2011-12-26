@@ -1098,4 +1098,39 @@ mu=pre${!pref.beta}post
         assertTrue(project.hasProperty('beta'))
         assertEquals('preonepost', project.property('beta'))
     }
+
+    @org.junit.Test
+    void escapedBehaviorRefPrefixes() {
+        // Also tests sysprop-prefixed prop names that beginw ith !, -, .
+        File f = JavaPropFilePluginTest.mkTestFile()
+        project.propFileLoader.overwriteThrow = true
+        checkProps('alpha', 'beta', 'gamma', 'delta', 'epsilon', 'mu')
+        f.write('''
+alpha=pre${sys|!eins}post
+beta=pre${sys|-zwei}post
+gamma=pre${sys|.drei}post
+delta=pre${\\\\!eins}post
+epsilon=pre${\\\\-zwei}post
+mu=pre${\\\\.drei}post
+                ''', 'ISO-8859-1')
+        System.setProperty('!eins', '11')
+        System.setProperty('-zwei', '12')
+        System.setProperty('.drei', '13')
+        project.setProperty('!eins', '21')
+        project.setProperty('-zwei', '22')
+        project.setProperty('.drei', '23')
+        project.propFileLoader.load(f)
+
+        ['alpha', 'beta', 'gamma', 'delta', 'epsilon', 'mu'].each {
+            assertFalse("Unexpected System property '$it'",
+                    System.properties.containsKey(it))
+            assertTrue("Missing property '$it'", project.hasProperty(it))
+        }
+        assertEquals('pre11post', project.property('alpha'))
+        assertEquals('pre12post', project.property('beta'))
+        assertEquals('pre13post', project.property('gamma'))
+        assertEquals('pre21post', project.property('delta'))
+        assertEquals('pre22post', project.property('epsilon'))
+        assertEquals('pre23post', project.property('mu'))
+    }
 }
