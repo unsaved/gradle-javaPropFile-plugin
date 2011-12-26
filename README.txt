@@ -208,6 +208,17 @@ Use plugin jar file locally.
 
 
 DETAILS
+    DEFINITIONS
+        BehaviorRefPrefixing:
+            Prefixing a referenced property name with ! - or . to specify
+             behavior if the specified property is not set (this overrides
+             the 'unsatisfiedRefBehavior' setting of the propFileLoader.
+        DotDeref 
+            Behavior where specifications like alpha.beta.gamma means
+            property-gamma-of-property-beta-of-property-alpha, instead of
+            property with name 'alpha.beta.gama'.  I.e. , if DotDefef behavior
+            holds, then unescaped dots in property name acts as a dereference
+            operator.
 
     IMPORTANT!  KEY/VALUE DELIMITER
     Java properties files allow for the key to be terminated by equal sign,
@@ -216,7 +227,7 @@ DETAILS
     information).
     Since white-space is optional after the property keys, and since property
     file rules even allow for the '=' to follow white space, we use white space
-    in this position to toggle '.'-as-dereference-operator behavior.
+    in this position to toggle DotDeref behavior.
     Compare:
         x.a=eks
         # No whitespace immediately after key "x.a" so property name is "x.a".
@@ -228,7 +239,7 @@ DETAILS
     between method name and parameters.  We use white space as delimiter to
     trigger Groovy-style dereferencing.)
     The presence of absence of white space after the key enables or disables
-    '.'-as-dereference-operator both for the key and for ${references" in the
+    DotDeref both for the key and for ${references" in the
     value.  Another example to show this:
         x=Value includes a reference to ${property.with.name.containg.dots}
     vs.
@@ -244,11 +255,11 @@ DETAILS
         ${sys|propName}      # For Java system property 'propName', using
                              # default systemPropPrefix of 'sys|'.
         ${extObj$propName}   # Property 'propName' of extension object 'extObj'
-        ${obj1.obj2.propName}  # If '.'-as deference operator is not active,
+        ${obj1.obj2.propName}  # If DotDeref operator is not active,
                                # then this is just property
                                # 'obj1.obj2.propName' of the target object
                                # like the first case above.
-                               # If '.'-as deference operator is active,
+                               # If DotDeref operator is active,
                                # then this is property 'projName' of property
                                # obj2 of property obj1 or the target object.
                                # In the second case, it is an error to
@@ -320,7 +331,7 @@ DETAILS
                              name "enableX(Boolean)".
         # With no space after the key, no need to escape dots in keys and refs.
         owner.id=x5klh.umagumma
-        # But if you want to use '.'-as-dereference-operator for only part of
+        # But if you want to use DotDeref for only part of
         # the definition, you will need to escape:
         owner\\.id=x5klh.${plugBean.user.name}
     Property names may begin with the characters ! - . but if you ${reference}
