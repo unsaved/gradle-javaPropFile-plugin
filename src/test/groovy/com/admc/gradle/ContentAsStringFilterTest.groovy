@@ -61,4 +61,32 @@ System.err.println("Iz " + destDir.absolutePath)
         assertEquals("ONE\nTWO\n", new File(destDir, inFile1.name).text)
         assertEquals("THREE\nFOUR\n", new File(destDir, inFile2.name).text)
     }
+
+    @org.junit.Test
+    void expand() {
+        File locDdir = destDir
+        project.apply plugin: JavaPropFilePlugin
+        File inFile1 = ContentAsStringFilterTest.textFileFromClasspath('triv1')
+        File inFile2 =
+                ContentAsStringFilterTest.textFileFromClasspath('template')
+        System.setProperty('aSysProp', 'eins')
+        project.setProperty('aProjProp', 'zwei')
+        project.copy {
+            from([inFile1, inFile2])
+            into locDdir.absolutePath
+            filter(ContentAsStringFilter, closure: {
+                project.propFileLoader.expand(it)
+            })
+        }
+        // Nothing to expand:
+        assertEquals("One\nTwo\n", new File(destDir, inFile1.name).text)
+        // A variety to expand:
+
+        assertEquals('''A Sample Template for Testing the JavaPropFile expand() Method
+
+A Java System property is 'eins', and a Gradle Project property is zwei and again (zwei).
+This line contains an un-expanded dot ${.reference} and a removed one in quotes: ''.
+''',
+                new File(destDir, inFile2.name).text)
+    }
 }

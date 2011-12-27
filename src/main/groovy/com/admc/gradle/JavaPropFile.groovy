@@ -131,6 +131,12 @@ Use the appropriate 2-parameter load method if you don't want to set targetMap.
      * Load a properties file into an extension object.
      *
      * Wrapper for #generalLoad(File, String, String, Map)
+     *
+     * @defaultExtObjName  This applies only to which properties are SET.
+     *                     It has no effect on property references.
+     *                     If you want to reference an extension object, then
+     *                     you must explicity use the {extObjName$..} prefix
+     *                     syntax.
      */
     void load(File propFile, String keyAssignPrefix, String defaultExtObjName) {
         assert defaultExtObjName != null:
@@ -488,7 +494,7 @@ Failed to resolve DomainExtensionObject ref though succeeded earlier:
                 gp.logger.warn(
                         'Top-level properties include non-expanded refs: ' + literalKeys
                         + '\ndue to unresolved references to: ' + literalRefs)
-            if (literalKeys.size() > 0)
+            if (nosetKeys.size() > 0)
                 gp.logger.warn(
                         'Top-level properties not set: ' + nosetKeys
                         + '\ndue to unresolved references to: ' + nosetRefs)
@@ -978,17 +984,346 @@ Failed to resolve DomainExtensionObject ref though succeeded earlier:
     private Object getPossiblyNestedValue(
             Boolean dotDeref, Object topObject, String propertyPath) {
         if (!dotDeref) {
-            if (targMap == null || topObject != gp)
+            if (targMap == null || topObject != gp) {
+                if ((topObject instanceof Map)
+                        && !topObject.containsKey(propertyPath))
+                    throw new MissingPropertyException(
+                        "Map has no property key '$propertyPath'")
                 return topObject[propertyPath]
+            }
             if (!targMap.containsKey(propertyPath))
                 throw new MissingPropertyException(
-                    "Specified map has no property key '$propetyPath'")
+                    "Specified map has no property key '$propertyPath'")
             return targMap[propertyPath]
         }
+        String key
         Object object = topObject
         propertyPath.replace('\\.', '\u001F').split('\\.', -1).each {
-            object = object[it.replace('\u001F', '.')]
+            key = it.replace('\u001F', '.')
+            if ((object instanceof Map) && !object.containsKey(key))
+                throw new MissingPropertyException(
+                    "Map has no property key '$key'")
+            object = object[key]
         }
         return object
+    }
+
+    /**
+     * Wrapper for #expand(File, Map, boolean), with dotDeref false.
+     */
+    public String expand(File inFile, Map<String, Object> sourceMap) {
+        return expand(inFile, sourceMap, false)
+    }
+
+    /**
+     * Wrapper for #expand(File, Map, boolean), with no sourceMap so that
+     * the Gradle Project is checked for properties by default.
+     */
+    public String expand(File inFile, boolean dotDeref) {
+        return expand(inFile, null, dotDeref)
+    }
+
+    /**
+     * Wrapper for #expand(File, Map, boolean), with dotDeref false and
+     * no sourceMap so that the Gradle Project is checked for properties by
+     * default.
+     */
+    public String expand(File inFile) {
+        return expand(inFile, null, false)
+    }
+
+    /**
+     * Just like .expand(String, Map, boolean), but uses specified text file
+     * content, with the environment's default encoding, as the input String.
+
+     * @see #expand(String, Map, boolean)
+     */
+    public String expand(
+            File inFile, Map<String, Object> sourceMap, boolean dotDeref) {
+        if (!inFile.canRead())
+            throw new GradleException(
+                    "Input file not readable: $inFile.absolutePath")
+        if (!inFile.isFile())
+            throw new GradleException("Not a file: $inFile.absolutePath")
+        return expand(inFile.text, sourceMap, dotDeref)
+    }
+
+    /**
+     * Wrapper for #expand(File, Map, boolean, String), with dotDeref false.
+     */
+    public String expand(
+            File inFile, Map<String, Object> sourceMap, String encoding) {
+        return expand(inFile, sourceMap, false, encoding)
+    }
+
+    /**
+     * Wrapper for #expand(File, Map, boolean, String),
+     * with no sourceMap so that
+     * the Gradle Project is checked for properties by default.
+     */
+    public String expand(File inFile, boolean dotDeref, String encoding) {
+        return expand(inFile, null, dotDeref, encoding)
+    }
+
+    /**
+     * Wrapper for #expand(File, Map, boolean, String), with dotDeref false and
+     * no sourceMap so that the Gradle Project is checked for properties by
+     * default.
+     */
+    public String expand(File inFile, String encoding) {
+        return expand(inFile, null, false, encoding)
+    }
+
+    /**
+     * Just like .expand(String, Map, boolean), but uses specified text file
+     * content, with the specified encoding, as the input String.
+
+     * @see #expand(String, Map, boolean)
+     */
+    public String expand(File inFile,
+            Map<String, Object> sourceMap, boolean dotDeref, String encoding) {
+        if (!inFile.canRead())
+            throw new GradleException(
+                    "Input file not readable: $inFile.absolutePath")
+        if (!inFile.isFile())
+            throw new GradleException("Not a file: $inFile.absolutePath")
+        return expand(inFile.getText(encoding), sourceMap, dotDeref)
+    }
+
+    /**
+     * Wrapper for #expand(String, Map, boolean), with dotDeref false.
+     */
+    public String expand(String inString, Map<String, Object> sourceMap) {
+        return expand(inString, sourceMap, false)
+    }
+
+    /**
+     * Wrapper for #expand(String, Map, boolean), with no sourceMap so that
+     * the Gradle Project is checked for properties by default.
+     */
+    public String expand(String inString, boolean dotDeref) {
+        return expand(inString, null, dotDeref)
+    }
+
+    /**
+     * Wrapper for #expand(String, Map, boolean), with dotDeref false and
+     * no sourceMap so that the Gradle Project is checked for properties by
+     * default.
+     */
+    public String expand(String inString) {
+        return expand(inString, null, false)
+    }
+
+    /**
+     * Since Beavior.NO_SET makes no sense when we are expanding and not
+     * setting anything, this method treats (rather arbitrarily but
+     * definitely) behavior.NO_SET exactly the same as if Behavior..LITERAL
+     * was actually set.
+     */
+    synchronized public String expand(
+            String inString, Map<String, Object> sourceMap, boolean dotDeref) {
+        /* Synchronized because instance field 'targMap' is referenced by
+         * called instance methods. */
+        Set throwRefs = []
+        Set zeroRefs = []
+        Set literalRefs = []
+        Set nosetRefs = []
+        Matcher matcher
+        String newValString, mg0, mg1, mg1de
+        targMap = null  // We do no assignments
+        Pattern systemPropPattern = ((systemPropPrefix == null) 
+                ? null
+                : Pattern.compile('^\\Q' + systemPropPrefix + '\\E(.+)'))
+
+        int dollarIndex
+
+        // 1:  Handle unresolved ${ref} values
+        newValString = inString.replaceAll(curlyRefGrpPatternDflt) {
+                matchGrps ->
+            mg0 = matchGrps.first()
+            mg1 = matchGrps[1].replace('\u0005', '}')
+            if (mg1.charAt(0) == '\\' && mg1.length() > 1)
+                mg1 = mg1.substring(1)
+            mg1de = mg1.replace('\u0004', '$') // dollar-escaped
+            if (systemPropPattern != null) {
+                matcher = systemPropPattern.matcher(mg1de)
+                if (matcher.matches()) {
+                    if (System.properties.containsKey(matcher.group(1)))
+                        return System.properties[matcher.group(1)]
+                    switch (unsatisfiedRefBehavior) {
+                      // case Behavior.UNSET:  See note above re. UNSET
+                      case Behavior.LITERAL:
+                      case Behavior.NO_SET:
+                        literalRefs << matcher.group(1)
+                        return mg0
+                      case Behavior.EMPTY:
+                        zeroRefs << matcher.group(1)
+                        return ''
+                        nosetRefs << matcher.group(1)
+                      case Behavior.THROW:
+                        throwRefs << matcher.group(1)
+                        return '*'  // Dummy return val
+                      default:
+                        assert false:
+                            "Unexpected Behavior value:  $unsatisfiedRefBehavior"
+                    }
+                }
+            }
+            dollarIndex = mg1.indexOf('$')
+            if (dollarIndex > 0
+                    && dollarIndex < mg1.length() - 1) {
+                String extObjName = mg1.substring(0, dollarIndex)
+                String propName = mg1.substring(dollarIndex+1)
+                try {
+                    return getPossiblyNestedValue(dotDeref,
+                            gp.extensions.getByName(extObjName),
+                            propName)
+                } catch (Exception e) {
+                    assert false: '''
+Failed to resolve DomainExtensionObject ref though succeeded earlier:
+\'$''' + extObjName + '\' reference ${' + mg1 + '}: ' + e
+                }
+            }
+            if (hasPossiblyNestedValue(dotDeref,
+                    ((sourceMap == null) ? gp : sourceMap), mg1de))
+                return getPossiblyNestedValue(dotDeref,
+                        ((sourceMap == null) ? gp : sourceMap), mg1de)
+                        .toString()
+            switch (unsatisfiedRefBehavior) {
+              // case Behavior.UNSET:  See note above re. UNSET
+              case Behavior.LITERAL:
+              case Behavior.NO_SET:
+                literalRefs << mg1de
+                return mg0
+              case Behavior.EMPTY:
+                zeroRefs << mg1de
+                return ''
+              case Behavior.THROW:
+                throwRefs << mg1de
+                return '*'  // Dummy return val
+              default:
+                assert false:
+                    "Unexpected Behavior value:  $unsatisfiedRefBehavior"
+            }
+        }
+        // 2:  Handle unresolved ${!ref} values
+        .replaceAll(curlyRefGrpPatternBang) {
+                matchGrps ->
+            mg1 = mg1
+            mg1de = mg1.replace('\u0004', '$') // dollar-escaped
+            if (systemPropPattern != null) {
+                matcher = systemPropPattern.matcher(mg1de)
+                if (matcher.matches()) {
+                    if (System.properties.containsKey(matcher.group(1)))
+                        return System.properties[matcher.group(1)]
+                    throwRefs << matcher.group(1)
+                    return '*'  // Dummy return val
+                }
+            }
+            dollarIndex = mg1.indexOf('$')
+            if (dollarIndex > 0 && dollarIndex < mg1.length() - 1) {
+                String extObjName = mg1.substring(0, dollarIndex)
+                String propName = mg1.substring(dollarIndex+1)
+                try {
+                    return getPossiblyNestedValue(dotDeref,
+                            gp.extensions.getByName(extObjName),
+                            propName)
+                } catch (Exception e) {
+                    assert false: '''
+Failed to resolve DomainExtensionObject ref though succeeded earlier:
+\'$''' + extObjName + '\' reference ${' + mg1 + '}: ' + e
+                }
+            }
+            if (hasPossiblyNestedValue(dotDeref,
+                    ((sourceMap == null) ? gp : sourceMap), mg1de))
+                return getPossiblyNestedValue(dotDeref,
+                        ((sourceMap == null) ? gp : sourceMap), mg1de)
+                        .toString()
+            throwRefs << mg1de
+            return '*'  // Dummy return val
+        }
+        // 3:  Handle unresolved ${-ref} values
+        .replaceAll(curlyRefGrpPatternHyphen) {
+                matchGrps ->
+            mg1 = matchGrps[1]
+            mg1de = mg1.replace('\u0004', '$') // dollar-escaped
+            if (systemPropPattern != null) {
+                matcher = systemPropPattern.matcher(mg1de)
+                if (matcher.matches()) {
+                    if (System.properties.containsKey(matcher.group(1)))
+                        return System.properties[matcher.group(1)]
+                    zeroRefs << matcher.group(1)
+                    return ''
+                }
+            }
+            dollarIndex = mg1.indexOf('$')
+            if (dollarIndex > 0 && dollarIndex < mg1.length() - 1) {
+                String extObjName = mg1.substring(0, dollarIndex)
+                String propName = mg1.substring(dollarIndex+1)
+                try {
+                    return getPossiblyNestedValue(dotDeref,
+                            gp.extensions.getByName(extObjName),
+                            propName)
+                } catch (Exception e) { assert false: '''
+Failed to resolve DomainExtensionObject ref though succeeded earlier:
+\'$''' + extObjName + '\' reference ${' + mg1 + '}: ' + e
+                }
+            }
+            if (hasPossiblyNestedValue(dotDeref,
+                    ((sourceMap == null) ? gp : sourceMap), mg1de))
+                return getPossiblyNestedValue(dotDeref,
+                        ((sourceMap == null) ? gp : sourceMap), mg1de)
+                        .toString()
+            zeroRefs << mg1de
+            return ''
+        }
+        // 4:  Handle unresolved ${.ref} values
+        .replaceAll(curlyRefGrpPatternDot) {
+                matchGrps ->
+            mg1 = matchGrps[1]
+            mg0 = matchGrps.first()
+            mg1de = mg1.replace('\u0004', '$') // dollar-escaped
+            if (systemPropPattern != null) {
+                matcher = systemPropPattern.matcher(mg1de)
+                if (matcher.matches()) {
+                    if (System.properties.containsKey(matcher.group(1)))
+                        return System.properties[matcher.group(1)]
+                    literalRefs << matcher.group(1)
+                    return mg0
+                }
+            }
+            dollarIndex = mg1.indexOf('$')
+            if (dollarIndex > 0 && dollarIndex < mg1.length() - 1) {
+                String extObjName = mg1.substring(0, dollarIndex)
+                String propName = mg1.substring(dollarIndex+1)
+                try {
+                    return getPossiblyNestedValue(dotDeref,
+                            gp.extensions.getByName(extObjName),
+                            propName)
+                } catch (Exception e) {
+                    assert false: '''
+Failed to resolve DomainExtensionObject ref though succeeded earlier: \'$''' + extObjName + '\' reference ${' + mg1 + '}: ' + e
+                }
+            }
+            if (hasPossiblyNestedValue(dotDeref,
+                    ((sourceMap == null) ? gp : sourceMap), mg1de))
+                return getPossiblyNestedValue(dotDeref,
+                        ((sourceMap == null) ? gp : sourceMap), mg1de)
+                        .toString()
+            literalRefs << mg1de
+            return mg0
+        }
+
+        if (throwRefs.size() > 0)
+            throw new GradleException(
+                'Unable to resolve references: ' + throwRefs)
+        if (zeroRefs.size() > 0)
+            gp.logger.warn(
+                    'Zero\'d unresolved references: ' + zeroRefs)
+        if (literalRefs.size() > 0)
+            gp.logger.warn(
+                    'Did not expand unresolved references: ' + literalRefs)
+
+        return newValString
     }
 }

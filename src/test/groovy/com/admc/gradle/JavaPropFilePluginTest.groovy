@@ -1133,4 +1133,55 @@ mu=pre${\\\\.drei}post
         assertEquals('pre22post', project.property('epsilon'))
         assertEquals('pre23post', project.property('mu'))
     }
+
+    @org.junit.Test
+    void noopExpand() {
+        assertEquals(
+                'Alpha\nBeta', project.propFileLoader.expand('Alpha\nBeta'))
+    }
+
+    @org.junit.Test
+    void expandFile() {
+        URL url = Thread.currentThread().contextClassLoader.getResource(
+                'template.txt')
+        assert url != null:
+            '''Template file not found as resource in classpath: template.txt
+'''
+        checkProps('aProjProp', 'aSysProp')
+        System.setProperty('aSysProp', 'eins')
+        project.setProperty('aProjProp', 'zwei')
+        File newFile = File.createTempFile('template', '.txt')
+        newFile.deleteOnExit()
+        newFile.write(url.getText('UTF-8'), 'UTF-8')
+
+        assertEquals('''A Sample Template for Testing the JavaPropFile expand() Method
+
+A Java System property is 'eins', and a Gradle Project property is zwei and again (zwei).
+This line contains an un-expanded dot ${.reference} and a removed one in quotes: ''.
+''',
+                project.propFileLoader.expand(newFile, 'UTF-8'))
+    }
+
+    @org.junit.Test
+    void expandWithMap() {
+        URL url = Thread.currentThread().contextClassLoader.getResource(
+                'template.txt')
+        assert url != null:
+            '''Template file not found as resource in classpath: template.txt
+'''
+        checkProps('aProjProp', 'aSysProp')
+        System.setProperty('aSysProp', 'eins')
+        project.setProperty('aProjProp', 'zwei')
+        Map<String, Object> aMap = [aProjProp: 'drei']
+        File newFile = File.createTempFile('template', '.txt')
+        newFile.deleteOnExit()
+        newFile.write(url.getText('UTF-8'), 'UTF-8')
+
+        assertEquals('''A Sample Template for Testing the JavaPropFile expand() Method
+
+A Java System property is 'eins', and a Gradle Project property is drei and again (drei).
+This line contains an un-expanded dot ${.reference} and a removed one in quotes: ''.
+''',
+                project.propFileLoader.expand(newFile, aMap, 'UTF-8'))
+    }
 }
