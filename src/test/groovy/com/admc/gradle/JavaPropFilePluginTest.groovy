@@ -1172,7 +1172,6 @@ This line contains an un-expanded dot ${.reference} and a removed one in quotes:
         checkProps('aProjProp', 'aSysProp')
         System.setProperty('aSysProp', 'eins')
         project.setProperty('aProjProp', 'zwei')
-        Map<String, Object> aMap = [aProjProp: 'drei']
         File newFile = File.createTempFile('template', '.txt')
         newFile.deleteOnExit()
         newFile.write(url.getText('UTF-8'), 'UTF-8')
@@ -1182,6 +1181,14 @@ This line contains an un-expanded dot ${.reference} and a removed one in quotes:
 A Java System property is 'eins', and a Gradle Project property is drei and again (drei).
 This line contains an un-expanded dot ${.reference} and a removed one in quotes: ''.
 ''',
-                project.propFileLoader.expand(newFile, aMap, 'UTF-8'))
+                project.propFileLoader.expand(newFile, [aProjProp: 'drei'], 'UTF-8'))
+    }
+
+    @org.junit.Test(expected=GradleException.class)
+    void expandMapThrow() {
+        checkProps('alpha', 'aSysProp')
+        System.setProperty('alpha', 'eins')
+        project.setProperty('alpha', 'zwei')
+        project.propFileLoader.expand('Pre ${alpha} Post', [other: 'mother'])
     }
 }
