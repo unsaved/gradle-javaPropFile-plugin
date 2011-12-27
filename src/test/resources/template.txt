@@ -1,4 +1,4 @@
 A Sample Template for Testing the JavaPropFile expand() Method
 
-A Java System property is '${sys|aSysProp}', and a Gradle Project property is ${aProjProp} and again (${aProjProp}).
+A Java System property is '${sys|aSysProp}', and a Gradle Project property is ${aProjProp} and again (${!aProjProp}).
 This line contains an un-expanded dot ${.reference} and a removed one in quotes: '${-reference}'.
