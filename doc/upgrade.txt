@@ -39,3 +39,7 @@ Recent functional changes.
     source code repository trunk, and will be in the next public release.
 
     ContentAsStringFilter, a Gradle Copy Filter, added.
+
+    Added expand() methods which expand ${references} in given String or
+    text File, using mappings according to normal JavaPropFile algorithms or
+    a supplied Map.

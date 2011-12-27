@@ -16,15 +16,10 @@
 defaultTasks 'displaySomeProps', 'displaySomeSysProps', 'displayLoadedMap'
 
 buildscript {
-/*
     repositories { mavenCentral() }
     dependencies {
         classpath 'com.admc:gradle-javaPropFile-plugin:latest.milestone'
     }
-*/
-    buildscript { dependencies {
-        classpath fileTree(dir: '../build/libs', excludes: ['**/*javadoc*, **/*sources*'], include: '**/*.jar')
-    } }
 }
 apply plugin: 'java'
 apply plugin: 'javaPropFile'
@@ -154,12 +149,6 @@ processResources {
     }
 }
 
-task anyCopyTask(type: Copy) {
-    from 'src/main/resources'
-    into 'build/tmp/x'
-    filter(ContentAsStringFilter, closure: { it.toLowerCase() })
-}
-
 task myTask << {
     // Do anything you want, +...
     copy {
@@ -168,3 +157,19 @@ task myTask << {
         filter(ContentAsStringFilter, closure: { it.toLowerCase() })
     }
 }
+myTask.description =
+        'Uses ContentAsStringFilter functionally, writing to build/tmp/y'
+
+task expand(type: Copy) {
+    System.setProperty('aSysProp', 'eins')
+    project.setProperty('aProjProp', 'zwei')
+    Map<String, Object> aMap = [aProjProp: 'drei']
+    propFileLoader.overwriteThrow = true
+    from 'src/main/resources'
+    into 'build/tmp/x'
+    filter(ContentAsStringFilter, closure: {
+        propFileLoader.expand(it)
+    })
+}
+expand.description =
+  'Uses ContentAsStringFilter + JavaPropFile.expand(), writing to build/tmp/x'

@@ -1,4 +1,4 @@
 A Sample Template for Testing the JavaPropFile expand() Method
 
-Your user ID is '${sys|user.name}', and you are using the ${name} project.
+A Java System property is '${sys|aSysProp}', and a Gradle Project property is ${aProjProp} and again (${!aProjProp}).
 This line contains an un-expanded dot ${.reference} and a removed one in quotes: '${-reference}'.

@@ -7,7 +7,9 @@ read the file "upgrade.txt" in the "doc" subdirectory.
 
 This plugin is for loading a Map, a Gradle Project or extension object (and
 objects nested beneath them), with properties from Java properties file;
-plus a general Gradle Copy Filter is provided.
+or for expanding given Strings or text files with the objects just listed or
+with a supplied Map; plus a general Gradle Copy Filter is provided.
+
 Most classes are supported, so that you can write JDK objects, custom objects,
 array, and collections in addition to String values (using a simply 'casting'
 syntax like "file.txt(File)").
@@ -130,6 +132,16 @@ FEATURES
       See 'ContentAsStringFilter' below.
       THIS FILTER IS FULLY IMPLEMENTED AND TESTED IN THE SOURCE CODE REPOSITORY
       TRUNK , BUT IS NOT IN A PUBLIC RELEASE YET.
+
+    + General expansion of ${reference}s in supplied Strings or Files.
+      References can be Gradle Projects or extension objects, as described
+      above, or a plain old user-supplied Map.  See the expand() methods below.
+      THIS FUNCTION IS FULLY IMPLEMENTED AND TESTED IN THE SOURCE CODE
+      REPOSITORY TRUNK , BUT IS NOT IN A PUBLIC RELEASE YET.
+
+    + The previous two items, ContentAsStringFilter + expand() methods, may be
+      combined to do efficient and powerful property expansion of text content
+      or resource files when building applications.
 
 USAGE
 
@@ -425,6 +437,34 @@ DETAILS
             Gradle callback to execute deferred extension property settings
             when the target extension object comes online.
 
+        String propFileLoader.expand(...)
+            The following methods all expand references in the specified String
+            or File (1st parameter) and return the resulting String.
+            propFileLoader Settings like propFileLoader.unsatisfiedRefBehavior
+            effect how expansions are performed.
+            A peculiarity is that since Behavior.NO_SET makes no sense when
+            only doing expansion, in this method a setting of Behavior.NO_SET
+            causes expansion exactly like Behavior.LITERAL.
+            If a final String is specified, that is the encoding type used
+            when reading the input text file.
+            If a boolean is specified, that enables DotDeref, which is disabled
+            by default.
+            If a Map is specivied, then that mapping will be used by default
+            for expansion mappings instead of the Gradle Project properties.
+        String propFileLoader.expand(File, Map<String, Object>)
+        String propFileLoader.expand(File, boolean)
+        String propFileLoader.expand(File)
+        String propFileLoader.expand(File, Map<String, Object>, boolean)
+        String propFileLoader.expand(File, Map<String, Object>, String)
+        String propFileLoader.expand(File, boolean dotDeref, String)
+        String propFileLoader.expand(File, String)
+        String propFileLoader.expand(
+                File, Map<String, Object> , boolean, String)
+        String propFileLoader.expand(String, Map<String, Object> sourceMap)
+        String propFileLoader.expand(String, boolean)
+        String propFileLoader.expand(String)
+        String propFileLoader.expand(String, Map<String, Object>, boolean)
+
     Configurations:
 
         After you "apply plugin 'javaPropFile'", you can set the following
@@ -552,3 +592,7 @@ ContentAsStringFilter
     file collection.
     THIS BEHAVIOR IS FULLY IMPLEMENTED AND TESTED IN THE SOURCE CODE REPOSITORY
     TRUNK , BUT IS NOT IN A PUBLIC RELEASE YET.
+
+Expand methods
+    File "doc/build.gradle" has an example of expanding property references in
+    application files using a COntentAsStringFilter and an .expand() call.
