@@ -1117,7 +1117,7 @@ Failed to resolve DomainExtensionObject ref though succeeded earlier:
     /**
      * Since Beavior.NO_SET makes no sense when we are expanding and not
      * setting anything, this method treats (rather arbitrarily but
-     * definitely) behavior.NO_SET exactly the same as if Behavior..LITERAL
+     * definitely) behavior.NO_SET exactly the same as if Behavior.LITERAL
      * was actually set.
      */
     synchronized public String expand(
