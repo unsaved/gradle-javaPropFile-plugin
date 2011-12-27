@@ -27,6 +27,7 @@ noop.description = 'Noop task for Gradle testing'
 
 jar { doFirst {
     project.metaInf << files('doc/LICENSE.txt')
+    exclude '**/.*/**'
     jar { manifest { attributes(
         'Specification-Title': 'JavaPropFile Gradle Plugin',
         'Specification-Version': '0.5.0',
