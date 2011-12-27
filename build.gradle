@@ -63,14 +63,16 @@ task checkTabs << {
 checkTabs.description = 'Reports on any text files containing tab characters'
 
 task sourcesJar(type: Jar, dependsOn:classes) {
-     classifier = 'sources'
-     from sourceSets.main.allSource
+    exclude '**/.*/**'
+    classifier = 'sources'
+    from sourceSets.main.allSource
 }
 sourcesJar.description = 'Build sources jar file'
 
 task javadocJar(type: Jar, dependsOn:javadoc) {
-     classifier = 'javadoc'
-     from javadoc.destinationDir
+    exclude '**/.*/**'
+    classifier = 'javadoc'
+    from javadoc.destinationDir
 }
 javadocJar.description = 'Build javadoc jar file'
 
