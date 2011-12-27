@@ -9,37 +9,15 @@ GOTCHAS
       not.  This has nothing to do with JavaPropFile, but with Gradle caching.
 
 
-Recent functional changes.
+Recent functional changes.  The new features are all documented in the file
+"README.txt" in the project root directory.
 
-    Version 4.x introduces two new major features, 'keyAssignPrefix'es, and
-    loading of Maps (in addition to Projects and extension objects).  Both
-    are implemented by new load method signatures, so see the main "README.txt"
-    file, sub-section DETAILS / Provided Public Methods.
+    BehaviorRefPrefixes allow for property-specific unset-property behaviors.
 
-    Excepting the items listed below, recent changes are all backwards
-    compatible, and the many unit tests assure this.
+    }-escaping
 
-    ! To allow for the new 'keyAssignPrefix', the method signature to
-      do a load into an extension object has changed from
+    ContentAsStringFilter, a Gradle Copy Filter
 
-        propFileLoader.load(File, String)
-
-      to
-
-        propFileLoader.loadIntoExtensionObject(File, String)
-
-      Calling "propFileLoader.load(File, String)" will load the file to the
-      Gradle Properties object with the specified keyAssignPrefix.
-
-    BehaviorRefPrefixes, as described in "README.TXT", are fully implemented
-    in the source code repository trunk, and will be in the next public
-    release.
-
-    }-escaping, as described in "README.TXT", is fully implemented in the
-    source code repository trunk, and will be in the next public release.
-
-    ContentAsStringFilter, a Gradle Copy Filter, added.
-
-    Added expand() methods which expand ${references} in given String or
+    expand() methods which expand ${references} in given String or
     text File, using mappings according to normal JavaPropFile algorithms or
     a supplied Map.

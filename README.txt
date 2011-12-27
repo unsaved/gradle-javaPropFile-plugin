@@ -122,22 +122,16 @@ FEATURES
     + Individual ${references} may use property name prefix characters to
       override the unset-reference-property behavior, so that in a single
       properties file or String or text file to be expanded, some references
-      may be required and others optional.  THIS BEHAVIOR IS FULLY IMPLEMENTED
-      AND TESTED IN THE SOURCE CODE REPOSITORY TRUNK , BUT IS NOT IN A PUBLIC
-      RELEASE YET.
+      may be required and others optional.
 
     + Provides Gradle Copy Filter that works just like Gradle's
           filter { String line -> output one line }
       but with good performance and without the limitations.
       See 'ContentAsStringFilter' below.
-      THIS FILTER IS FULLY IMPLEMENTED AND TESTED IN THE SOURCE CODE REPOSITORY
-      TRUNK , BUT IS NOT IN A PUBLIC RELEASE YET.
 
     + General expansion of ${reference}s in supplied Strings or Files.
       References can be Gradle Projects or extension objects, as described
       above, or a plain old user-supplied Map.  See the expand() methods below.
-      THIS FUNCTION IS FULLY IMPLEMENTED AND TESTED IN THE SOURCE CODE
-      REPOSITORY TRUNK , BUT IS NOT IN A PUBLIC RELEASE YET.
 
     + The previous two items, ContentAsStringFilter + expand() methods, may be
       combined to do efficient and powerful property expansion of text content
@@ -223,8 +217,13 @@ DETAILS
     DEFINITIONS
         BehaviorRefPrefixing:
             Prefixing a referenced property name with ! - or . to specify
-             behavior if the specified property is not set (this overrides
-             the 'unsatisfiedRefBehavior' setting of the propFileLoader.
+            behavior if the specified property is not set (this overrides
+            the 'unsatisfiedRefBehavior' setting of the propFileLoader).
+            Allows single-reference-specific behaviors in the same properties
+            or text files.  Some ${references} may require the property to be
+            set, others may leave the text of unsatisfied references unchanged,
+            and other occurrences may replace the unsatisfied reference with
+            nothing (empty string).
         DotDeref 
             Behavior where specifications like alpha.beta.gamma means
             property-gamma-of-property-beta-of-property-alpha, instead of
@@ -279,8 +278,6 @@ DETAILS
         # In all cases above (except nested properties, as noted), references
         # to properties that are missing are handled according to the default
         # or specified unsatisfiedRefBehavior.
-       THE FOLLOWING ALTERNATIVES ARE FULLY IMPLEMENTED AND TESTED IN THE
-       SOURCE CODE REPOSITORY TRUNK, BUT ARE NOT IN A PUBLIC RELEASE YET.
         ${!propName}         # For all variants above, if the reference
         ${!sys|propName}     # property name is immediately preceded by !,
         etc.                 # then the unsatisfiedRefBehavior is thereby
@@ -361,8 +358,6 @@ DETAILS
         sides and in expand() Strings or text files):
             \\$  Unless $ used to specify an extension object
             \\}  Otherwise it would end the ${...}
-        IMPORTANT:  } ESCAPING IS FULLY IMPLEMENTED AND TESTED IN THE SOURCE
-        CODE REPOSITORY TRUNK, BUT IS NOT IN A PUBLIC RELEASE YET.
 
 
     Precedence works intuitively, not freakishly like Ant properties.
@@ -590,8 +585,6 @@ ContentAsStringFilter
     See "doc/build.gradle" for useful examples with Copy task configuration,
     functional "copy {...}" calls, and filtering a just subset of a predefined
     file collection.
-    THIS BEHAVIOR IS FULLY IMPLEMENTED AND TESTED IN THE SOURCE CODE REPOSITORY
-    TRUNK , BUT IS NOT IN A PUBLIC RELEASE YET.
 
 Expand methods
     File "doc/build.gradle" has an example of expanding property references in
