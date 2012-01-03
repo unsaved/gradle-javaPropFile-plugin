@@ -588,4 +588,4 @@ ContentAsStringFilter
 
 Expand methods
     File "doc/build.gradle" has an example of expanding property references in
-    application files using a COntentAsStringFilter and an .expand() call.
+    application files using a ContentAsStringFilter and an .expand() call.
