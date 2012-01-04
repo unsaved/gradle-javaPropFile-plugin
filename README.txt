@@ -589,3 +589,23 @@ ContentAsStringFilter
 Expand methods
     File "doc/build.gradle" has an example of expanding property references in
     application files using a ContentAsStringFilter and an .expand() call.
+
+    JavaPropFile is distinctive from other templating/expansions systems in
+    that it can be used with the other systems without breaking them.
+    I very frequently want to perform build-time substitutions on files that
+    will later be run-time substituted.  This is a major pain with other
+    systems out there, requiring extra staging directories, escaping
+    characters, non-standard delimiters, loss of validation, etc.
+    This use case is handled intuitively by JavaPropFile by three easy steps:
+        1: Use a sensible naming convention to make it clear to developers
+           whether each reference is intended for use by JavaPropFile or the
+           other tool.  (If loading properties from a file, you can use the
+           'keyAssignPrefix' load parameter to facilitate this).
+        2: Set...
+          propFileLoader.unsatisfiedRefBehavior = JavaPropFile.Behavior.LITERAL
+        3: For each reference that you want to require JavaPropFile to expand,
+           prefix the name with !, like...
+          Some text in the template file requires ${!name} to be set.
+    Instead of duplicating an example here, see the configuration of task
+    'processResources' in this production build file:
+        https://github.com/unsaved/jcreole/raw/master/build.gradle

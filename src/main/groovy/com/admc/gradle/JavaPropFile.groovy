@@ -1152,6 +1152,7 @@ Failed to resolve DomainExtensionObject ref though succeeded earlier:
                         return System.properties[matcher.group(1)]
                     switch (unsatisfiedRefBehavior) {
                       // case Behavior.UNSET:  See note above re. UNSET
+                      // See class JavaDoc above about Behavior.NO_SET here.
                       case Behavior.LITERAL:
                       case Behavior.NO_SET:
                         literalRefs << matcher.group(1)
@@ -1159,7 +1160,6 @@ Failed to resolve DomainExtensionObject ref though succeeded earlier:
                       case Behavior.EMPTY:
                         zeroRefs << matcher.group(1)
                         return ''
-                        nosetRefs << matcher.group(1)
                       case Behavior.THROW:
                         throwRefs << matcher.group(1)
                         return '*'  // Dummy return val
@@ -1209,7 +1209,7 @@ Failed to resolve DomainExtensionObject ref though succeeded earlier:
         // 2:  Handle unresolved ${!ref} values
         .replaceAll(curlyRefGrpPatternBang) {
                 matchGrps ->
-            mg1 = mg1
+            mg1 = matchGrps[1]
             mg1de = mg1.replace('\u0004', '$') // dollar-escaped
             if (systemPropPattern != null) {
                 matcher = systemPropPattern.matcher(mg1de)

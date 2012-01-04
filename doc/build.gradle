@@ -169,6 +169,10 @@ task expand(type: Copy) {
     into 'build/tmp/x'
     filter(ContentAsStringFilter, closure: {
         propFileLoader.expand(it)
+        //propFileLoader.expand(it, [a: map])   to expand properties from a map.
+        // See README.txt for an easy tactic if you want to do JavaPropFile
+        // expansion on files that will later have ${...} expanded by
+        // something else like Spring, Groovy, JSP EL, Velocity, Log4j...
     })
 }
 expand.description =

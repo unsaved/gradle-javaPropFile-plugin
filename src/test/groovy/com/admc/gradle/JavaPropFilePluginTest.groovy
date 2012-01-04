@@ -1169,7 +1169,7 @@ This line contains an un-expanded dot ${.reference} and a removed one in quotes:
         assert url != null:
             '''Template file not found as resource in classpath: template.txt
 '''
-        checkProps('aProjProp', 'aSysProp')
+        checkProps('aProjProp', 'aSysProp', 'reference')
         System.setProperty('aSysProp', 'eins')
         project.setProperty('aProjProp', 'zwei')
         File newFile = File.createTempFile('template', '.txt')
@@ -1190,5 +1190,33 @@ This line contains an un-expanded dot ${.reference} and a removed one in quotes:
         System.setProperty('alpha', 'eins')
         project.setProperty('alpha', 'zwei')
         project.propFileLoader.expand('Pre ${alpha} Post', [other: 'mother'])
+    }
+
+    @org.junit.Test
+    void expandSomeWithMap() {
+        checkProps('alpha', 'beta', 'gamma', 'delta')
+        project.propFileLoader.unsatisfiedRefBehavior =
+                JavaPropFile.Behavior.LITERAL
+
+        assertEquals(
+'''One ${alpha} Two ${beta} Three ${alpha} Four drei Five
+one ${alpha} two ${beta} three ${alpha} four drei five
+'''
+                , project.propFileLoader.expand(
+'''One ${alpha} Two ${beta} Three ${alpha} Four ${gamma} Five
+one ${alpha} two ${beta} three ${alpha} four ${gamma} five
+'''
+                , [gamma: 'drei', delta: 'vier']))
+    }
+
+    @org.junit.Test(expected=GradleException.class)
+    void expandBangThrow() {
+        checkProps('alpha', 'beta', 'gamma', 'delta')
+        project.propFileLoader.unsatisfiedRefBehavior =
+                JavaPropFile.Behavior.LITERAL
+
+        project.propFileLoader.expand(
+                'One ${!alpha} Two ${!beta} Three ${alpha} Four ${gamma} Five',
+                [gamma: 'drei', delta: 'vier'])
     }
 }
