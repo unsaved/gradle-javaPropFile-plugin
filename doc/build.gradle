@@ -135,6 +135,11 @@ task displayLoadedMap << {
 displayLoadedMap.description =
         'Display a Map loaded from a map file with specified name-prefix'
 
+
+// ContentAsStringFilter uses:
+// As noted in "README.txt", if there is a reference failure you will have to
+// add -s to your Gradle invocation to find out the real cause.
+
 import com.admc.gradle.ContentAsStringFilter
 processResources {
     exclude '**/.*/**'

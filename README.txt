@@ -440,12 +440,14 @@ DETAILS
             A peculiarity is that since Behavior.NO_SET makes no sense when
             only doing expansion, in this method a setting of Behavior.NO_SET
             causes expansion exactly like Behavior.LITERAL.
-            If a final String is specified, that is the encoding type used
+            If a method variant with File parameter and a final String param,
+            the final String parameter is the encoding type that will be used
             when reading the input text file.
             If a boolean is specified, that enables DotDeref, which is disabled
             by default.
-            If a Map is specivied, then that mapping will be used by default
+            If a Map is specified, then that mapping will be used by default
             for expansion mappings instead of the Gradle Project properties.
+            See the 'Expand methods' section below for more details.
         String propFileLoader.expand(File, Map<String, Object>)
         String propFileLoader.expand(File, boolean)
         String propFileLoader.expand(File)
@@ -589,6 +591,14 @@ ContentAsStringFilter
 Expand methods
     File "doc/build.gradle" has an example of expanding property references in
     application files using a ContentAsStringFilter and an .expand() call.
+
+    When using the expand method nested in some closures... definitely when
+    calling expand inside of a ContentAsStringFilter... reference failures
+    (throws) will just indicate failure whatever executes the closure.
+    In the case of a reference failure in a ContentAsStringFilter, you will
+    get a Gradle error message including "Cause: Could not copy file...".
+    Just re-run the Gradle command with the addition of the -s switch and look
+    through the stack traces for the precise failure cause.
 
     JavaPropFile is distinctive from other templating/expansions systems in
     that it can be used with the other systems without breaking them.
