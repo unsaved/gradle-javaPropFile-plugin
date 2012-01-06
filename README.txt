@@ -146,7 +146,7 @@ Pull plugin from Internet.
         buildscript {
             repositories { mavenCentral() }
             dependencies {
-                classpath 'com.admc:gradle-javaPropFile-plugin:latest.milestone'
+                classpath 'com.admc:gradle-javaPropFile-plugin:latest.integration'
             }
         }
         apply plugin: 'javaPropFile'

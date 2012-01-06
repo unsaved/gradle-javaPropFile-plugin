@@ -18,7 +18,7 @@ defaultTasks 'displaySomeProps', 'displaySomeSysProps', 'displayLoadedMap'
 buildscript {
     repositories { mavenCentral() }
     dependencies {
-        classpath 'com.admc:gradle-javaPropFile-plugin:latest.milestone'
+        classpath 'com.admc:gradle-javaPropFile-plugin:latest.integration'
     }
 }
 apply plugin: 'java'
