@@ -627,7 +627,7 @@ Failed to resolve DomainExtensionObject ref though succeeded earlier:
      * @return java.lang.Class instance.  Never returns null
      * @throws GradleException if specified class not accessible
      */
-    public static Class resolveClass(String className) {
+    static Class resolveClass(String className) {
         if (className.indexOf('.') < 0) {
             for (pkg in JavaPropFile.defaultGroovyPackages) try {
                 return Class.forName(pkg + '.' + className,
@@ -1011,7 +1011,7 @@ Failed to resolve DomainExtensionObject ref though succeeded earlier:
     /**
      * Wrapper for #expand(File, Map, boolean), with dotDeref false.
      */
-    public String expand(File inFile, Map<String, Object> sourceMap) {
+    String expand(File inFile, Map<String, Object> sourceMap) {
         return expand(inFile, sourceMap, false)
     }
 
@@ -1019,7 +1019,7 @@ Failed to resolve DomainExtensionObject ref though succeeded earlier:
      * Wrapper for #expand(File, Map, boolean), with no sourceMap so that
      * the Gradle Project is checked for properties by default.
      */
-    public String expand(File inFile, boolean dotDeref) {
+    String expand(File inFile, boolean dotDeref) {
         return expand(inFile, null, dotDeref)
     }
 
@@ -1028,7 +1028,7 @@ Failed to resolve DomainExtensionObject ref though succeeded earlier:
      * no sourceMap so that the Gradle Project is checked for properties by
      * default.
      */
-    public String expand(File inFile) {
+    String expand(File inFile) {
         return expand(inFile, null, false)
     }
 
@@ -1038,7 +1038,7 @@ Failed to resolve DomainExtensionObject ref though succeeded earlier:
 
      * @see #expand(String, Map, boolean)
      */
-    public String expand(
+    String expand(
             File inFile, Map<String, Object> sourceMap, boolean dotDeref) {
         if (!inFile.canRead())
             throw new GradleException(
@@ -1051,7 +1051,7 @@ Failed to resolve DomainExtensionObject ref though succeeded earlier:
     /**
      * Wrapper for #expand(File, Map, boolean, String), with dotDeref false.
      */
-    public String expand(
+    String expand(
             File inFile, Map<String, Object> sourceMap, String encoding) {
         return expand(inFile, sourceMap, false, encoding)
     }
@@ -1061,7 +1061,7 @@ Failed to resolve DomainExtensionObject ref though succeeded earlier:
      * with no sourceMap so that
      * the Gradle Project is checked for properties by default.
      */
-    public String expand(File inFile, boolean dotDeref, String encoding) {
+    String expand(File inFile, boolean dotDeref, String encoding) {
         return expand(inFile, null, dotDeref, encoding)
     }
 
@@ -1070,7 +1070,7 @@ Failed to resolve DomainExtensionObject ref though succeeded earlier:
      * no sourceMap so that the Gradle Project is checked for properties by
      * default.
      */
-    public String expand(File inFile, String encoding) {
+    String expand(File inFile, String encoding) {
         return expand(inFile, null, false, encoding)
     }
 
@@ -1080,7 +1080,7 @@ Failed to resolve DomainExtensionObject ref though succeeded earlier:
 
      * @see #expand(String, Map, boolean)
      */
-    public String expand(File inFile,
+    String expand(File inFile,
             Map<String, Object> sourceMap, boolean dotDeref, String encoding) {
         if (!inFile.canRead())
             throw new GradleException(
@@ -1093,7 +1093,7 @@ Failed to resolve DomainExtensionObject ref though succeeded earlier:
     /**
      * Wrapper for #expand(String, Map, boolean), with dotDeref false.
      */
-    public String expand(String inString, Map<String, Object> sourceMap) {
+    String expand(String inString, Map<String, Object> sourceMap) {
         return expand(inString, sourceMap, false)
     }
 
@@ -1101,7 +1101,7 @@ Failed to resolve DomainExtensionObject ref though succeeded earlier:
      * Wrapper for #expand(String, Map, boolean), with no sourceMap so that
      * the Gradle Project is checked for properties by default.
      */
-    public String expand(String inString, boolean dotDeref) {
+    String expand(String inString, boolean dotDeref) {
         return expand(inString, null, dotDeref)
     }
 
@@ -1110,7 +1110,7 @@ Failed to resolve DomainExtensionObject ref though succeeded earlier:
      * no sourceMap so that the Gradle Project is checked for properties by
      * default.
      */
-    public String expand(String inString) {
+    String expand(String inString) {
         return expand(inString, null, false)
     }
 
@@ -1127,7 +1127,6 @@ Failed to resolve DomainExtensionObject ref though succeeded earlier:
         Set throwRefs = []
         Set zeroRefs = []
         Set literalRefs = []
-        Set nosetRefs = []
         Matcher matcher
         String newValString, mg0, mg1, mg1de
         targMap = null  // We do no assignments
@@ -1137,7 +1136,7 @@ Failed to resolve DomainExtensionObject ref though succeeded earlier:
 
         int dollarIndex
 
-        // 1:  Handle unresolved ${ref} values
+        // 1:  Handle ${ref} values
         newValString = inString.replaceAll(curlyRefGrpPatternDflt) {
                 matchGrps ->
             mg0 = matchGrps.first()
@@ -1206,7 +1205,7 @@ Failed to resolve DomainExtensionObject ref though succeeded earlier:
                     "Unexpected Behavior value:  $unsatisfiedRefBehavior"
             }
         }
-        // 2:  Handle unresolved ${!ref} values
+        // 2:  Handle ${!ref} values
         .replaceAll(curlyRefGrpPatternBang) {
                 matchGrps ->
             mg1 = matchGrps[1]
@@ -1242,7 +1241,7 @@ Failed to resolve DomainExtensionObject ref though succeeded earlier:
             throwRefs << mg1de
             return '*'  // Dummy return val
         }
-        // 3:  Handle unresolved ${-ref} values
+        // 3:  Handle ${-ref} values
         .replaceAll(curlyRefGrpPatternHyphen) {
                 matchGrps ->
             mg1 = matchGrps[1]
@@ -1277,7 +1276,7 @@ Failed to resolve DomainExtensionObject ref though succeeded earlier:
             zeroRefs << mg1de
             return ''
         }
-        // 4:  Handle unresolved ${.ref} values
+        // 4:  Handle ${.ref} values
         .replaceAll(curlyRefGrpPatternDot) {
                 matchGrps ->
             mg1 = matchGrps[1]
