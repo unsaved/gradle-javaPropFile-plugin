@@ -65,7 +65,7 @@ Github Issue to get help.
 
     * Nested property definitions like users of Ant and Log4j are used to.
       I.e. use references like ${this} in your property values.
-      ${ref} references can be made before or after the 'ref' property is
+      ${ref} references can be made before or after the ##ref## property is
       defined, as long as the ref is defined in this file (or before this file
       is loaded).  (If writing an object and a property of the object, you
       must create the object first).
@@ -81,7 +81,7 @@ Github Issue to get help.
       that is of a different data type.
     * Overwriting is configurable.  You may prohibit(throw), allow, or
       silently ignore attempts to overwrite.
-    * Turn on 'typeCasting' and if you prefix or suffix a property name with
+    * Turn on //typeCasting// and if you prefix or suffix a property name with
       a (ClassName), an instance of that class will be instantiated with a
       valueOf(String) or String constructor using the specified property value
       as the instantiation parameter.  The resultant object is what will be
@@ -118,7 +118,7 @@ Github Issue to get help.
     * Provides Gradle Copy Filter that works just like
       Gradle's\\##filter { String line -> output one line }##\\
       but with good performance and without the limitations.
-      See 'ContentAsStringFilter' below.
+      See [[#jcsect_Contentasstringfilter]] below.
     * General expansion of ${reference}s in supplied Strings or Files.
       References can be Gradle Projects or extension objects, as described
       above, or a plain old user-supplied Map.  See the expand() methods below.
@@ -211,7 +211,7 @@ Github Issue to get help.
      *= BehaviorRefPrefixing|
             Prefixing a referenced property name with ! - or . to specify
             behavior if the specified property is not set (this overrides
-            the 'unsatisfiedRefBehavior' setting of the propFileLoader).
+            the ##unsatisfiedRefBehavior## setting of the propFileLoader).
             Allows single-reference-specific behaviors in the same properties
             or text files.  Some ${references} may require the property to be
             set, others may leave the text of unsatisfied references unchanged,
@@ -220,7 +220,7 @@ Github Issue to get help.
      *= DotDeref|
             Behavior where specifications like alpha.beta.gamma means
             property-gamma-of-property-beta-of-property-alpha, instead of
-            property with name 'alpha.beta.gama'.  I.e. , if DotDefef behavior
+            property with name ##alpha.beta.gama##.  I.e. , if DotDefef behavior
             holds, then unescaped dots in property name acts as a dereference
             operator.
 
@@ -236,19 +236,19 @@ Github Issue to get help.
     Compare:
 <<prettyPrint>> {{{
         x.a=eks
-        # No whitespace immediately after key "x.a" so property name is "x.a".
+        # No whitespace immediately after key ##x.a## so property name is ##x.a##.
 }}}
     vs.
 <<prettyPrint>> {{{
         x.a =eks
-        # Whitespace immediately after key "x.a" so this means proeprty "a" of
-        # object "x".
+        # Whitespace immediately after key ##x.a## so this means property ##a## of
+        # object ##x##.
 }}}
     (MNEMONIC:  Groovy is distinctive for allowing white space to delimit
     between method name and parameters.  We use white space as delimiter to
     trigger Groovy-style dereferencing.)
     The presence of absence of white space after the key enables or disables
-    DotDeref both for the key and for ${references" in the
+    DotDeref both for the key and for ##${references}## in the
     value.  Another example to show this:
 <<prettyPrint>> {{{
         x=Value includes a reference to ${property.with.name.containg.dots}
@@ -289,7 +289,7 @@ Github Issue to get help.
         ${-propName}, etc.   # Just like previous case, but if the property is
                              # not set, the ${-...} expression will be replace
                              # with nothing at all (an empty string).
-        ${.propName}, etc.   # Just like previous case, but if the proeprty is
+        ${.propName}, etc.   # Just like previous case, but if the property is
                              # not set, the ${....} expression will be left
                              # exactly as it is.
         # The !, -, . prefixes, which override unsatisfiedRefBehavior, are
@@ -304,7 +304,7 @@ Github Issue to get help.
     In the great majority of cases, sequence makes no difference.  You can
     assign as many properties as you wish to, and reference as many properties
     as you wish to, and as long as the following two situations do not apply,
-    the sequence doesn't matter.  The ${reference} value of property 'x' will
+    the sequence doesn't matter.  The ##${reference}## value of property 'x' will
     be precisely what 'x' is set to in the same file (or, if it is not set in
     this file, then what it was before the file was loaded).  If 'x' is
     referenced 100 times like ${x}, it will have the same value every time,
@@ -330,7 +330,7 @@ Github Issue to get help.
         colon\:and\ space_inside_property_key=hello
 }}}
     But to tell JavaPropFile to escape characters (list of examples follows),
-    you must double escape with \\, because that is how you tell any Java
+    you must double escape with ~\\, because that is how you tell any Java
     properties file to pass | to the application (and in this context,
     JavaPropFile is an application).  Examples:
 <<prettyPrint>> {{{
@@ -389,8 +389,8 @@ Github Issue to get help.
 =====   void propFileLoader.load(File propertiesFile, String keyAssignPrefix)
             Exact same as previous, except that each property written to the
             Project is prefixed with the supplied String.
-            If you ran "propFileLoader.load(file('a.properties'), 'pref')" and
-            you have a line in "a.properties" like:
+            If you ran "##propFileLoader.load(file('a.properties'), 'pref')##" and
+            you have a line in ##a.properties## like:
 <<prettyPrint>> {{{
                 key=val
 }}}
@@ -403,7 +403,7 @@ Github Issue to get help.
             Loads a properties file and writes map properties with those values.
             You must specify a Map to be populated, so if you want to load a
             new Map, just specify value [:] as the map.
-            The given 'aMap' reference will be returned.
+            The given ##aMap## reference will be returned.
 
 ====    void propFileLoader.load(
 <<prettyPrint>> {{{
@@ -421,17 +421,17 @@ Github Issue to get help.
             is where the dereferencing begins).
 
 ====    void propFileLoader.traditionalPropertiesInit()
-            Loads 'app.properties' (if it is present), prohibiting use of
-            undefined ${...} references; then loads 'local.properties' (if it
+            Loads ##app.properties## (if it is present), prohibiting use of
+            undefined ${...} references; then loads ##local.properties## (if it
             is present), allowing use of undefined references.  Overwriting is
             allowed.  (It will use whatever settings you have made previously
             regarding typeCasting, system property assignment, and system
             property expansion.  Only the last of these is enabled by default).
-            File 'build.properties' is actually a more traditional file name
-            than 'app.properties' or 'local.properties', but unfortunately
-            the name 'build.properties' does not distinguish whether it is
+            File ##build.properties## is actually a more traditional file name
+            than ##app.properties## or ##local.properties## but unfortunately
+            the name ##build.properties## does not distinguish whether it is
             intended for shared or private/local usage, so I have standardized
-            on the distinctive names 'app.properties' and 'local.properties'.
+            on the distinctive names ##app.properties## and ##local.properties##
 
 ====    Map<String, Map<String, Object>>
                 propFileLoader.getDeferredExtensionProps()
@@ -466,7 +466,7 @@ Github Issue to get help.
             by default.
             If a Map is specified, then that mapping will be used by default
             for expansion mappings instead of the Gradle Project properties.
-            See the 'Expand methods' section below for more details.
+            See the [[#jcsect_ExpandMethods]] section below for more details.
 <<prettyPrint>> {{{
         String propFileLoader.expand(File, Map<String, Object>)
         String propFileLoader.expand(File, boolean)
@@ -485,8 +485,8 @@ Github Issue to get help.
 
 === Configurations:
 
-        After you "apply plugin 'javaPropFile'", you can set the following
-        properties on extension object 'propFileLoader'.
+        After you "##apply plugin 'javaPropFile'##", you can set the following
+        properties on extension object ##propFileLoader##.
 
 ====    boolean propFileLoader.unsatisfiedRefBehavior
             What to do when ${x} is used in a property value, but 'x' is not
@@ -529,14 +529,14 @@ Github Issue to get help.
 ====    String propFileLoader.systemPropPrefix
             If this is non-null, then you can both reference system properties
             in property definition values, and can assign system properties.
-            An example of each with systemPropPrefix set to 'sys|':
+            An example of each with systemPropPrefix set to ##sys|##:
 <<prettyPrint>> {{{
                 projectOwner=Mr. ${sys|user.name}
                 sys|java.io.tmpdir=/usr/local/tmp
 }}}
             Set to null to prevent referencing and assignment of system
             properties.
-            Defaults to 'sys|'.
+            Defaults to ##sys|##.
 
 ====    boolean propFileLoader.typeCasting
             If set to true, then whenever you set a property with name
@@ -610,24 +610,24 @@ nor property value:
     and then assign to the new value.
 
 ==== ContentAsStringFilter
-    Set attribute 'closure' to a closure that transforms the entire input
+    Set attribute ##closure## to a closure that transforms the entire input
     file text into output file text.
     As noted above, the advantages of ContentAsStringFilter are, it invokes
     the supplied closure only once for each input file, and it has no
     limitations on regex support or EOL-handling.
-    See "doc/build.gradle" for useful examples with Copy task configuration,
-    functional "copy {...}" calls, and filtering a just subset of a predefined
+    See ##doc/build.gradle## for useful examples with Copy task configuration,
+    functional ##copy {...}## calls, and filtering a just subset of a predefined
     file collection.
 
 ==== Expand methods
-    File "doc/build.gradle" has an example of expanding property references in
+    File ##doc/build.gradle## has an example of expanding property references in
     application files using a ContentAsStringFilter and an .expand() call.
 
     When using the expand method nested in some closures... definitely when
     calling expand inside of a ContentAsStringFilter... reference failures
     (throws) will just indicate failure whatever executes the closure.
     In the case of a reference failure in a ContentAsStringFilter, you will
-    get a Gradle error message including "Cause: Could not copy file...".
+    get a Gradle error message including "//Cause: Could not copy file...//".
     Just re-run the Gradle command with the addition of the -s switch and look
     through the stack traces for the precise failure cause.
 
@@ -640,13 +640,13 @@ nor property value:
     This use case is handled intuitively by JavaPropFile by three easy steps:
         # Use a sensible naming convention to make it clear to developers
            whether each reference is intended for use by JavaPropFile or the
-           other tool.  (If loading properties from a file, you can use the
-           'keyAssignPrefix' load parameter to facilitate this).
+           other tool.  (If loading properties from a file, you can use
+           the ##keyAssignPrefix## load parameter to facilitate this).
         # Set...\\##propFileLoader.unsatisfiedRefBehavior = JavaPropFile.Behavior.LITERAL##
         # For each reference that you want to require JavaPropFile to expand,
            prefix the name with !, like...
          Some text in the template file requires $~{!name} to be set.
 
-    Instead of duplicating an example here, see the configuration of task
-    'processResources' in this production build file:
+    Instead of duplicating an example here, see the configuration of
+    task ##processResources## in this production build file:
         https://github.com/unsaved/jcreole/raw/master/build.gradle

@@ -356,7 +356,7 @@ Github Issue to get help.</p>
 <ul>
   <li> Nested property definitions like users of Ant and Log4j are used to.
       I.e. use references like ${this} in your property values.
-      ${ref} references can be made before or after the 'ref' property is
+      ${ref} references can be made before or after the <tt>ref</tt> property is
       defined, as long as the ref is defined in this file (or before this file
       is loaded).  (If writing an object and a property of the object, you
       must create the object first).</li>
@@ -372,7 +372,7 @@ Github Issue to get help.</p>
       that is of a different data type.</li>
   <li> Overwriting is configurable.  You may prohibit(throw), allow, or
       silently ignore attempts to overwrite.</li>
-  <li> Turn on 'typeCasting' and if you prefix or suffix a property name with
+  <li> Turn on <em>typeCasting</em> and if you prefix or suffix a property name with
       a (ClassName), an instance of that class will be instantiated with a
       valueOf(String) or String constructor using the specified property value
       as the instantiation parameter.  The resultant object is what will be
@@ -409,7 +409,7 @@ Github Issue to get help.</p>
   <li> Provides Gradle Copy Filter that works just like
       Gradle's<br><tt>filter { String line -&gt; output one line }</tt><br>
       but with good performance and without the limitations.
-      See 'ContentAsStringFilter' below.</li>
+      See <a href="#jcsect_Contentasstringfilter">ContentAsStringFilter</a> below.</li>
   <li> General expansion of ${reference}s in supplied Strings or Files.
       References can be Gradle Projects or extension objects, as described
       above, or a plain old user-supplied Map.  See the expand() methods below.</li>
@@ -502,7 +502,7 @@ Github Issue to get help.</p>
   <li><span class="jcreole_lh"> BehaviorRefPrefixing</span><span class="jcreole_ld">
             Prefixing a referenced property name with ! - or . to specify
             behavior if the specified property is not set (this overrides
-            the 'unsatisfiedRefBehavior' setting of the propFileLoader).
+            the <tt>unsatisfiedRefBehavior</tt> setting of the propFileLoader).
             Allows single-reference-specific behaviors in the same properties
             or text files.  Some ${references} may require the property to be
             set, others may leave the text of unsatisfied references unchanged,
@@ -511,7 +511,7 @@ Github Issue to get help.</p>
   <li><span class="jcreole_lh"> DotDeref</span><span class="jcreole_ld">
             Behavior where specifications like alpha.beta.gamma means
             property-gamma-of-property-beta-of-property-alpha, instead of
-            property with name 'alpha.beta.gama'.  I.e. , if DotDefef behavior
+            property with name <tt>alpha.beta.gama</tt>.  I.e. , if DotDefef behavior
             holds, then unescaped dots in property name acts as a dereference
             operator.</span></li>
 </ul>
@@ -528,19 +528,19 @@ Github Issue to get help.</p>
 <p>    Compare:</p>
 <pre class="prettyprint">
         x.a=eks
-        # No whitespace immediately after key &quot;x.a&quot; so property name is &quot;x.a&quot;.
+        # No whitespace immediately after key ##x.a## so property name is ##x.a##.
 </pre>
 <p>    vs.</p>
 <pre class="prettyprint">
         x.a =eks
-        # Whitespace immediately after key &quot;x.a&quot; so this means proeprty &quot;a&quot; of
-        # object &quot;x&quot;.
+        # Whitespace immediately after key ##x.a## so this means property ##a## of
+        # object ##x##.
 </pre>
 <p>    (MNEMONIC:  Groovy is distinctive for allowing white space to delimit
     between method name and parameters.  We use white space as delimiter to
     trigger Groovy-style dereferencing.)
     The presence of absence of white space after the key enables or disables
-    DotDeref both for the key and for ${references&quot; in the
+    DotDeref both for the key and for <tt>${references}</tt> in the
     value.  Another example to show this:</p>
 <pre class="prettyprint">
         x=Value includes a reference to ${property.with.name.containg.dots}
@@ -581,7 +581,7 @@ Github Issue to get help.</p>
         , etc.   # Just like previous case, but if the property is
                              # not set, the  expression will be replace
                              # with nothing at all (an empty string).
-        ${.propName}, etc.   # Just like previous case, but if the proeprty is
+        ${.propName}, etc.   # Just like previous case, but if the property is
                              # not set, the ${....} expression will be left
                              # exactly as it is.
         # The !, -, . prefixes, which override unsatisfiedRefBehavior, are
@@ -596,7 +596,7 @@ Github Issue to get help.</p>
     In the great majority of cases, sequence makes no difference.  You can
     assign as many properties as you wish to, and reference as many properties
     as you wish to, and as long as the following two situations do not apply,
-    the sequence doesn't matter.  The ${reference} value of property 'x' will
+    the sequence doesn't matter.  The <tt>${reference}</tt> value of property 'x' will
     be precisely what 'x' is set to in the same file (or, if it is not set in
     this file, then what it was before the file was loaded).  If 'x' is
     referenced 100 times like ${x}, it will have the same value every time,
@@ -624,7 +624,7 @@ Github Issue to get help.</p>
         colon\:and\ space_inside_property_key=hello
 </pre>
 <p>    But to tell JavaPropFile to escape characters (list of examples follows),
-    you must double escape with <br>, because that is how you tell any Java
+    you must double escape with \\, because that is how you tell any Java
     properties file to pass | to the application (and in this context,
     JavaPropFile is an application).  Examples:</p>
 <pre class="prettyprint">
@@ -681,8 +681,8 @@ Github Issue to get help.</p>
 <h5 id="jcsect_vplfpsk"><span class="jcreole_hbody">   void propFileLoader.load(File propertiesFile, String keyAssignPrefix)</span></h5>
 <p>            Exact same as previous, except that each property written to the
             Project is prefixed with the supplied String.
-            If you ran &quot;propFileLoader.load(file('a.properties'), 'pref')&quot; and
-            you have a line in &quot;a.properties&quot; like:</p>
+            If you ran &quot;<tt>propFileLoader.load(file('a.properties'), 'pref')</tt>&quot; and
+            you have a line in <tt>a.properties</tt> like:</p>
 <pre class="prettyprint">
                 key=val
 </pre>
@@ -695,7 +695,7 @@ Github Issue to get help.</p>
 <p>            Loads a properties file and writes map properties with those values.
             You must specify a Map to be populated, so if you want to load a
             new Map, just specify value [:] as the map.
-            The given 'aMap' reference will be returned.</p>
+            The given <tt>aMap</tt> reference will be returned.</p>
 <h4 id="jcsect_VoidPropfileloaderLoad"><span class="jcreole_hbody">    void propFileLoader.load(</span></h4>
 <pre class="prettyprint">
                 File propertiesFile, String keyAssignPrefix, Map aMap)
@@ -710,17 +710,17 @@ Github Issue to get help.</p>
             to apply property values to (or with as-dereference-operator, this
             is where the dereferencing begins).</p>
 <h4 id="jcsect_vpt"><span class="jcreole_hbody">    void propFileLoader.traditionalPropertiesInit()</span></h4>
-<p>            Loads 'app.properties' (if it is present), prohibiting use of
-            undefined ${...} references; then loads 'local.properties' (if it
+<p>            Loads <tt>app.properties</tt> (if it is present), prohibiting use of
+            undefined ${...} references; then loads <tt>local.properties</tt> (if it
             is present), allowing use of undefined references.  Overwriting is
             allowed.  (It will use whatever settings you have made previously
             regarding typeCasting, system property assignment, and system
             property expansion.  Only the last of these is enabled by default).
-            File 'build.properties' is actually a more traditional file name
-            than 'app.properties' or 'local.properties', but unfortunately
-            the name 'build.properties' does not distinguish whether it is
+            File <tt>build.properties</tt> is actually a more traditional file name
+            than <tt>app.properties</tt> or <tt>local.properties</tt> but unfortunately
+            the name <tt>build.properties</tt> does not distinguish whether it is
             intended for shared or private/local usage, so I have standardized
-            on the distinctive names 'app.properties' and 'local.properties'.</p>
+            on the distinctive names <tt>app.properties</tt> and <tt>local.properties</tt></p>
 <h4 id="jcsect_MapstringMapstringObject"><span class="jcreole_hbody">    Map&lt;String, Map&lt;String, Object&gt;&gt;</span></h4>
 <p>                propFileLoader.getDeferredExtensionProps()
             Most users will not use this.  It is for checking the state of
@@ -751,7 +751,7 @@ Github Issue to get help.</p>
             by default.
             If a Map is specified, then that mapping will be used by default
             for expansion mappings instead of the Gradle Project properties.
-            See the 'Expand methods' section below for more details.</p>
+            See the <a href="#jcsect_ExpandMethods">Expand methods</a> section below for more details.</p>
 <pre class="prettyprint">
         String propFileLoader.expand(File, Map&lt;String, Object&gt;)
         String propFileLoader.expand(File, boolean)
@@ -770,8 +770,8 @@ Github Issue to get help.</p>
 
 <h3 id="jcsect_Configurations"><span class="jcreole_hbody"> Configurations:</span></h3>
 
-<p>        After you &quot;apply plugin 'javaPropFile'&quot;, you can set the following
-        properties on extension object 'propFileLoader'.</p>
+<p>        After you &quot;<tt>apply plugin 'javaPropFile'</tt>&quot;, you can set the following
+        properties on extension object <tt>propFileLoader</tt>.</p>
 <h4 id="jcsect_bpu"><span class="jcreole_hbody">    boolean propFileLoader.unsatisfiedRefBehavior</span></h4>
 <p>            What to do when ${x} is used in a property value, but 'x' is not
             defined.
@@ -810,14 +810,14 @@ Github Issue to get help.</p>
 <h4 id="jcsect_StringPropfileloaderSystempropprefix"><span class="jcreole_hbody">    String propFileLoader.systemPropPrefix</span></h4>
 <p>            If this is non-null, then you can both reference system properties
             in property definition values, and can assign system properties.
-            An example of each with systemPropPrefix set to 'sys|':</p>
+            An example of each with systemPropPrefix set to <tt>sys|</tt>:</p>
 <pre class="prettyprint">
                 projectOwner=Mr. ${sys|user.name}
                 sys|java.io.tmpdir=/usr/local/tmp
 </pre>
 <p>            Set to null to prevent referencing and assignment of system
             properties.
-            Defaults to 'sys|'.</p>
+            Defaults to <tt>sys|</tt>.</p>
 <h4 id="jcsect_BooleanPropfileloaderTypecasting"><span class="jcreole_hbody">    boolean propFileLoader.typeCasting</span></h4>
 <p>            If set to true, then whenever you set a property with name
             beginning or ending with a (ParenthesizedString), the parentheses
@@ -886,23 +886,23 @@ nor property value:</p>
     If you really want to, you can get around htis constraint by assigning null
     and then assign to the new value.</p>
 <h4 id="jcsect_Contentasstringfilter"><span class="jcreole_hbody"> ContentAsStringFilter</span></h4>
-<p>    Set attribute 'closure' to a closure that transforms the entire input
+<p>    Set attribute <tt>closure</tt> to a closure that transforms the entire input
     file text into output file text.
     As noted above, the advantages of ContentAsStringFilter are, it invokes
     the supplied closure only once for each input file, and it has no
     limitations on regex support or EOL-handling.
-    See &quot;doc/build.gradle&quot; for useful examples with Copy task configuration,
-    functional &quot;copy {...}&quot; calls, and filtering a just subset of a predefined
+    See <tt>doc/build.gradle</tt> for useful examples with Copy task configuration,
+    functional <tt>copy {...}</tt> calls, and filtering a just subset of a predefined
     file collection.</p>
 <h4 id="jcsect_ExpandMethods"><span class="jcreole_hbody"> Expand methods</span></h4>
-<p>    File &quot;doc/build.gradle&quot; has an example of expanding property references in
+<p>    File <tt>doc/build.gradle</tt> has an example of expanding property references in
     application files using a ContentAsStringFilter and an .expand() call.</p>
 
 <p>    When using the expand method nested in some closures... definitely when
     calling expand inside of a ContentAsStringFilter... reference failures
     (throws) will just indicate failure whatever executes the closure.
     In the case of a reference failure in a ContentAsStringFilter, you will
-    get a Gradle error message including &quot;Cause: Could not copy file...&quot;.
+    get a Gradle error message including &quot;<em>Cause: Could not copy file...</em>&quot;.
     Just re-run the Gradle command with the addition of the -s switch and look
     through the stack traces for the precise failure cause.</p>
 
@@ -916,22 +916,22 @@ nor property value:</p>
 <ol>
   <li> Use a sensible naming convention to make it clear to developers
            whether each reference is intended for use by JavaPropFile or the
-           other tool.  (If loading properties from a file, you can use the
-           'keyAssignPrefix' load parameter to facilitate this).</li>
+           other tool.  (If loading properties from a file, you can use
+           the <tt>keyAssignPrefix</tt> load parameter to facilitate this).</li>
   <li> Set...<br><tt>propFileLoader.unsatisfiedRefBehavior = JavaPropFile.Behavior.LITERAL</tt></li>
   <li> For each reference that you want to require JavaPropFile to expand,
            prefix the name with !, like...
          Some text in the template file requires ${!name} to be set.</li>
 </ol>
 
-<p>    Instead of duplicating an example here, see the configuration of task
-    'processResources' in this production build file:
+<p>    Instead of duplicating an example here, see the configuration of
+    task <tt>processResources</tt> in this production build file:
         <a href="https://github.com/unsaved/jcreole/raw/master/build.gradle">https://github.com/unsaved/jcreole/raw/master/build.gradle</a></p>
 
 </div>
 
 <hr>
-<div class="jcreole_footer">Generated by JCreole v. 1.1.2 @ 2012-01-08T21:43:06-0500.
+<div class="jcreole_footer">Generated by JCreole v. 1.1.2 @ 2012-01-08T22:19:59-0500.
 &nbsp; &nbsp; &nbsp; &nbsp;
 Apache 2 license &copy; 2011 by Axis Data Management Corp.</div>
 </body>
