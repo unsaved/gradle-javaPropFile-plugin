@@ -1,0 +1,938 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!--
+ - Copyright 2011 Axis Data Management Corp.
+ -
+ - Licensed under the Apache License, Version 2.0 (the "License");
+ - you may not use this file except in compliance with the License.
+ - You may obtain a copy of the License at
+ -
+ - http://www.apache.org/licenses/LICENSE-2.0
+ -
+ - Unless required by applicable law or agreed to in writing, software
+ - distributed under the License is distributed on an "AS IS" BASIS,
+ - WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ - See the License for the specific language governing permissions and
+ - limitations under the License.
+
+ N.b.!  Unlike the default boilerplate, this one is not standalone.
+ You don't need to place any files with it (i.e. there are no relative file
+ dependencies), but there are dependencies to files in public Internet
+ repositories (at least ajax.agoogleapis.com).
+-->
+<html>
+<head>
+<title>readme</title>
+<meta name="Generator" content="JCreole">
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<script type="text/javascript"
+  src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js">
+</script>
+<script type="text/javascript">
+  if ("undefined" == (typeof jQuery)) {
+      alert("Failed to load jQuery library from '"
+          + "'https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js'");
+      throw Error("Failed to load jQuery library from '"
+          + "'https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js'");
+  }
+</script>
+<script type="text/javascript"
+  src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/jquery-ui.js">
+</script>
+<link rel="stylesheet" type="text/css"
+href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/themes/ui-lightness/jquery-ui.css">
+<script type="text/javascript">
+  localLinkRe = /#(.+)$/;
+  footNoteClones = [];
+  defListClones = [];
+  jcreoleInfoPopup = function(s) {
+      $('<p class="ui-state-default">' + s + "</p>").prependTo("body").dialog({
+          close: function() {$(this).dialog("destroy").remove();},
+          title: "Information"
+      });
+  };
+  displayFootnote = function(origLink) {
+      var extracted = localLinkRe.exec(origLink);
+      if (extracted === null) {
+          alert("Internal failure.  "
+                  + "Failed to extract local link from footnote ref");
+          throw new Error("Internal failure.  "
+                  + "Failed to extract local link from footnote ref");
+      }
+      $(footNoteClones[extracted[1]]).dialog("open");
+  };
+  displayMasterDef = function(origLink, defName) {
+      var extracted = localLinkRe.exec(origLink);
+      if (extracted === null) {
+          alert("Internal failure.  "
+                  + "Failed to extract local link from masterdeflist ref");
+          throw new Error("Internal failure.  "
+                  + "Failed to extract local link from masterdeflist ref");
+      }
+      $(defListClones[extracted[1]])
+            .dialog("option", "title", ("Definition for '" + defName + "'"))
+            .dialog("open");
+  };
+  $(function() {
+      $("a.jcreole_fnref").each(function() {
+          this.href = 'javascript:displayFootnote("' + this.href
+                + '"); void(0); // Display footnote';
+      });
+      $("div.jcx_footnotes > dl").each(function() {
+          footNoteClones[this.id] = $(this).find("dd > p").clone(false)
+                .dialog({autoOpen: false, title: "Footnote"});
+      });
+      $("a.jcreole_mdef").each(function() {
+          this.href = 'javascript:displayMasterDef("' + this.href + '", "'
+                + this.title + '"); void(0); // Display master def';
+      });
+      $("div.jcx_masterDef > dl").each(function() {
+          defListClones[this.id] = $(this).find("dd > p").clone(false)
+                .dialog({autoOpen: false});
+      });
+      $("div.jcreole_tabset").tabs();
+      prettyPrint()
+  });
+</script>
+<script type="text/javascript"
+  src="https://github.com/unsaved/jcreole/raw/master/google-code-prettify-small/1/prettify.js">
+</script>
+<style>
+  /******************************************************************
+   * Build-time dynamically-including google-code-prettify, because absolute
+   * URLs not working to the .css file, for unknown reason.  */
+   .pln{color:#000}@media screen{.str{color:#080}.kwd{color:#008}.com{color:#800}.typ{color:#606}.lit{color:#066}.pun,.opn,.clo{color:#660}.tag{color:#008}.atn{color:#606}.atv{color:#080}.dec,.var{color:#606}.fun{color:red}}@media print,projection{.str{color:#060}.kwd{color:#006;font-weight:bold}.com{color:#600;font-style:italic}.typ{color:#404;font-weight:bold}.lit{color:#044}.pun,.opn,.clo{color:#440}.tag{color:#006;font-weight:bold}.atn{color:#404}.atv{color:#060}}pre.prettyprint{padding:2px;border:1px solid #888}ol.linenums{margin-top:0;margin-bottom:0}li.L0,li.L1,li.L2,li.L3,li.L5,li.L6,li.L7,li.L8{list-style-type:none}li.L1,li.L3,li.L5,li.L7,li.L9{background:#eee}
+  /*****  End of google-code-prettify inclusion  ********************/
+  body,table { font-size:16px; font-family:serif; }
+  tr { vertical-align:top; }
+  table.jcreole_data, table.jcreole_data input, table.jcreole_data select,
+  table.jcreole_data button,
+  table.jcreole_data textarea, table.jcreole_data td, table.jcreole_data th,
+  input, select, textarea, button, u, del, tt, sup, sub, pre, code  {
+      font-size:13px; font-family:sans-serif;
+  }
+  button { padding: 0; }
+  body {
+      margin-left:auto;
+      margin-right:auto;
+      background-color:white;
+      padding:10px;
+      margin:0;
+  }
+  img,p,div,form,table,pre,code {
+      margin:0;
+      padding:0;
+      border:0;
+      list-style-type:none;
+      background-repeat:no-repeat;
+  }
+  ul { margin-left:14px; padding-left:0; margin-top:0; margin-bottom:0; }
+  table hr {
+      height:1px;
+      clear:both;
+      /* margin:none: 0;  DisplayTag site had value of "none", which is illegal */
+      width:100%;
+  }
+  p { margin-top: 8px; margin-bottom:8px; }
+  table.jcreole_data thead th { vertical-align:bottom; }
+
+  /* FOLLOWING PILFERED (but extensively modified) FROM DISPLAYTABLE */
+
+  table.jcreole_data { border: 1px solid #666; }
+
+  table thead th, table td {
+      padding: 2px 4px 2px 4px !important;
+  }
+  table.jcreole_data tbody td {
+      text-align: left;
+      vertical-align: top;
+  }
+  table.jcreole_data thead th {
+      text-align: center;
+      vertical-align: bottom;
+  }
+
+  /* Don't set tr border or padding values.  It is non-portable. */
+
+  table.jcreole_data thead tr { background-color: #fc0; }
+  /* Don't set tr border or padding values.  It is non-portable. */
+
+  table.jcreole_data thead th a, table.jcreole_data thead th a:visited {
+      color: black;
+  }
+
+  table.jcreole_data thead th a:hover {
+      text-decoration: underline;
+      color: black;
+  }
+
+  table.jcreole_data tbody tr.jcreole_odd { background-color: #ededed }
+  /* Don't set tr border or padding values.  It is non-portable. */
+
+  table.jcreole_data tbody tr.jcreole_even { background-color: #fea }
+  /* Don't set tr border or padding values.  It is non-portable. */
+
+  .jcreole_orphanLink {
+      background-color:red;
+      color:black;
+      font-weight:bold;
+  }
+
+  div.jcreole_footer {
+      font-size: 12px;
+      font-family: sans-serif;
+      text-align:center;
+  }
+
+  div.jcreole .yellow { background-color:yellow; }
+
+  div.jcx_toc { font-size:12px; }
+  div.jcx_toc span.jcx_enum { font-variant:normal; font-weight:bold; }
+  h1 span.jcx_enum, h2 span.jcx_enum, h3 span.jcx_enum,
+  h4 span.jcx_enum, h5 span.jcx_enum, h6 span.jcx_enum { font-family:serif; }
+
+  div.reftoc { float:right; margin-left:50px; font-variant:small-caps; }
+
+  div.jcreole div.clear { clear:both; }
+
+  h6 { margin:0; }
+  h6 span.jcreole_hbody {
+      font-family:monospace;
+      font-size:14px;
+      background-color:#DDDDDD;
+  }
+  h1 {
+      margin-top:0;
+      text-align:center;
+      background-color:#F8F8F8;
+      border:solid #DDDDDD 1px;
+      padding-top:0; padding-bottom:0; padding-left:2px; padding-right:2px;
+  }
+  h1 span.jcreole_hbody {
+      margin:0;
+      padding-top:0; padding-bottom:0; padding-left:0; padding-right:0;
+  }
+  h2 span.jcreole_hbody, h3 span.jcreole_hbody {
+      background-color:#F4F4F4;
+      border:solid #DDDDDD 2px;
+  }
+  h4 span.jcreole_hbody, h5 span.jcreole_hbody { background-color:#F4F4F4; }
+  h2 span.jcreole_hbody, h3 span.jcreole_hbody,
+  h4 span.jcreole_hbody, h5 span.jcreole_hbody, h6 span.jcreole_hbody {
+      margin:0;
+      padding-top:0; padding-bottom:0; padding-left:2px; padding-right:2px;
+  }
+
+  span.jcx_enum { font-weight:bold; font-family:serif; }
+  span.jcreole_strike { text-decoration: line-through; }
+  span.jcreole_underline { text-decoration: underline; }
+  span.jcreole_em { font-style: italic; }
+  span.jcreole_strong { font-weight: bold; }
+  span.jcreole_monospace { font-family: monospace; }
+
+  span.jcreole_lh { font-weight:bolder; font-family:monospace; margin-right:10px; }
+
+  div.jcx_masterDef {
+    border: solid gray 2px;
+    padding:0;
+    display:inline-block;
+  }
+  dl { border-bottom: solid silver 1px; padding:4px; margin:1px; }
+  dt { font-weight: bolder; font-family:monospace; }
+
+  div.ui-tabs { font-size:16px; font-family:serif; }
+</style>
+<link rel="stylesheet" type="text/css" href="site.css" />
+
+</head>
+<body>
+<div class="jcreole">
+<h1 id="jcsect_JavapropfileGradlePlugin"><span class="jcreole_hbody"> JavaPropFile Gradle Plugin</span></h1>
+
+<div class="jcx_toc">
+<ul class="jcx_toc">
+  <li><a href="#jcsect_JavapropfileGradlePlugin">JavaPropFile Gradle Plugin</a><ul>
+    <li><a href="#jcsect_Features">Features</a></li>
+    <li><a href="#jcsect_Usage">Usage</a><ul>
+      <li><a href="#jcsect_PullPluginFromInternet">Pull plugin from Internet.</a></li>
+      <li><a href="#jcsect_UsePluginJarFileLocally">Use plugin jar file locally.</a></li>
+    </ul></li>
+    <li><a href="#jcsect_Details">Details</a><ul>
+      <li><a href="#jcsect_Definitions">Definitions</a></li>
+      <li><a href="#jcsect_ImportantKeyValueDelimiter">IMPORTANT! Key/Value Delimiter</a></li>
+      <li><a href="#jcsect_ReferenceSyntax">Reference Syntax</a></li>
+      <li><a href="#jcsect_SequeneOfAssignmenttsAndReferences">Sequene of Assignmentts and References</a></li>
+      <li><a href="#jcsect_Escaping">Escaping</a></li>
+      <li><a href="#jcsect_ProvidedPublicMethods">Provided Public Methods:</a><ul>
+        <li><a href="#jcsect_mplfpma">Map propFileLoader.load(File propertiesFile, Map aMap)</a></li>
+        <li><a href="#jcsect_VoidPropfileloaderLoad">void propFileLoader.load(</a></li>
+        <li><a href="#jcsect_VoidPropfileloaderLoadintoexensionobject">void propFileLoader.loadIntoExensionObject(</a></li>
+        <li><a href="#jcsect_vpt">void propFileLoader.traditionalPropertiesInit()</a></li>
+        <li><a href="#jcsect_MapstringMapstringObject">Map&lt;String, Map&lt;String, Object&gt;&gt;</a></li>
+        <li><a href="#jcsect_scjrsc">static Class JavaPropFile.resolveClass(String className)</a></li>
+        <li><a href="#jcsect_VoidPropfileloaderExecutedeferrals">void propFileLoader.executeDeferrals()</a></li>
+        <li><a href="#jcsect_StringPropfileloaderExpand">String propFileLoader.expand(...)</a></li>
+      </ul></li>
+      <li><a href="#jcsect_Configurations">Configurations:</a><ul>
+        <li><a href="#jcsect_bpu">boolean propFileLoader.unsatisfiedRefBehavior</a></li>
+        <li><a href="#jcsect_BooleanPropfileloaderOverwritethrow">boolean propFileLoader.overwriteThrow</a></li>
+        <li><a href="#jcsect_BooleanPropfileloaderOverwrite">boolean propFileLoader.overwrite</a></li>
+        <li><a href="#jcsect_StringPropfileloaderSystempropprefix">String propFileLoader.systemPropPrefix</a></li>
+        <li><a href="#jcsect_BooleanPropfileloaderTypecasting">boolean propFileLoader.typeCasting</a></li>
+        <li><a href="#jcsect_BooleanPropfileloaderDefer">boolean propFileLoader.defer</a></li>
+      </ul></li>
+      <li><a href="#jcsect_TypeCasting">Type Casting</a><ul>
+        <li><a href="#jcsect_ArraysAndCollections">Arrays and Collections</a></li>
+        <li><a href="#jcsect_TypeValidation">Type Validation</a></li>
+        <li><a href="#jcsect_Contentasstringfilter">ContentAsStringFilter</a></li>
+        <li><a href="#jcsect_ExpandMethods">Expand methods</a></li>
+      </ul></li>
+    </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+<p>Version 0.4.* and later require Gradle 1.0-milestone-6 or later.</p>
+
+<p><strong>IMPORTANT:</strong>  Users who are upgrading Gradle or upgrading JavaPropFile should
+read the file <tt>upgrade.txt</tt> in the <tt>doc</tt> subdirectory.</p>
+
+<p>This plugin is for loading a Map, a Gradle Project or extension object (and
+objects nested beneath them), with properties from Java properties file;
+or for expanding given Strings or text files with the objects just listed or
+with a supplied Map; plus a general Gradle Copy Filter is provided.</p>
+
+<p>Most classes are supported, so that you can write JDK objects, custom objects,
+array, and collections in addition to String values (using a simply <em>casting</em>
+syntax like &quot;<tt>file.txt(File)</tt>&quot;).
+Several mechanisms provided make it easy use a differentiated property name
+space for propery file loads (when your use case allows for this).
+The Copy Filter is very similar to the Gradle built-in operator:</p>
+<pre class="prettyprint lang-java">
+     filter { String line -&gt; output one line }
+</pre>
+<p>but eliminating the performance and limitations due to processing
+a-line-at-a-time.</p>
+
+<p>What's wrong with Gradle's <em>gradle.properties</em> system?
+You are restricted to a single properties in your home directory and one for
+each project directory, all with mandated name.
+If you want to separate your properties into shared properties and personal
+properties, as is a very good practice, you can't.
+If you want to set the value of a property based on anything else (like a
+previously set property, an extension object property value, a system property,
+or some nested item in your Project), you can't.
+If you want to set even a basic JDK object like a Boolean or File value, you
+will have to change your Gradle Groovy code to convert from the String property
+value.
+If you want to load or merge new properties from a properties file into an
+exiting map, perhaps automatically prefixing these properties with a
+distinguishing prefix, you have to do that manually.
+If you want to do all of these things at once... settle down for a week of
+coding.</p>
+
+<p>What's wrong with Gradle's <em>filter { Sring line -&gt; ... }</em>?
+Nothing if you really want to work on each input file <em>line</em> independently.
+Otherwise, your app will suffer from a massive performance penalty from
+executing the closure once for every input file line stead of just once;
+and you are subject to regular expression and EOL-transformation limitations.</p>
+
+<p>A sample build setup is provided in subdirectory <tt>doc</tt>.
+Even if you don't care to run the demo, you would probably benefit by looking
+at the .properties files in there, if not the <tt>build.gradle</tt> file.
+If you want to run the example and are pulling this project from Git, then cd
+to the doc subdirectory and run <tt>../gradlew</tt> (<tt>..\gradlew</tt> on Windows).  You
+do not need to have Gradle installed to run the demonstration (if you pull the
+entire project from Git).
+<strong>WARNING:</strong>  If you pull from Git trunk, you will be working with pre-production
+code.  The sample may be in the process of being updated.  If you experience
+problems running the sample, work with a Git tag instead of trunk, or open a
+Github Issue to get help.</p>
+
+
+<h2 id="jcsect_Features"><span class="jcreole_hbody"> Features</span></h2>
+
+<ul>
+  <li> Nested property definitions like users of Ant and Log4j are used to.
+      I.e. use references like ${this} in your property values.
+      ${ref} references can be made before or after the 'ref' property is
+      defined, as long as the ref is defined in this file (or before this file
+      is loaded).  (If writing an object and a property of the object, you
+      must create the object first).</li>
+  <li> System properties are expanded, like users of Ant, Log4j, and Ivy
+      are used to, but with their own (user-specified) namespace prefix to
+      avoid name collisions.  (May be disabled).</li>
+  <li> System properties may be set using the same prefix.  (May be disabled).</li>
+  <li> Behavior when there are unsatisfied ${references} is configurable.
+      You may specify to prohibit (throw), leave the literal as it was,
+      replace with empty string, or ignore the property setting altogether.</li>
+  <li> Type-checking.  Fast-fail if an attempt is made to overwrite a Project
+      property (or previous property file assignment) with a non-null value
+      that is of a different data type.</li>
+  <li> Overwriting is configurable.  You may prohibit(throw), allow, or
+      silently ignore attempts to overwrite.</li>
+  <li> Turn on 'typeCasting' and if you prefix or suffix a property name with
+      a (ClassName), an instance of that class will be instantiated with a
+      valueOf(String) or String constructor using the specified property value
+      as the instantiation parameter.  The resultant object is what will be
+      added as a Project property.  Use () to set a null value.</li>
+  <li> typeCasting supports arrays and arbitrary Collection types</li>
+  <li> '.' may be used both as a character in a property name
+      like<br><tt>xfer.max(Float)=30.0</tt><br>
+      and to dereference object properties,
+      like:<br><tt>compileJava.options.debug(Boolean) = false</tt><br>
+      The behavior is toggled by whether or not the property file definition
+      has a space after the key.  Note the space before &quot;=&quot; above.</li>
+  <li> Properties of either the Gradle project or specified extension object may
+      be set, as well as descendant objects (using the . dereference operator
+      of previous bullet).  By default, setting or referencing &quot;x&quot; means
+      property &quot;x&quot; of the Gradle Project, but you can precede the property name
+      with extension object name + $, like &quot;<tt>ivyxml$depFile</tt>&quot;.</li>
+  <li> Entire property files may be dedicated to configuring a specified
+      extension object.  I.e. if the target extension object is specified as
+      optional load parameter, properties will default to that object instead
+      of to the Project.</li>
+  <li> Extension object properties may be set before the target extension object
+      becomes available.  Settings deferred in this way will be applied as soon
+      as the extension object comes online.  Deferral behavior may  be disabled
+      if you want to enforce that target extension objects are available ahead
+      of time.</li>
+  <li> User specifiable load-specific automatic prefix.  This allows you to
+      load properties from multiple sources into your Project or Map, without
+      risking name collisions, and being able to clearly and definitively tell
+      the source of each property.</li>
+  <li> Individual ${references} may use property name prefix characters to
+      override the unset-reference-property behavior, so that in a single
+      properties file or String or text file to be expanded, some references
+      may be required and others optional.</li>
+  <li> Provides Gradle Copy Filter that works just like
+      Gradle's<br><tt>filter { String line -&gt; output one line }</tt><br>
+      but with good performance and without the limitations.
+      See 'ContentAsStringFilter' below.</li>
+  <li> General expansion of ${reference}s in supplied Strings or Files.
+      References can be Gradle Projects or extension objects, as described
+      above, or a plain old user-supplied Map.  See the expand() methods below.</li>
+  <li> The previous two items, ContentAsStringFilter + expand() methods, may be
+      combined to do efficient and powerful property expansion of text content
+      or resource files when building applications.</li>
+</ul>
+
+<h2 id="jcsect_Usage"><span class="jcreole_hbody"> Usage</span></h2>
+
+<h3 id="jcsect_PullPluginFromInternet"><span class="jcreole_hbody"> Pull plugin from Internet.</span></h3>
+
+<p>    Couldn't be easier.  This will pull the plugin from Maven Central:</p>
+<pre class="prettyprint lang-java">
+        buildscript {
+            repositories { mavenCentral() }
+            dependencies {
+                classpath 'com.admc:gradle-javaPropFile-plugin:latest.integration'
+            }
+        }
+        apply plugin: 'javaPropFile'
+        // Following loads 'app.properties' then 'local.properties' files
+        // from project directory if they exist there.
+        propFileLoader.traditionalPropertiesInit()
+        // See
+        // https://github.com/unsaved/gradle-javaPropFile-plugin/tree/master/doc
+        // for examples of specifying your own file names and settings,
+        // including usage of typeCasting.
+
+        // Create a new Map by loading a properties file:
+        someMap = propFileLoader(load(file('mail.properties'), [:])
+
+        // To use the ContentAsStringFilter, you don't need to 'apply' anything.
+        import com.admc.gradle.ContentAsStringFilter
+        task anyCopyTask(type: Copy) {
+            from 'src/main/resources'
+            into 'build/tmp/x'
+            filter(ContentAsStringFilter, closure: { it.toLowerCase() })
+        }
+        // See
+        // https://github.com/unsaved/gradle-javaPropFile-plugin/tree/master/doc
+        // for some other very useful examples using ContentAsStringFilter.
+</pre>
+
+<h3 id="jcsect_UsePluginJarFileLocally"><span class="jcreole_hbody"> Use plugin jar file locally.</span></h3>
+
+<p>    Just use your browser to go to the JavaPropFile directory at Maven
+    Central.  <a href="http://repo1.maven.org/maven2/com/admc/gradle-javaPropFile-plugin">http://repo1.maven.org/maven2/com/admc/gradle-javaPropFile-plugin</a>
+    Click into the version that you want.
+    Right-click and download the only *.jar file in that directory.</p>
+
+<p>    You can save the plugin jar with your project, thereby automatically
+    sharing it with other project developers (assuming you use some SCM system).
+    Or you can store it in a local directory, perhaps with other Gradle plugin
+    jars.  The procedure is the same either way:</p>
+<pre class="prettyprint lang-java">
+        buildscript { dependencies {
+            classpath fileTree(
+                dir: 'directory/containing/the/plugin/jar/file',
+                include: 'gradle-javaPropFile-plugin-*.jar
+            )
+        } }
+        apply plugin: 'javaPropFile'
+        // Following loads 'app.properties' then 'local.properties' files
+        // from project directory if they exist there.
+        propFileLoader.traditionalPropertiesInit()
+        // https://github.com/unsaved/gradle-javaPropFile-plugin/tree/master/doc
+        // for examples of specifying your own file names and settings,
+        // including usage of typeCasting.
+
+        // Create a new Map by loading a properties file:
+        someMap = propFileLoader(load(file('mail.properties'), [:])
+
+        // To use the ContentAsStringFilter, you don't need to 'apply' anything.
+        import com.admc.gradle.ContentAsStringFilter
+        task anyCopyTask(type: Copy) {
+            from 'src/main/resources'
+            into 'build/tmp/x'
+            filter(ContentAsStringFilter, closure: { it.toLowerCase() })
+        }
+        // See
+        // https://github.com/unsaved/gradle-javaPropFile-plugin/tree/master/doc
+        // for some other very useful examples using ContentAsStringFilter.
+</pre>
+
+
+<h2 id="jcsect_Details"><span class="jcreole_hbody"> Details</span></h2>
+<h3 id="jcsect_Definitions"><span class="jcreole_hbody"> Definitions</span></h3>
+<ul>
+  <li><span class="jcreole_lh"> BehaviorRefPrefixing</span><span class="jcreole_ld">
+            Prefixing a referenced property name with ! - or . to specify
+            behavior if the specified property is not set (this overrides
+            the 'unsatisfiedRefBehavior' setting of the propFileLoader).
+            Allows single-reference-specific behaviors in the same properties
+            or text files.  Some ${references} may require the property to be
+            set, others may leave the text of unsatisfied references unchanged,
+            and other occurrences may replace the unsatisfied reference with
+            nothing (empty string).</span></li>
+  <li><span class="jcreole_lh"> DotDeref</span><span class="jcreole_ld">
+            Behavior where specifications like alpha.beta.gamma means
+            property-gamma-of-property-beta-of-property-alpha, instead of
+            property with name 'alpha.beta.gama'.  I.e. , if DotDefef behavior
+            holds, then unescaped dots in property name acts as a dereference
+            operator.</span></li>
+</ul>
+
+<h3 id="jcsect_ImportantKeyValueDelimiter"><span class="jcreole_hbody"> IMPORTANT!  Key/Value Delimiter</span></h3>
+<p>    Java properties files allow for the key to be terminated by equal sign,
+    colon character, or a white space character.  (Our keys contain a
+    property and may contain other typing and parent-object-identifying
+    information).
+    Since white-space is optional after the property keys, and since property
+    file rules even allow for the '=' to follow white space, we use white space
+    in this position to toggle DotDeref behavior.</p>
+
+<p>    Compare:</p>
+<pre class="prettyprint">
+        x.a=eks
+        # No whitespace immediately after key &quot;x.a&quot; so property name is &quot;x.a&quot;.
+</pre>
+<p>    vs.</p>
+<pre class="prettyprint">
+        x.a =eks
+        # Whitespace immediately after key &quot;x.a&quot; so this means proeprty &quot;a&quot; of
+        # object &quot;x&quot;.
+</pre>
+<p>    (MNEMONIC:  Groovy is distinctive for allowing white space to delimit
+    between method name and parameters.  We use white space as delimiter to
+    trigger Groovy-style dereferencing.)
+    The presence of absence of white space after the key enables or disables
+    DotDeref both for the key and for ${references&quot; in the
+    value.  Another example to show this:</p>
+<pre class="prettyprint">
+        x=Value includes a reference to ${property.with.name.containg.dots}
+</pre>
+<p>    vs.</p>
+<pre class="prettyprint">
+        x =Value includes a reference to ${subObject1.subObject2.propertyName}
+</pre>
+
+<h3 id="jcsect_ReferenceSyntax"><span class="jcreole_hbody"> Reference Syntax</span></h3>
+<p>    References are not allowed on the left-hand side of property file records.
+    They may be used on the value (right-hand) side of property file records,
+    and in Strings and Files that are expand()ed.
+    These are the variants:</p>
+<pre class="prettyprint">
+        ${propName}          # Simple property 'propName' of the target
+                             # object (which defaults to the Gradle Project).
+        ${sys|propName}      # For Java system property 'propName', using
+                             # default systemPropPrefix of 'sys|'.
+        ${extObj$propName}   # Property 'propName' of extension object 'extObj'
+        ${obj1.obj2.propName}  # If DotDeref operator is not active,
+                               # then this is just property
+                               # 'obj1.obj2.propName' of the target object
+                               # like the first case above.
+                               # If DotDeref operator is active,
+                               # then this is property 'projName' of property
+                               # obj2 of property obj1 or the target object.
+                               # In the second case, it is an error to
+                               # reference a non-defined property.
+        # In all cases above (except nested properties, as noted), references
+        # to properties that are missing are handled according to the default
+        # or specified unsatisfiedRefBehavior.
+        $~{!propName}         # For all variants above, if the reference
+        $~{!sys|propName}     # property name is immediately preceded by !,
+        etc.                 # then the unsatisfiedRefBehavior is thereby
+                             # overridden so that if the referenced property
+                             # is not set, JavaPropFile wil throw.
+        , etc.   # Just like previous case, but if the property is
+                             # not set, the  expression will be replace
+                             # with nothing at all (an empty string).
+        ${.propName}, etc.   # Just like previous case, but if the proeprty is
+                             # not set, the ${....} expression will be left
+                             # exactly as it is.
+        # The !, -, . prefixes, which override unsatisfiedRefBehavior, are
+        # known as 'behaviorRefPrefixes'.
+</pre>
+
+<h3 id="jcsect_SequeneOfAssignmenttsAndReferences"><span class="jcreole_hbody"> Sequene of Assignmentts and References</span></h3>
+<p>    In all cases, sequence is consistent and understandable.
+    According to Java's property file rules, it is useless to assign to a
+    single property twice in a single properties file.  We therefore prohibit
+    this confusing and misleading scenario.
+    In the great majority of cases, sequence makes no difference.  You can
+    assign as many properties as you wish to, and reference as many properties
+    as you wish to, and as long as the following two situations do not apply,
+    the sequence doesn't matter.  The ${reference} value of property 'x' will
+    be precisely what 'x' is set to in the same file (or, if it is not set in
+    this file, then what it was before the file was loaded).  If 'x' is
+    referenced 100 times like ${x}, it will have the same value every time,
+    regardless of whether it is referenced before or after 'x' is assigned.</p>
+
+<ol>
+  <li><span class="jcreole_lh"> Exception</span><span class="jcreole_ld">If property 'x' has a value before loading a property
+        file that assigns 'x', then sequence matters, because ${x} will
+        resolve to the original value before the assignment but to the new
+        value after the assignment.</span></li>
+  <li><span class="jcreole_lh"> Exception</span><span class="jcreole_ld">You can't assign to an object before the object is
+        present.  The sequence must be like this:
+            t1(Thread)=one
+            t1.name=two</span></li>
+</ol>
+
+<h3 id="jcsect_Escaping"><span class="jcreole_hbody"> Escaping</span></h3>
+<p>    You escape with backslash \, whether escaping is required by Java
+    properties file format, java.util.regex.Pattern format, or JavaPropFile.
+    As is very well documented at
+    <a href="http://docs.oracle.com/javase/6/docs/api/java/util/Properties.html#load(java.io.Reader)">http://docs.oracle.com/javase/6/docs/api/java/util/Properties.html#load(java.io.Reader)</a>
+    you must \ to escape all white space characters (including line breaks),
+    ':', and '=' inside of property keys.</p>
+<pre class="prettyprint">
+        colon\:and\ space_inside_property_key=hello
+</pre>
+<p>    But to tell JavaPropFile to escape characters (list of examples follows),
+    you must double escape with <br>, because that is how you tell any Java
+    properties file to pass | to the application (and in this context,
+    JavaPropFile is an application).  Examples:</p>
+<pre class="prettyprint">
+        # A literal | in a regex must be escaped, and you must use \\ to get
+        # \ to JavaPropFile:
+        mockBean$intList(Integer[\\|]ArrayList)=91|72|101
+        # The ' ' here does not need to be escaped in a regex, but does need
+        # to be escaped in a properties file key or the key would end at the
+        # space:
+        alpha(Integer[\ ]ArrayList)=94 3 12
+        expressionVar=Value will contain literal \\${dollar sign and curlies}
+        enableX\\(Boolean\\)=With typeCasting on you need this for property  \
+                             name &quot;enableX(Boolean)&quot;.
+        # With no space after the key, no need to escape dots in keys and refs.
+        owner.id=x5klh.umagumma
+        # But if you want to use DotDeref for only part of
+        # the definition, you will need to escape:
+        owner\\.id=x5klh.${plugBean.user.name}
+</pre>
+<p>    Property names may begin with the characters ! - . but if you ${reference}
+    them, you must escape that character with <br>, like:</p>
+<pre class="prettyprint">
+        nestingVar=${\\!nested!var}}  # References property '!nested!var'
+        # Note that you only escape these characters in references and only
+        # when they are the first character.  The 2nd ! above should and may
+        # not be escaped.
+</pre>
+<p>    What characters must be escaped just for JavaPropFile?
+        In .properties name (left) sides:</p>
+<pre class="prettyprint">
+            \\$  Unless $ used to specify an extension object
+            \\(  Unless ( used to start a typecast
+            \\)  Unless ) used to end a typecast
+</pre>
+<p>        Inside of ${...} (which are only allowed in .properties value (right)
+        sides and in expand() Strings or text files):</p>
+<pre class="prettyprint">
+            \\$  Unless $ used to specify an extension object
+            \\}  Otherwise it would end the ${...}
+</pre>
+
+
+<p>    Precedence works intuitively, not freakishly like Ant properties.
+    The value of a property will be the last value that was assigned to it.
+    You can prohibit attempts to overwrite by throwing or silently ignoring.</p>
+
+<p>    Gradle provides no way to unset/remove any Project property, therefore
+    JavaPropFile has no capability to remove a property.</p>
+<h3 id="jcsect_ProvidedPublicMethods"><span class="jcreole_hbody"> Provided Public Methods:</span></h3>
+
+<h5 id="jcsect_VoidPropfileloaderLoadFilePropertiesfile"><span class="jcreole_hbody">   void propFileLoader.load(File propertiesFile)</span></h5>
+<p>            Loads a properties file and writes Gradle Project properties with
+            those values.</p>
+<h5 id="jcsect_vplfpsk"><span class="jcreole_hbody">   void propFileLoader.load(File propertiesFile, String keyAssignPrefix)</span></h5>
+<p>            Exact same as previous, except that each property written to the
+            Project is prefixed with the supplied String.
+            If you ran &quot;propFileLoader.load(file('a.properties'), 'pref')&quot; and
+            you have a line in &quot;a.properties&quot; like:</p>
+<pre class="prettyprint">
+                key=val
+</pre>
+<p>            then JavaPropFile would end up doing</p>
+<pre class="prettyprint">
+                gradleProject.setProperty('prefkey', 'val)
+</pre>
+
+<h4 id="jcsect_mplfpma"><span class="jcreole_hbody">    Map propFileLoader.load(File propertiesFile, Map aMap)</span></h4>
+<p>            Loads a properties file and writes map properties with those values.
+            You must specify a Map to be populated, so if you want to load a
+            new Map, just specify value [:] as the map.
+            The given 'aMap' reference will be returned.</p>
+<h4 id="jcsect_VoidPropfileloaderLoad"><span class="jcreole_hbody">    void propFileLoader.load(</span></h4>
+<pre class="prettyprint">
+                File propertiesFile, String keyAssignPrefix, Map aMap)
+</pre>
+<p>            Exact same as previous, except that each property written to the
+            Map is prefixed with the supplied String.  See description for the
+            load(File, String) method above for details about how the prefix
+            value is applied.</p>
+<h4 id="jcsect_VoidPropfileloaderLoadintoexensionobject"><span class="jcreole_hbody">    void propFileLoader.loadIntoExensionObject(</span></h4>
+<p>                File, String defaultExtObjName)
+            The String is an extension object name.  This is the default object
+            to apply property values to (or with as-dereference-operator, this
+            is where the dereferencing begins).</p>
+<h4 id="jcsect_vpt"><span class="jcreole_hbody">    void propFileLoader.traditionalPropertiesInit()</span></h4>
+<p>            Loads 'app.properties' (if it is present), prohibiting use of
+            undefined ${...} references; then loads 'local.properties' (if it
+            is present), allowing use of undefined references.  Overwriting is
+            allowed.  (It will use whatever settings you have made previously
+            regarding typeCasting, system property assignment, and system
+            property expansion.  Only the last of these is enabled by default).
+            File 'build.properties' is actually a more traditional file name
+            than 'app.properties' or 'local.properties', but unfortunately
+            the name 'build.properties' does not distinguish whether it is
+            intended for shared or private/local usage, so I have standardized
+            on the distinctive names 'app.properties' and 'local.properties'.</p>
+<h4 id="jcsect_MapstringMapstringObject"><span class="jcreole_hbody">    Map&lt;String, Map&lt;String, Object&gt;&gt;</span></h4>
+<p>                propFileLoader.getDeferredExtensionProps()
+            Most users will not use this.  It is for checking the state of
+            deferred extension object properties.
+            Returns a map of extension object names to map of deferred
+            property definitions for that extension object.</p>
+<h4 id="jcsect_scjrsc"><span class="jcreole_hbody">    static Class JavaPropFile.resolveClass(String className)</span></h4>
+<p>            This probably won't be called in the context of using JavaPropFile,
+            but some developers may want to copy this, as it successfully
+            uses the context class loader and Groovy's default package rules
+            to resolve class names.</p>
+<h4 id="jcsect_VoidPropfileloaderExecutedeferrals"><span class="jcreole_hbody">    void propFileLoader.executeDeferrals()</span></h4>
+<p>            Most users will not use this.  It is invoked automatically by a
+            Gradle callback to execute deferred extension property settings
+            when the target extension object comes online.</p>
+<h4 id="jcsect_StringPropfileloaderExpand"><span class="jcreole_hbody">    String propFileLoader.expand(...)</span></h4>
+<p>            The following methods all expand references in the specified String
+            or File (1st parameter) and return the resulting String.
+            propFileLoader Settings like propFileLoader.unsatisfiedRefBehavior
+            effect how expansions are performed.
+            A peculiarity is that since Behavior.NO_SET makes no sense when
+            only doing expansion, in this method a setting of Behavior.NO_SET
+            causes expansion exactly like Behavior.LITERAL.
+            If a method variant with File parameter and a final String param,
+            the final String parameter is the encoding type that will be used
+            when reading the input text file.
+            If a boolean is specified, that enables DotDeref, which is disabled
+            by default.
+            If a Map is specified, then that mapping will be used by default
+            for expansion mappings instead of the Gradle Project properties.
+            See the 'Expand methods' section below for more details.</p>
+<pre class="prettyprint">
+        String propFileLoader.expand(File, Map&lt;String, Object&gt;)
+        String propFileLoader.expand(File, boolean)
+        String propFileLoader.expand(File)
+        String propFileLoader.expand(File, Map&lt;String, Object&gt;, boolean)
+        String propFileLoader.expand(File, Map&lt;String, Object&gt;, String)
+        String propFileLoader.expand(File, boolean dotDeref, String)
+        String propFileLoader.expand(File, String)
+        String propFileLoader.expand(
+                File, Map&lt;String, Object&gt; , boolean, String)
+        String propFileLoader.expand(String, Map&lt;String, Object&gt; sourceMap)
+        String propFileLoader.expand(String, boolean)
+        String propFileLoader.expand(String)
+        String propFileLoader.expand(String, Map&lt;String, Object&gt;, boolean)
+</pre>
+
+<h3 id="jcsect_Configurations"><span class="jcreole_hbody"> Configurations:</span></h3>
+
+<p>        After you &quot;apply plugin 'javaPropFile'&quot;, you can set the following
+        properties on extension object 'propFileLoader'.</p>
+<h4 id="jcsect_bpu"><span class="jcreole_hbody">    boolean propFileLoader.unsatisfiedRefBehavior</span></h4>
+<p>            What to do when ${x} is used in a property value, but 'x' is not
+            defined.
+            Defaults to com.admc.gradle.THROW, which will cause the property
+            file load to fast-fail.
+            You can change the behavior to any of the following.  (My syntax
+            here assumes that you imported the class
+            com.admc.gradle.JavaPropFile).</p>
+<pre class="prettyprint">
+                JavaPropFile.LITERAL  Leave literal ${x}
+                JavaPropFile.EMPTY    Replace ${x} with the empty string
+                JavaPropFile.NO_SET   Don't set the property at all
+                JavaPropFile.THROW    Here only for completeness.  See above.
+</pre>
+<p>            unsatisfiedRef behavior does not apply to references to missing
+             extension object references like ${x$y} (on the value side of
+             assignments or in expand() Strings/files).  This situation will
+             always throw.  The only reason for this exception is the amount
+             of coding and complexity needed for a capability with unknown
+             user demand.</p>
+<h4 id="jcsect_BooleanPropfileloaderOverwritethrow"><span class="jcreole_hbody">    boolean propFileLoader.overwriteThrow</span></h4>
+<p>            Property file loading will throw and abort immediately if a
+            property assignment is attempted to a property that already has a
+            value.  (Empty string values and nulls are still values).
+            Attempts to assign the same value that a property already has is
+            always allowed.
+            If this value is true, the value of propFileLoader.overwrite
+            doesn't matter.
+            Defaults to false</p>
+<h4 id="jcsect_BooleanPropfileloaderOverwrite"><span class="jcreole_hbody">    boolean propFileLoader.overwrite</span></h4>
+<p>            If set to true, and .overwriteThrow is false (its default), then
+            you can change existing property values.
+            Defaults to true.
+            If false, and .overwriteThrow is false, then attempts to change
+            existing property values are silently ignored.</p>
+<h4 id="jcsect_StringPropfileloaderSystempropprefix"><span class="jcreole_hbody">    String propFileLoader.systemPropPrefix</span></h4>
+<p>            If this is non-null, then you can both reference system properties
+            in property definition values, and can assign system properties.
+            An example of each with systemPropPrefix set to 'sys|':</p>
+<pre class="prettyprint">
+                projectOwner=Mr. ${sys|user.name}
+                sys|java.io.tmpdir=/usr/local/tmp
+</pre>
+<p>            Set to null to prevent referencing and assignment of system
+            properties.
+            Defaults to 'sys|'.</p>
+<h4 id="jcsect_BooleanPropfileloaderTypecasting"><span class="jcreole_hbody">    boolean propFileLoader.typeCasting</span></h4>
+<p>            If set to true, then whenever you set a property with name
+            beginning or ending with a (ParenthesizedString), the parentheses
+            and contents will be stripped off and an instance of the
+            specified class name will be instantiated.  Use just () to assign
+            a null.  Details about this follow.</p>
+<h4 id="jcsect_BooleanPropfileloaderDefer"><span class="jcreole_hbody">    boolean propFileLoader.defer</span></h4>
+<p>            If false then assignments to missing extension objects will cause
+            the property file load to fail.
+            If true, then assignments for missing extensions will be deferred
+            until the target extension objects become available.
+            Defaults to true.</p>
+
+
+<h3 id="jcsect_TypeCasting"><span class="jcreole_hbody"> Type Casting</span></h3>
+
+<p>Type casting is in effect if you set:  propFileLoader.typeCasting = true</p>
+
+<p>Property settings with specified name that does not start or end with
+parentheses will behave without any type casting, exactly as if typeCasting
+were off.</p>
+
+<p>Put the name of the desired Java class in parentheses immediately before or
+after the property name, with no intervening spaces.
+An instance of that class will be instantiated using the specified property
+value as String parameter to either the static valueOf(String) method of the
+class, or a String-parameter constructor.</p>
+
+<p>Groovy's rules for package defaults apply.</p>
+
+<p>Some examples:</p>
+<pre class="prettyprint">
+    output(File)=/path/to/file.txt
+    (Long)xferTime.max=31.25
+    compileJava.options.debug(Boolean) = false
+    monitor(com.admc.net.NetworMonitor)=Custom Network Monitor
+    mavenRepository.dest.url(URL)=file:/tmp/fakeMvn
+</pre>
+
+<p>To assign a null, do the same thing, but give no value at all for class name
+nor property value:</p>
+<pre class="prettyprint">
+    envTarget()=
+</pre>
+
+<h4 id="jcsect_ArraysAndCollections"><span class="jcreole_hbody"> Arrays and Collections</span></h4>
+
+<p>    Immediately after the element typeCasting class,
+    add [ + splitting-pattern + ] + optional-CollectionImplementationClass.
+    The Splitting pattern is a java.util.regex.Pattern String, and you must,
+    of course, follow Java properties file escaping rules.  If no collection
+    implementation class is specifies, an Array will be instantiated.
+    Examples:</p>
+<pre class="prettyprint">
+        mockBean$intList(Integer[\\|]ArrayList)=91|72|101
+        # Note the extra ugly backslashes needed to satisfy both Java
+        # properties escaping and java.util.regex.Pattern escaping for '|'.
+        alpha(Integer[\ ]ArrayList)=94 3 12
+        alpha(String[,]HashSet)=one,two,three
+</pre>
+
+<h4 id="jcsect_TypeValidation"><span class="jcreole_hbody"> Type Validation</span></h4>
+<p>    If you have JavaPropFile configured to allow property overwriting (by
+    default it is allowed), you are still never allowed to directly change a
+    property value from one non-null type to another non-null type.
+    If you really want to, you can get around htis constraint by assigning null
+    and then assign to the new value.</p>
+<h4 id="jcsect_Contentasstringfilter"><span class="jcreole_hbody"> ContentAsStringFilter</span></h4>
+<p>    Set attribute 'closure' to a closure that transforms the entire input
+    file text into output file text.
+    As noted above, the advantages of ContentAsStringFilter are, it invokes
+    the supplied closure only once for each input file, and it has no
+    limitations on regex support or EOL-handling.
+    See &quot;doc/build.gradle&quot; for useful examples with Copy task configuration,
+    functional &quot;copy {...}&quot; calls, and filtering a just subset of a predefined
+    file collection.</p>
+<h4 id="jcsect_ExpandMethods"><span class="jcreole_hbody"> Expand methods</span></h4>
+<p>    File &quot;doc/build.gradle&quot; has an example of expanding property references in
+    application files using a ContentAsStringFilter and an .expand() call.</p>
+
+<p>    When using the expand method nested in some closures... definitely when
+    calling expand inside of a ContentAsStringFilter... reference failures
+    (throws) will just indicate failure whatever executes the closure.
+    In the case of a reference failure in a ContentAsStringFilter, you will
+    get a Gradle error message including &quot;Cause: Could not copy file...&quot;.
+    Just re-run the Gradle command with the addition of the -s switch and look
+    through the stack traces for the precise failure cause.</p>
+
+<p>    JavaPropFile is distinctive from other templating/expansions systems in
+    that it can be used with the other systems without breaking them.
+    I very frequently want to perform build-time substitutions on files that
+    will later be run-time substituted.  This is a major pain with other
+    systems out there, requiring extra staging directories, escaping
+    characters, non-standard delimiters, loss of validation, etc.
+    This use case is handled intuitively by JavaPropFile by three easy steps:</p>
+<ol>
+  <li> Use a sensible naming convention to make it clear to developers
+           whether each reference is intended for use by JavaPropFile or the
+           other tool.  (If loading properties from a file, you can use the
+           'keyAssignPrefix' load parameter to facilitate this).</li>
+  <li> Set...<br><tt>propFileLoader.unsatisfiedRefBehavior = JavaPropFile.Behavior.LITERAL</tt></li>
+  <li> For each reference that you want to require JavaPropFile to expand,
+           prefix the name with !, like...
+         Some text in the template file requires ${!name} to be set.</li>
+</ol>
+
+<p>    Instead of duplicating an example here, see the configuration of task
+    'processResources' in this production build file:
+        <a href="https://github.com/unsaved/jcreole/raw/master/build.gradle">https://github.com/unsaved/jcreole/raw/master/build.gradle</a></p>
+
+</div>
+
+<hr>
+<div class="jcreole_footer">Generated by JCreole v. 1.1.2 @ 2012-01-08T21:43:06-0500.
+&nbsp; &nbsp; &nbsp; &nbsp;
+Apache 2 license &copy; 2011 by Axis Data Management Corp.</div>
+</body>
+</html>

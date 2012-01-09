@@ -1,9 +1,12 @@
-JavaPropFile Gradle Plugin
+= JavaPropFile Gradle Plugin
+
+<<toc>>
 
 
 Version 0.4.* and later require Gradle 1.0-milestone-6 or later.
-IMPORTANT:  Users who are upgrading Gradle or upgrading JavaPropFile should
-read the file "upgrade.txt" in the "doc" subdirectory.
+
+**IMPORTANT:**  Users who are upgrading Gradle or upgrading JavaPropFile should
+read the file ##upgrade.txt## in the ##doc## subdirectory.
 
 This plugin is for loading a Map, a Gradle Project or extension object (and
 objects nested beneath them), with properties from Java properties file;
@@ -11,16 +14,18 @@ or for expanding given Strings or text files with the objects just listed or
 with a supplied Map; plus a general Gradle Copy Filter is provided.
 
 Most classes are supported, so that you can write JDK objects, custom objects,
-array, and collections in addition to String values (using a simply 'casting'
-syntax like "file.txt(File)").
+array, and collections in addition to String values (using a simply //casting//
+syntax like "##file.txt(File)##").
 Several mechanisms provided make it easy use a differentiated property name
 space for propery file loads (when your use case allows for this).
 The Copy Filter is very similar to the Gradle built-in operator:
+<<prettyPrint lang-java>> {{{
      filter { String line -> output one line }
+}}}
 but eliminating the performance and limitations due to processing
 a-line-at-a-time.
 
-What's wrong with Gradle's "gradle.properties" system?
+What's wrong with Gradle's //gradle.properties// system?
 You are restricted to a single properties in your home directory and one for
 each project directory, all with mandated name.
 If you want to separate your properties into shared properties and personal
@@ -37,112 +42,97 @@ distinguishing prefix, you have to do that manually.
 If you want to do all of these things at once... settle down for a week of
 coding.
 
-What's wrong with Gradle's "filter { Sring line -> ... }"?
-Nothing if you really want to work on each input file "line" independently.
+What's wrong with Gradle's //filter { Sring line -> ... }//?
+Nothing if you really want to work on each input file //line// independently.
 Otherwise, your app will suffer from a massive performance penalty from
 executing the closure once for every input file line stead of just once;
 and you are subject to regular expression and EOL-transformation limitations.
 
-A sample build setup is provided in subdirectory "doc".
+A sample build setup is provided in subdirectory ##doc##.
 Even if you don't care to run the demo, you would probably benefit by looking
-at the .properties files in there, if not the "build.gradle" file.
+at the .properties files in there, if not the ##build.gradle## file.
 If you want to run the example and are pulling this project from Git, then cd
-to the doc subdirectory and run "../gradlew" ("..\gradlew" on Windows).  You
+to the doc subdirectory and run ##../gradlew## (##..\gradlew## on Windows).  You
 do not need to have Gradle installed to run the demonstration (if you pull the
 entire project from Git).
-WARNING:  If you pull from Git trunk, you will be working with pre-production
+**WARNING:**  If you pull from Git trunk, you will be working with pre-production
 code.  The sample may be in the process of being updated.  If you experience
 problems running the sample, work with a Git tag instead of trunk, or open a
 Github Issue to get help.
 
 
-FEATURES
+== Features
 
-    + Nested property definitions like users of Ant and Log4j are used to.
+    * Nested property definitions like users of Ant and Log4j are used to.
       I.e. use references like ${this} in your property values.
       ${ref} references can be made before or after the 'ref' property is
       defined, as long as the ref is defined in this file (or before this file
       is loaded).  (If writing an object and a property of the object, you
       must create the object first).
-
-    + System properties are expanded, like users of Ant, Log4j, and Ivy
+    * System properties are expanded, like users of Ant, Log4j, and Ivy
       are used to, but with their own (user-specified) namespace prefix to
       avoid name collisions.  (May be disabled).
-
-    + System properties may be set using the same prefix.  (May be disabled).
-
-    + Behavior when there are unsatisfied ${references} is configurable.
+    * System properties may be set using the same prefix.  (May be disabled).
+    * Behavior when there are unsatisfied ${references} is configurable.
       You may specify to prohibit (throw), leave the literal as it was,
       replace with empty string, or ignore the property setting altogether.
-
-    + Type-checking.  Fast-fail if an attempt is made to overwrite a Project
+    * Type-checking.  Fast-fail if an attempt is made to overwrite a Project
       property (or previous property file assignment) with a non-null value
       that is of a different data type.
-
-    + Overwriting is configurable.  You may prohibit(throw), allow, or
+    * Overwriting is configurable.  You may prohibit(throw), allow, or
       silently ignore attempts to overwrite.
-
-    + Turn on 'typeCasting' and if you prefix or suffix a property name with
+    * Turn on 'typeCasting' and if you prefix or suffix a property name with
       a (ClassName), an instance of that class will be instantiated with a
       valueOf(String) or String constructor using the specified property value
       as the instantiation parameter.  The resultant object is what will be
       added as a Project property.  Use () to set a null value.
-
-    + typeCasting supports arrays and arbitrary Collection types
-
-    + '.' may be used both as a character in a property name like
-          xfer.max(Float)=30.0
-      and to dereference object properties, like:
-          compileJava.options.debug(Boolean) = false
+    * typeCasting supports arrays and arbitrary Collection types
+    * '.' may be used both as a character in a property name
+      like\\##xfer.max(Float)=30.0##\\
+      and to dereference object properties,
+      like:\\##compileJava.options.debug(Boolean) = false##\\
       The behavior is toggled by whether or not the property file definition
       has a space after the key.  Note the space before "=" above.
-
-    + Properties of either the Gradle project or specified extension object may
+    * Properties of either the Gradle project or specified extension object may
       be set, as well as descendant objects (using the . dereference operator
       of previous bullet).  By default, setting or referencing "x" means
       property "x" of the Gradle Project, but you can precede the property name
-      with extension object name + $, like "ivyxml$depFile".
-
-    + Entire property files may be dedicated to configuring a specified
+      with extension object name + $, like "##ivyxml$depFile##".
+    * Entire property files may be dedicated to configuring a specified
       extension object.  I.e. if the target extension object is specified as
       optional load parameter, properties will default to that object instead
       of to the Project.
-
-    + Extension object properties may be set before the target extension object
+    * Extension object properties may be set before the target extension object
       becomes available.  Settings deferred in this way will be applied as soon
       as the extension object comes online.  Deferral behavior may  be disabled
       if you want to enforce that target extension objects are available ahead
       of time.
-
-    + User specifiable load-specific automatic prefix.  This allows you to
+    * User specifiable load-specific automatic prefix.  This allows you to
       load properties from multiple sources into your Project or Map, without
       risking name collisions, and being able to clearly and definitively tell
       the source of each property.
-
-    + Individual ${references} may use property name prefix characters to
+    * Individual ${references} may use property name prefix characters to
       override the unset-reference-property behavior, so that in a single
       properties file or String or text file to be expanded, some references
       may be required and others optional.
-
-    + Provides Gradle Copy Filter that works just like Gradle's
-          filter { String line -> output one line }
+    * Provides Gradle Copy Filter that works just like
+      Gradle's\\##filter { String line -> output one line }##\\
       but with good performance and without the limitations.
       See 'ContentAsStringFilter' below.
-
-    + General expansion of ${reference}s in supplied Strings or Files.
+    * General expansion of ${reference}s in supplied Strings or Files.
       References can be Gradle Projects or extension objects, as described
       above, or a plain old user-supplied Map.  See the expand() methods below.
-
-    + The previous two items, ContentAsStringFilter + expand() methods, may be
+    * The previous two items, ContentAsStringFilter + expand() methods, may be
       combined to do efficient and powerful property expansion of text content
       or resource files when building applications.
 
-USAGE
+== Usage
 
-Pull plugin from Internet.
+=== Pull plugin from Internet.
 
     Couldn't be easier.  This will pull the plugin from Maven Central:
 
+<<prettyPrint lang-java>> {{{
         buildscript {
             repositories { mavenCentral() }
             dependencies {
@@ -171,8 +161,9 @@ Pull plugin from Internet.
         // See
         // https://github.com/unsaved/gradle-javaPropFile-plugin/tree/master/doc
         // for some other very useful examples using ContentAsStringFilter.
+}}}
 
-Use plugin jar file locally.
+=== Use plugin jar file locally.
 
     Just use your browser to go to the JavaPropFile directory at Maven
     Central.  http://repo1.maven.org/maven2/com/admc/gradle-javaPropFile-plugin
@@ -184,6 +175,7 @@ Use plugin jar file locally.
     Or you can store it in a local directory, perhaps with other Gradle plugin
     jars.  The procedure is the same either way:
 
+<<prettyPrint lang-java>> {{{
         buildscript { dependencies {
             classpath fileTree(
                 dir: 'directory/containing/the/plugin/jar/file',
@@ -211,11 +203,12 @@ Use plugin jar file locally.
         // See
         // https://github.com/unsaved/gradle-javaPropFile-plugin/tree/master/doc
         // for some other very useful examples using ContentAsStringFilter.
+}}}
 
 
-DETAILS
-    DEFINITIONS
-        BehaviorRefPrefixing:
+== Details
+=== Definitions
+     *= BehaviorRefPrefixing|
             Prefixing a referenced property name with ! - or . to specify
             behavior if the specified property is not set (this overrides
             the 'unsatisfiedRefBehavior' setting of the propFileLoader).
@@ -224,14 +217,14 @@ DETAILS
             set, others may leave the text of unsatisfied references unchanged,
             and other occurrences may replace the unsatisfied reference with
             nothing (empty string).
-        DotDeref 
+     *= DotDeref|
             Behavior where specifications like alpha.beta.gamma means
             property-gamma-of-property-beta-of-property-alpha, instead of
             property with name 'alpha.beta.gama'.  I.e. , if DotDefef behavior
             holds, then unescaped dots in property name acts as a dereference
             operator.
 
-    IMPORTANT!  KEY/VALUE DELIMITER
+=== IMPORTANT!  Key/Value Delimiter
     Java properties files allow for the key to be terminated by equal sign,
     colon character, or a white space character.  (Our keys contain a
     property and may contain other typing and parent-object-identifying
@@ -239,28 +232,38 @@ DETAILS
     Since white-space is optional after the property keys, and since property
     file rules even allow for the '=' to follow white space, we use white space
     in this position to toggle DotDeref behavior.
+
     Compare:
+<<prettyPrint>> {{{
         x.a=eks
         # No whitespace immediately after key "x.a" so property name is "x.a".
+}}}
     vs.
+<<prettyPrint>> {{{
         x.a =eks
         # Whitespace immediately after key "x.a" so this means proeprty "a" of
         # object "x".
+}}}
     (MNEMONIC:  Groovy is distinctive for allowing white space to delimit
     between method name and parameters.  We use white space as delimiter to
     trigger Groovy-style dereferencing.)
     The presence of absence of white space after the key enables or disables
     DotDeref both for the key and for ${references" in the
     value.  Another example to show this:
+<<prettyPrint>> {{{
         x=Value includes a reference to ${property.with.name.containg.dots}
+}}}
     vs.
+<<prettyPrint>> {{{
         x =Value includes a reference to ${subObject1.subObject2.propertyName}
+}}}
 
-    REFERENCE SYNTAX
+=== Reference Syntax
     References are not allowed on the left-hand side of property file records.
     They may be used on the value (right-hand) side of property file records,
     and in Strings and Files that are expand()ed.
     These are the variants:
+<<prettyPrint>> {{{
         ${propName}          # Simple property 'propName' of the target
                              # object (which defaults to the Gradle Project).
         ${sys|propName}      # For Java system property 'propName', using
@@ -278,8 +281,8 @@ DETAILS
         # In all cases above (except nested properties, as noted), references
         # to properties that are missing are handled according to the default
         # or specified unsatisfiedRefBehavior.
-        ${!propName}         # For all variants above, if the reference
-        ${!sys|propName}     # property name is immediately preceded by !,
+        $~{!propName}         # For all variants above, if the reference
+        $~{!sys|propName}     # property name is immediately preceded by !,
         etc.                 # then the unsatisfiedRefBehavior is thereby
                              # overridden so that if the referenced property
                              # is not set, JavaPropFile wil throw.
@@ -291,8 +294,9 @@ DETAILS
                              # exactly as it is.
         # The !, -, . prefixes, which override unsatisfiedRefBehavior, are
         # known as 'behaviorRefPrefixes'.
+}}}
 
-    SEQUENCE OF ASSIGNMENTS AND REFERENCES
+=== Sequene of Assignmentts and References
     In all cases, sequence is consistent and understandable.
     According to Java's property file rules, it is useless to assign to a
     single property twice in a single properties file.  We therefore prohibit
@@ -306,28 +310,30 @@ DETAILS
     referenced 100 times like ${x}, it will have the same value every time,
     regardless of whether it is referenced before or after 'x' is assigned.
 
-        Exception 1:  If property 'x' has a value before loading a property
+#= Exception|If property 'x' has a value before loading a property
         file that assigns 'x', then sequence matters, because ${x} will
         resolve to the original value before the assignment but to the new
         value after the assignment.
-
-        Exception 2:  You can't assign to an object before the object is
+#= Exception|You can't assign to an object before the object is
         present.  The sequence must be like this:
             t1(Thread)=one
             t1.name=two
 
-    ESCAPING
+=== Escaping
     You escape with backslash \, whether escaping is required by Java
     properties file format, java.util.regex.Pattern format, or JavaPropFile.
     As is very well documented at
     http://docs.oracle.com/javase/6/docs/api/java/util/Properties.html#load(java.io.Reader)
     you must \ to escape all white space characters (including line breaks),
     ':', and '=' inside of property keys.
+<<prettyPrint>> {{{
         colon\:and\ space_inside_property_key=hello
+}}}
     But to tell JavaPropFile to escape characters (list of examples follows),
     you must double escape with \\, because that is how you tell any Java
     properties file to pass | to the application (and in this context,
     JavaPropFile is an application).  Examples:
+<<prettyPrint>> {{{
         # A literal | in a regex must be escaped, and you must use \\ to get
         # \ to JavaPropFile:
         mockBean$intList(Integer[\\|]ArrayList)=91|72|101
@@ -343,21 +349,28 @@ DETAILS
         # But if you want to use DotDeref for only part of
         # the definition, you will need to escape:
         owner\\.id=x5klh.${plugBean.user.name}
+}}}
     Property names may begin with the characters ! - . but if you ${reference}
     them, you must escape that character with \\, like:
+<<prettyPrint>> {{{
         nestingVar=${\\!nested!var}}  # References property '!nested!var'
         # Note that you only escape these characters in references and only
         # when they are the first character.  The 2nd ! above should and may
         # not be escaped.
+}}}
     What characters must be escaped just for JavaPropFile?
         In .properties name (left) sides:
+<<prettyPrint>> {{{
             \\$  Unless $ used to specify an extension object
             \\(  Unless ( used to start a typecast
             \\)  Unless ) used to end a typecast
+}}}
         Inside of ${...} (which are only allowed in .properties value (right)
         sides and in expand() Strings or text files):
+<<prettyPrint>> {{{
             \\$  Unless $ used to specify an extension object
             \\}  Otherwise it would end the ${...}
+}}}
 
 
     Precedence works intuitively, not freakishly like Ant properties.
@@ -367,41 +380,47 @@ DETAILS
     Gradle provides no way to unset/remove any Project property, therefore
     JavaPropFile has no capability to remove a property.
 
-    Provided Public Methods:
+=== Provided Public Methods:
 
-        void propFileLoader.load(File propertiesFile)
+=====   void propFileLoader.load(File propertiesFile)
             Loads a properties file and writes Gradle Project properties with
             those values.
 
-        void propFileLoader.load(File propertiesFile, String keyAssignPrefix)
+=====   void propFileLoader.load(File propertiesFile, String keyAssignPrefix)
             Exact same as previous, except that each property written to the
             Project is prefixed with the supplied String.
             If you ran "propFileLoader.load(file('a.properties'), 'pref')" and
             you have a line in "a.properties" like:
+<<prettyPrint>> {{{
                 key=val
+}}}
             then JavaPropFile would end up doing
+<<prettyPrint>> {{{
                 gradleProject.setProperty('prefkey', 'val)
+}}}
 
-        Map propFileLoader.load(File propertiesFile, Map aMap)
+====    Map propFileLoader.load(File propertiesFile, Map aMap)
             Loads a properties file and writes map properties with those values.
             You must specify a Map to be populated, so if you want to load a
             new Map, just specify value [:] as the map.
             The given 'aMap' reference will be returned.
 
-        void propFileLoader.load(
+====    void propFileLoader.load(
+<<prettyPrint>> {{{
                 File propertiesFile, String keyAssignPrefix, Map aMap)
+}}}
             Exact same as previous, except that each property written to the
             Map is prefixed with the supplied String.  See description for the
             load(File, String) method above for details about how the prefix
             value is applied.
 
-        void propFileLoader.loadIntoExensionObject(
+====    void propFileLoader.loadIntoExensionObject(
                 File, String defaultExtObjName)
             The String is an extension object name.  This is the default object
             to apply property values to (or with as-dereference-operator, this
             is where the dereferencing begins).
 
-        void propFileLoader.traditionalPropertiesInit()
+====    void propFileLoader.traditionalPropertiesInit()
             Loads 'app.properties' (if it is present), prohibiting use of
             undefined ${...} references; then loads 'local.properties' (if it
             is present), allowing use of undefined references.  Overwriting is
@@ -414,25 +433,25 @@ DETAILS
             intended for shared or private/local usage, so I have standardized
             on the distinctive names 'app.properties' and 'local.properties'.
 
-        Map<String, Map<String, Object>>
+====    Map<String, Map<String, Object>>
                 propFileLoader.getDeferredExtensionProps()
             Most users will not use this.  It is for checking the state of
             deferred extension object properties.
             Returns a map of extension object names to map of deferred
             property definitions for that extension object.
 
-        static Class JavaPropFile.resolveClass(String className)
+====    static Class JavaPropFile.resolveClass(String className)
             This probably won't be called in the context of using JavaPropFile,
             but some developers may want to copy this, as it successfully
             uses the context class loader and Groovy's default package rules
             to resolve class names.
 
-        void propFileLoader.executeDeferrals()
+====    void propFileLoader.executeDeferrals()
             Most users will not use this.  It is invoked automatically by a
             Gradle callback to execute deferred extension property settings
             when the target extension object comes online.
 
-        String propFileLoader.expand(...)
+====    String propFileLoader.expand(...)
             The following methods all expand references in the specified String
             or File (1st parameter) and return the resulting String.
             propFileLoader Settings like propFileLoader.unsatisfiedRefBehavior
@@ -448,6 +467,7 @@ DETAILS
             If a Map is specified, then that mapping will be used by default
             for expansion mappings instead of the Gradle Project properties.
             See the 'Expand methods' section below for more details.
+<<prettyPrint>> {{{
         String propFileLoader.expand(File, Map<String, Object>)
         String propFileLoader.expand(File, boolean)
         String propFileLoader.expand(File)
@@ -461,13 +481,14 @@ DETAILS
         String propFileLoader.expand(String, boolean)
         String propFileLoader.expand(String)
         String propFileLoader.expand(String, Map<String, Object>, boolean)
+}}}
 
-    Configurations:
+=== Configurations:
 
         After you "apply plugin 'javaPropFile'", you can set the following
         properties on extension object 'propFileLoader'.
 
-        boolean propFileLoader.unsatisfiedRefBehavior
+====    boolean propFileLoader.unsatisfiedRefBehavior
             What to do when ${x} is used in a property value, but 'x' is not
             defined.
             Defaults to com.admc.gradle.THROW, which will cause the property
@@ -475,10 +496,12 @@ DETAILS
             You can change the behavior to any of the following.  (My syntax
             here assumes that you imported the class
             com.admc.gradle.JavaPropFile).
+<<prettyPrint>> {{{
                 JavaPropFile.LITERAL  Leave literal ${x}
                 JavaPropFile.EMPTY    Replace ${x} with the empty string
                 JavaPropFile.NO_SET   Don't set the property at all
                 JavaPropFile.THROW    Here only for completeness.  See above.
+}}}
             unsatisfiedRef behavior does not apply to references to missing
              extension object references like ${x$y} (on the value side of
              assignments or in expand() Strings/files).  This situation will
@@ -486,7 +509,7 @@ DETAILS
              of coding and complexity needed for a capability with unknown
              user demand.
 
-        boolean propFileLoader.overwriteThrow
+====    boolean propFileLoader.overwriteThrow
             Property file loading will throw and abort immediately if a
             property assignment is attempted to a property that already has a
             value.  (Empty string values and nulls are still values).
@@ -496,31 +519,33 @@ DETAILS
             doesn't matter.
             Defaults to false
 
-        boolean propFileLoader.overwrite
+====    boolean propFileLoader.overwrite
             If set to true, and .overwriteThrow is false (its default), then
             you can change existing property values.
             Defaults to true.
             If false, and .overwriteThrow is false, then attempts to change
             existing property values are silently ignored.
 
-        String propFileLoader.systemPropPrefix
+====    String propFileLoader.systemPropPrefix
             If this is non-null, then you can both reference system properties
             in property definition values, and can assign system properties.
             An example of each with systemPropPrefix set to 'sys|':
+<<prettyPrint>> {{{
                 projectOwner=Mr. ${sys|user.name}
                 sys|java.io.tmpdir=/usr/local/tmp
+}}}
             Set to null to prevent referencing and assignment of system
             properties.
             Defaults to 'sys|'.
 
-        boolean propFileLoader.typeCasting
+====    boolean propFileLoader.typeCasting
             If set to true, then whenever you set a property with name
             beginning or ending with a (ParenthesizedString), the parentheses
             and contents will be stripped off and an instance of the
             specified class name will be instantiated.  Use just () to assign
             a null.  Details about this follow.
 
-        boolean propFileLoader.defer
+====    boolean propFileLoader.defer
             If false then assignments to missing extension objects will cause
             the property file load to fail.
             If true, then assignments for missing extensions will be deferred
@@ -528,7 +553,7 @@ DETAILS
             Defaults to true.
 
 
-TYPE CASTING
+=== Type Casting
 
 Type casting is in effect if you set:  propFileLoader.typeCasting = true
 
@@ -546,18 +571,22 @@ Groovy's rules for package defaults apply.
 
 Some examples:
 
+<<prettyPrint>> {{{
     output(File)=/path/to/file.txt
     (Long)xferTime.max=31.25
     compileJava.options.debug(Boolean) = false
     monitor(com.admc.net.NetworMonitor)=Custom Network Monitor
     mavenRepository.dest.url(URL)=file:/tmp/fakeMvn
+}}}
 
 To assign a null, do the same thing, but give no value at all for class name
 nor property value:
 
+<<prettyPrint>> {{{
     envTarget()=
+}}}
 
-Arrays and Collections
+==== Arrays and Collections
 
     Immediately after the element typeCasting class,
     add [ + splitting-pattern + ] + optional-CollectionImplementationClass.
@@ -565,20 +594,22 @@ Arrays and Collections
     of course, follow Java properties file escaping rules.  If no collection
     implementation class is specifies, an Array will be instantiated.
     Examples:
+<<prettyPrint>> {{{
         mockBean$intList(Integer[\\|]ArrayList)=91|72|101
         # Note the extra ugly backslashes needed to satisfy both Java
         # properties escaping and java.util.regex.Pattern escaping for '|'.
         alpha(Integer[\ ]ArrayList)=94 3 12
         alpha(String[,]HashSet)=one,two,three
+}}}
 
-Type Validation
+==== Type Validation
     If you have JavaPropFile configured to allow property overwriting (by
     default it is allowed), you are still never allowed to directly change a
     property value from one non-null type to another non-null type.
     If you really want to, you can get around htis constraint by assigning null
     and then assign to the new value.
 
-ContentAsStringFilter
+==== ContentAsStringFilter
     Set attribute 'closure' to a closure that transforms the entire input
     file text into output file text.
     As noted above, the advantages of ContentAsStringFilter are, it invokes
@@ -588,7 +619,7 @@ ContentAsStringFilter
     functional "copy {...}" calls, and filtering a just subset of a predefined
     file collection.
 
-Expand methods
+==== Expand methods
     File "doc/build.gradle" has an example of expanding property references in
     application files using a ContentAsStringFilter and an .expand() call.
 
@@ -607,15 +638,15 @@ Expand methods
     systems out there, requiring extra staging directories, escaping
     characters, non-standard delimiters, loss of validation, etc.
     This use case is handled intuitively by JavaPropFile by three easy steps:
-        1: Use a sensible naming convention to make it clear to developers
+        # Use a sensible naming convention to make it clear to developers
            whether each reference is intended for use by JavaPropFile or the
            other tool.  (If loading properties from a file, you can use the
            'keyAssignPrefix' load parameter to facilitate this).
-        2: Set...
-          propFileLoader.unsatisfiedRefBehavior = JavaPropFile.Behavior.LITERAL
-        3: For each reference that you want to require JavaPropFile to expand,
+        # Set...\\##propFileLoader.unsatisfiedRefBehavior = JavaPropFile.Behavior.LITERAL##
+        # For each reference that you want to require JavaPropFile to expand,
            prefix the name with !, like...
-          Some text in the template file requires ${!name} to be set.
+         Some text in the template file requires $~{!name} to be set.
+
     Instead of duplicating an example here, see the configuration of task
     'processResources' in this production build file:
         https://github.com/unsaved/jcreole/raw/master/build.gradle
