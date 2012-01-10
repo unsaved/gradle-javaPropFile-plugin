@@ -250,42 +250,44 @@ href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/themes/ui-lightness/
 
 <div class="jcx_toc">
 <ul class="jcx_toc">
-  <li><a href="#jcsect_JavapropfileGradlePlugin">JavaPropFile Gradle Plugin</a><ul>
-    <li><a href="#jcsect_Features">Features</a></li>
-    <li><a href="#jcsect_Usage">Usage</a><ul>
-      <li><a href="#jcsect_PullPluginFromInternet">Pull plugin from Internet.</a></li>
-      <li><a href="#jcsect_UsePluginJarFileLocally">Use plugin jar file locally.</a></li>
+  <li><a href="#jcsect_Features">Features</a></li>
+  <li><a href="#jcsect_Usage">Usage</a><ul>
+    <li><a href="#jcsect_PullPluginFromInternet">Pull plugin from Internet.</a></li>
+    <li><a href="#jcsect_UsePluginJarFileLocally">Use plugin jar file locally.</a></li>
+  </ul></li>
+  <li><a href="#jcsect_Details">Details</a><ul>
+    <li><a href="#jcsect_Definitions">Definitions</a></li>
+    <li><a href="#jcsect_ImportantKeyValueDelimiter">IMPORTANT! Key/Value Delimiter</a></li>
+    <li><a href="#jcsect_ReferenceSyntax">Reference Syntax</a></li>
+    <li><a href="#jcsect_SequeneOfAssignmenttsAndReferences">Sequene of Assignmentts and References</a></li>
+    <li><a href="#jcsect_Escaping">Escaping</a></li>
+    <li><a href="#jcsect_ProvidedPublicMethods">Provided Public Methods:</a><ul>
+      <ul>
+        <li><a href="#jcsect_VoidPropfileloaderLoadFilePropertiesfile">void propFileLoader.load(File propertiesFile)</a></li>
+        <li><a href="#jcsect_vplfpsk">void propFileLoader.load(File propertiesFile, String keyAssignPrefix)</a></li>
+      </ul></li>
+      <li><a href="#jcsect_mplfpma">Map propFileLoader.load(File propertiesFile, Map aMap)</a></li>
+      <li><a href="#jcsect_VoidPropfileloaderLoad">void propFileLoader.load(</a></li>
+      <li><a href="#jcsect_VoidPropfileloaderLoadintoexensionobject">void propFileLoader.loadIntoExensionObject(</a></li>
+      <li><a href="#jcsect_vpt">void propFileLoader.traditionalPropertiesInit()</a></li>
+      <li><a href="#jcsect_MapstringMapstringObject">Map&lt;String, Map&lt;String, Object&gt;&gt;</a></li>
+      <li><a href="#jcsect_scjrsc">static Class JavaPropFile.resolveClass(String className)</a></li>
+      <li><a href="#jcsect_VoidPropfileloaderExecutedeferrals">void propFileLoader.executeDeferrals()</a></li>
+      <li><a href="#jcsect_StringPropfileloaderExpand">String propFileLoader.expand(...)</a>
     </ul></li>
-    <li><a href="#jcsect_Details">Details</a><ul>
-      <li><a href="#jcsect_Definitions">Definitions</a></li>
-      <li><a href="#jcsect_ImportantKeyValueDelimiter">IMPORTANT! Key/Value Delimiter</a></li>
-      <li><a href="#jcsect_ReferenceSyntax">Reference Syntax</a></li>
-      <li><a href="#jcsect_SequeneOfAssignmenttsAndReferences">Sequene of Assignmentts and References</a></li>
-      <li><a href="#jcsect_Escaping">Escaping</a></li>
-      <li><a href="#jcsect_ProvidedPublicMethods">Provided Public Methods:</a><ul>
-        <li><a href="#jcsect_mplfpma">Map propFileLoader.load(File propertiesFile, Map aMap)</a></li>
-        <li><a href="#jcsect_VoidPropfileloaderLoad">void propFileLoader.load(</a></li>
-        <li><a href="#jcsect_VoidPropfileloaderLoadintoexensionobject">void propFileLoader.loadIntoExensionObject(</a></li>
-        <li><a href="#jcsect_vpt">void propFileLoader.traditionalPropertiesInit()</a></li>
-        <li><a href="#jcsect_MapstringMapstringObject">Map&lt;String, Map&lt;String, Object&gt;&gt;</a></li>
-        <li><a href="#jcsect_scjrsc">static Class JavaPropFile.resolveClass(String className)</a></li>
-        <li><a href="#jcsect_VoidPropfileloaderExecutedeferrals">void propFileLoader.executeDeferrals()</a></li>
-        <li><a href="#jcsect_StringPropfileloaderExpand">String propFileLoader.expand(...)</a></li>
-      </ul></li>
-      <li><a href="#jcsect_Configurations">Configurations:</a><ul>
-        <li><a href="#jcsect_bpu">boolean propFileLoader.unsatisfiedRefBehavior</a></li>
-        <li><a href="#jcsect_BooleanPropfileloaderOverwritethrow">boolean propFileLoader.overwriteThrow</a></li>
-        <li><a href="#jcsect_BooleanPropfileloaderOverwrite">boolean propFileLoader.overwrite</a></li>
-        <li><a href="#jcsect_StringPropfileloaderSystempropprefix">String propFileLoader.systemPropPrefix</a></li>
-        <li><a href="#jcsect_BooleanPropfileloaderTypecasting">boolean propFileLoader.typeCasting</a></li>
-        <li><a href="#jcsect_BooleanPropfileloaderDefer">boolean propFileLoader.defer</a></li>
-      </ul></li>
-      <li><a href="#jcsect_TypeCasting">Type Casting</a><ul>
-        <li><a href="#jcsect_ArraysAndCollections">Arrays and Collections</a></li>
-        <li><a href="#jcsect_TypeValidation">Type Validation</a></li>
-        <li><a href="#jcsect_Contentasstringfilter">ContentAsStringFilter</a></li>
-        <li><a href="#jcsect_ExpandMethods">Expand methods</a></li>
-      </ul></li>
+    <li><a href="#jcsect_Configurations">Configurations:</a><ul>
+      <li><a href="#jcsect_bpu">boolean propFileLoader.unsatisfiedRefBehavior</a></li>
+      <li><a href="#jcsect_BooleanPropfileloaderOverwritethrow">boolean propFileLoader.overwriteThrow</a></li>
+      <li><a href="#jcsect_BooleanPropfileloaderOverwrite">boolean propFileLoader.overwrite</a></li>
+      <li><a href="#jcsect_StringPropfileloaderSystempropprefix">String propFileLoader.systemPropPrefix</a></li>
+      <li><a href="#jcsect_BooleanPropfileloaderTypecasting">boolean propFileLoader.typeCasting</a></li>
+      <li><a href="#jcsect_BooleanPropfileloaderDefer">boolean propFileLoader.defer</a></li>
+    </ul></li>
+    <li><a href="#jcsect_TypeCasting">Type Casting</a><ul>
+      <li><a href="#jcsect_ArraysAndCollections">Arrays and Collections</a></li>
+      <li><a href="#jcsect_TypeValidation">Type Validation</a></li>
+      <li><a href="#jcsect_Contentasstringfilter">ContentAsStringFilter</a></li>
+      <li><a href="#jcsect_ExpandMethods">Expand methods</a></li>
     </ul></li>
   </ul></li>
 </ul>
@@ -379,9 +381,12 @@ Github Issue to get help.</p>
       added as a Project property.  Use () to set a null value.</li>
   <li> typeCasting supports arrays and arbitrary Collection types</li>
   <li> '.' may be used both as a character in a property name
-      like<br><tt>xfer.max(Float)=30.0</tt><br>
-      and to dereference object properties,
-      like:<br><tt>compileJava.options.debug(Boolean) = false</tt><br>
+      like <pre class="prettyprint">
+xfer.max(Float)=30.0
+</pre>
+      and to dereference object properties, like: <pre class="prettyprint">
+compileJava.options.debug(Boolean) = false
+</pre>
       The behavior is toggled by whether or not the property file definition
       has a space after the key.  Note the space before &quot;=&quot; above.</li>
   <li> Properties of either the Gradle project or specified extension object may
@@ -406,8 +411,9 @@ Github Issue to get help.</p>
       override the unset-reference-property behavior, so that in a single
       properties file or String or text file to be expanded, some references
       may be required and others optional.</li>
-  <li> Provides Gradle Copy Filter that works just like
-      Gradle's<br><tt>filter { String line -&gt; output one line }</tt><br>
+  <li> Provides Gradle Copy Filter that works just like Gradle's <pre class="prettyprint">
+filter { String line -&gt; output one line }
+</pre>
       but with good performance and without the limitations.
       See <a href="#jcsect_Contentasstringfilter">ContentAsStringFilter</a> below.</li>
   <li> General expansion of ${reference}s in supplied Strings or Files.
@@ -423,6 +429,7 @@ Github Issue to get help.</p>
 <h3 id="jcsect_PullPluginFromInternet"><span class="jcreole_hbody"> Pull plugin from Internet.</span></h3>
 
 <p>    Couldn't be easier.  This will pull the plugin from Maven Central:</p>
+
 <pre class="prettyprint lang-java">
         buildscript {
             repositories { mavenCentral() }
@@ -465,6 +472,7 @@ Github Issue to get help.</p>
     sharing it with other project developers (assuming you use some SCM system).
     Or you can store it in a local directory, perhaps with other Gradle plugin
     jars.  The procedure is the same either way:</p>
+
 <pre class="prettyprint lang-java">
         buildscript { dependencies {
             classpath fileTree(
@@ -645,7 +653,7 @@ Github Issue to get help.</p>
         owner\\.id=x5klh.${plugBean.user.name}
 </pre>
 <p>    Property names may begin with the characters ! - . but if you ${reference}
-    them, you must escape that character with <br>, like:</p>
+    them, you must escape that character with \\, like:</p>
 <pre class="prettyprint">
         nestingVar=${\\!nested!var}}  # References property '!nested!var'
         # Note that you only escape these characters in references and only
@@ -849,6 +857,7 @@ class, or a String-parameter constructor.</p>
 <p>Groovy's rules for package defaults apply.</p>
 
 <p>Some examples:</p>
+
 <pre class="prettyprint">
     output(File)=/path/to/file.txt
     (Long)xferTime.max=31.25
@@ -859,6 +868,7 @@ class, or a String-parameter constructor.</p>
 
 <p>To assign a null, do the same thing, but give no value at all for class name
 nor property value:</p>
+
 <pre class="prettyprint">
     envTarget()=
 </pre>
@@ -918,8 +928,11 @@ nor property value:</p>
            whether each reference is intended for use by JavaPropFile or the
            other tool.  (If loading properties from a file, you can use
            the <tt>keyAssignPrefix</tt> load parameter to facilitate this).</li>
-  <li> Set...<br><tt>propFileLoader.unsatisfiedRefBehavior = JavaPropFile.Behavior.LITERAL</tt></li>
+  <li> Set... <pre class="prettyprint">
+propFileLoader.unsatisfiedRefBehavior = JavaPropFile.Behavior.LITERAL
+</pre></li>
   <li> For each reference that you want to require JavaPropFile to expand,
+        bad
            prefix the name with !, like...
          Some text in the template file requires ${!name} to be set.</li>
 </ol>
@@ -931,7 +944,7 @@ nor property value:</p>
 </div>
 
 <hr>
-<div class="jcreole_footer">Generated by JCreole v. 1.1.2 @ 2012-01-08T22:19:59-0500.
+<div class="jcreole_footer">Generated by JCreole v. 1.1.3-SNAPSHOT @ 2012-01-10T18:16:27-0500.
 &nbsp; &nbsp; &nbsp; &nbsp;
 Apache 2 license &copy; 2011 by Axis Data Management Corp.</div>
 </body>

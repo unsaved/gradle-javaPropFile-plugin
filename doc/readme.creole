@@ -1,6 +1,6 @@
 = JavaPropFile Gradle Plugin
 
-<<toc>>
+<<toc /x____x>>
 
 
 Version 0.4.* and later require Gradle 1.0-milestone-6 or later.
@@ -19,7 +19,8 @@ syntax like "##file.txt(File)##").
 Several mechanisms provided make it easy use a differentiated property name
 space for propery file loads (when your use case allows for this).
 The Copy Filter is very similar to the Gradle built-in operator:
-<<prettyPrint lang-java>> {{{
+<<prettyPrint lang-java>>
+{{{
      filter { String line -> output one line }
 }}}
 but eliminating the performance and limitations due to processing
@@ -88,9 +89,14 @@ Github Issue to get help.
       added as a Project property.  Use () to set a null value.
     * typeCasting supports arrays and arbitrary Collection types
     * '.' may be used both as a character in a property name
-      like\\##xfer.max(Float)=30.0##\\
-      and to dereference object properties,
-      like:\\##compileJava.options.debug(Boolean) = false##\\
+      like <<prettyPrint>>
+{{{
+xfer.max(Float)=30.0
+}}}
+      and to dereference object properties, like: <<prettyPrint>>
+{{{
+compileJava.options.debug(Boolean) = false
+}}}
       The behavior is toggled by whether or not the property file definition
       has a space after the key.  Note the space before "=" above.
     * Properties of either the Gradle project or specified extension object may
@@ -115,8 +121,10 @@ Github Issue to get help.
       override the unset-reference-property behavior, so that in a single
       properties file or String or text file to be expanded, some references
       may be required and others optional.
-    * Provides Gradle Copy Filter that works just like
-      Gradle's\\##filter { String line -> output one line }##\\
+    * Provides Gradle Copy Filter that works just like Gradle's <<prettyPrint>>
+{{{
+filter { String line -> output one line }
+}}}
       but with good performance and without the limitations.
       See [[#jcsect_Contentasstringfilter]] below.
     * General expansion of ${reference}s in supplied Strings or Files.
@@ -132,7 +140,8 @@ Github Issue to get help.
 
     Couldn't be easier.  This will pull the plugin from Maven Central:
 
-<<prettyPrint lang-java>> {{{
+<<prettyPrint lang-java>>
+{{{
         buildscript {
             repositories { mavenCentral() }
             dependencies {
@@ -175,7 +184,8 @@ Github Issue to get help.
     Or you can store it in a local directory, perhaps with other Gradle plugin
     jars.  The procedure is the same either way:
 
-<<prettyPrint lang-java>> {{{
+<<prettyPrint lang-java>>
+{{{
         buildscript { dependencies {
             classpath fileTree(
                 dir: 'directory/containing/the/plugin/jar/file',
@@ -234,12 +244,14 @@ Github Issue to get help.
     in this position to toggle DotDeref behavior.
 
     Compare:
-<<prettyPrint>> {{{
+<<prettyPrint>>
+{{{
         x.a=eks
         # No whitespace immediately after key ##x.a## so property name is ##x.a##.
 }}}
     vs.
-<<prettyPrint>> {{{
+<<prettyPrint>>
+{{{
         x.a =eks
         # Whitespace immediately after key ##x.a## so this means property ##a## of
         # object ##x##.
@@ -250,11 +262,13 @@ Github Issue to get help.
     The presence of absence of white space after the key enables or disables
     DotDeref both for the key and for ##${references}## in the
     value.  Another example to show this:
-<<prettyPrint>> {{{
+<<prettyPrint>>
+{{{
         x=Value includes a reference to ${property.with.name.containg.dots}
 }}}
     vs.
-<<prettyPrint>> {{{
+<<prettyPrint>>
+{{{
         x =Value includes a reference to ${subObject1.subObject2.propertyName}
 }}}
 
@@ -263,7 +277,8 @@ Github Issue to get help.
     They may be used on the value (right-hand) side of property file records,
     and in Strings and Files that are expand()ed.
     These are the variants:
-<<prettyPrint>> {{{
+<<prettyPrint>>
+{{{
         ${propName}          # Simple property 'propName' of the target
                              # object (which defaults to the Gradle Project).
         ${sys|propName}      # For Java system property 'propName', using
@@ -326,14 +341,16 @@ Github Issue to get help.
     http://docs.oracle.com/javase/6/docs/api/java/util/Properties.html#load(java.io.Reader)
     you must \ to escape all white space characters (including line breaks),
     ':', and '=' inside of property keys.
-<<prettyPrint>> {{{
+<<prettyPrint>>
+{{{
         colon\:and\ space_inside_property_key=hello
 }}}
     But to tell JavaPropFile to escape characters (list of examples follows),
     you must double escape with ~\\, because that is how you tell any Java
     properties file to pass | to the application (and in this context,
     JavaPropFile is an application).  Examples:
-<<prettyPrint>> {{{
+<<prettyPrint>>
+{{{
         # A literal | in a regex must be escaped, and you must use \\ to get
         # \ to JavaPropFile:
         mockBean$intList(Integer[\\|]ArrayList)=91|72|101
@@ -351,8 +368,9 @@ Github Issue to get help.
         owner\\.id=x5klh.${plugBean.user.name}
 }}}
     Property names may begin with the characters ! - . but if you ${reference}
-    them, you must escape that character with \\, like:
-<<prettyPrint>> {{{
+    them, you must escape that character with ~\\, like:
+<<prettyPrint>>
+{{{
         nestingVar=${\\!nested!var}}  # References property '!nested!var'
         # Note that you only escape these characters in references and only
         # when they are the first character.  The 2nd ! above should and may
@@ -360,14 +378,16 @@ Github Issue to get help.
 }}}
     What characters must be escaped just for JavaPropFile?
         In .properties name (left) sides:
-<<prettyPrint>> {{{
+<<prettyPrint>>
+{{{
             \\$  Unless $ used to specify an extension object
             \\(  Unless ( used to start a typecast
             \\)  Unless ) used to end a typecast
 }}}
         Inside of ${...} (which are only allowed in .properties value (right)
         sides and in expand() Strings or text files):
-<<prettyPrint>> {{{
+<<prettyPrint>>
+{{{
             \\$  Unless $ used to specify an extension object
             \\}  Otherwise it would end the ${...}
 }}}
@@ -391,11 +411,13 @@ Github Issue to get help.
             Project is prefixed with the supplied String.
             If you ran "##propFileLoader.load(file('a.properties'), 'pref')##" and
             you have a line in ##a.properties## like:
-<<prettyPrint>> {{{
+<<prettyPrint>>
+{{{
                 key=val
 }}}
             then JavaPropFile would end up doing
-<<prettyPrint>> {{{
+<<prettyPrint>>
+{{{
                 gradleProject.setProperty('prefkey', 'val)
 }}}
 
@@ -406,7 +428,8 @@ Github Issue to get help.
             The given ##aMap## reference will be returned.
 
 ====    void propFileLoader.load(
-<<prettyPrint>> {{{
+<<prettyPrint>>
+{{{
                 File propertiesFile, String keyAssignPrefix, Map aMap)
 }}}
             Exact same as previous, except that each property written to the
@@ -467,7 +490,8 @@ Github Issue to get help.
             If a Map is specified, then that mapping will be used by default
             for expansion mappings instead of the Gradle Project properties.
             See the [[#jcsect_ExpandMethods]] section below for more details.
-<<prettyPrint>> {{{
+<<prettyPrint>>
+{{{
         String propFileLoader.expand(File, Map<String, Object>)
         String propFileLoader.expand(File, boolean)
         String propFileLoader.expand(File)
@@ -496,7 +520,8 @@ Github Issue to get help.
             You can change the behavior to any of the following.  (My syntax
             here assumes that you imported the class
             com.admc.gradle.JavaPropFile).
-<<prettyPrint>> {{{
+<<prettyPrint>>
+{{{
                 JavaPropFile.LITERAL  Leave literal ${x}
                 JavaPropFile.EMPTY    Replace ${x} with the empty string
                 JavaPropFile.NO_SET   Don't set the property at all
@@ -530,7 +555,8 @@ Github Issue to get help.
             If this is non-null, then you can both reference system properties
             in property definition values, and can assign system properties.
             An example of each with systemPropPrefix set to ##sys|##:
-<<prettyPrint>> {{{
+<<prettyPrint>>
+{{{
                 projectOwner=Mr. ${sys|user.name}
                 sys|java.io.tmpdir=/usr/local/tmp
 }}}
@@ -571,7 +597,8 @@ Groovy's rules for package defaults apply.
 
 Some examples:
 
-<<prettyPrint>> {{{
+<<prettyPrint>>
+{{{
     output(File)=/path/to/file.txt
     (Long)xferTime.max=31.25
     compileJava.options.debug(Boolean) = false
@@ -582,7 +609,8 @@ Some examples:
 To assign a null, do the same thing, but give no value at all for class name
 nor property value:
 
-<<prettyPrint>> {{{
+<<prettyPrint>>
+{{{
     envTarget()=
 }}}
 
@@ -594,7 +622,8 @@ nor property value:
     of course, follow Java properties file escaping rules.  If no collection
     implementation class is specifies, an Array will be instantiated.
     Examples:
-<<prettyPrint>> {{{
+<<prettyPrint>>
+{{{
         mockBean$intList(Integer[\\|]ArrayList)=91|72|101
         # Note the extra ugly backslashes needed to satisfy both Java
         # properties escaping and java.util.regex.Pattern escaping for '|'.
@@ -642,8 +671,12 @@ nor property value:
            whether each reference is intended for use by JavaPropFile or the
            other tool.  (If loading properties from a file, you can use
            the ##keyAssignPrefix## load parameter to facilitate this).
-        # Set...\\##propFileLoader.unsatisfiedRefBehavior = JavaPropFile.Behavior.LITERAL##
+        # Set... <<prettyPrint>>
+{{{
+propFileLoader.unsatisfiedRefBehavior = JavaPropFile.Behavior.LITERAL
+}}}
         # For each reference that you want to require JavaPropFile to expand,
+        bad
            prefix the name with !, like...
          Some text in the template file requires $~{!name} to be set.
 
