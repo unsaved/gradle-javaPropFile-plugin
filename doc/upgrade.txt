@@ -2,6 +2,7 @@ Important information for users upgrading JavaPropFile
     
 GOTCHAS
 
+    * Version 0.6.* and later require Gradle 1.2 or later.
     * Version 0.4.* and later require Gradle 1.0-milestone-6 or later.
       (This is due to compatibility-killing Groovy upgrade in Gradle).
     * If you upgrade gradle to milestone-6, completely wipe out your Gradle
@@ -11,6 +12,8 @@ GOTCHAS
 
 Recent functional changes.  The new features are all documented in the file
 "README.txt" in the project root directory.
+
+    Now works with JSE 1.5 (in addition to 1.6+)
 
     BehaviorRefPrefixes allow for property-specific unset-property behaviors.
 

@@ -3,7 +3,8 @@
 <<toc /x____x>>
 
 
-Version 0.4.* and later require Gradle 1.0-milestone-6 or later.
+Versions 0.6.* and later require Gradle 1.2 or later.
+Versions 0.4.* and later require Gradle 1.0-milestone-6 or later.
 
 **IMPORTANT:**  Users who are upgrading Gradle or upgrading JavaPropFile should
 read the file ##upgrade.txt## in the ##doc## subdirectory.
@@ -311,7 +312,7 @@ filter { String line -> output one line }
         # known as 'behaviorRefPrefixes'.
 }}}
 
-=== Sequene of Assignmentts and References
+=== Sequence of Assignments and References
     In all cases, sequence is consistent and understandable.
     According to Java's property file rules, it is useless to assign to a
     single property twice in a single properties file.  We therefore prohibit
