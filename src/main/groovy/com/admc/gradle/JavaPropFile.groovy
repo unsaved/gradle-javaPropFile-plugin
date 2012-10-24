@@ -891,7 +891,12 @@ Failed to resolve DomainExtensionObject ref though succeeded earlier:
             sb.append(it).append('\n')
             pText = sb + '\u0003=\n'
             workPs.clear()
-            workPs.load(new StringReader(pText))
+            try {
+                workPs.load(new StringReader(pText))
+            } catch (MissingMethodException mme) {
+                // Hack is workaround for pre-1.6 Java
+                workPs.load(new StringBufferInputStream(pText))
+            }
             tmpList = workPs.propertyNames().toList()
             if (tmpList.size() < 2) return
             assert tmpList.size() == 2:
@@ -909,8 +914,14 @@ Failed to resolve DomainExtensionObject ref though succeeded earlier:
             firstDelim = '\0'
             for (i in (firstNonWs + 1) .. sb.length()) {
                 workPs.clear()
-                workPs.load(new StringReader(sb.substring(firstNonWs, i)
-                        + '\u0003\n'))
+                try {
+                    workPs.load(new StringReader(sb.substring(firstNonWs, i)
+                            + '\u0003\n'))
+                } catch (MissingMethodException mme) {
+                    // Hack is workaround for pre-1.6 Java
+                    workPs.load(new StringBufferInputStream(sb.substring(firstNonWs, i)
+                            + '\u0003\n'))
+                }
                 if (workPs.size() == 1
                         && workPs.getProperty(workPs.propertyNames()
                         .toList().first()) == '\u0003') {
