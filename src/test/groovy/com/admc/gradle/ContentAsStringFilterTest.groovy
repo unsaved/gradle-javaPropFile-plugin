@@ -70,7 +70,7 @@ System.err.println("Iz " + destDir.absolutePath)
         File inFile2 =
                 ContentAsStringFilterTest.textFileFromClasspath('template')
         System.setProperty('aSysProp', 'eins')
-        project.setProperty('aProjProp', 'zwei')
+        project.ext.set('aProjProp', 'zwei')
         project.copy {
             from([inFile1, inFile2])
             into locDdir.absolutePath

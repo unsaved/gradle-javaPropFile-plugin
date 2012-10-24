@@ -11,10 +11,10 @@ if (localGradleFile.isFile()) {
 
 if (version == 'unspecified') version = '0.5.2-SNAPSHOT'
 if (!project.hasProperty('org.name'))
-    project.setProperty('org.name', ((group == 'com.admc')
+    project.ext.set('org.name', ((group == 'com.admc')
             ? 'Axis Data Management Corp.' : System.properties['user.name']))
 if (!project.hasProperty('jar.title'))
-    project.setProperty('jar.title', (group == 'com.admc')
+    project.ext.set('jar.title', (group == 'com.admc')
             ? 'JavaPropFile Gradle plugin jar' : 'Customization')
 
 dependencies {

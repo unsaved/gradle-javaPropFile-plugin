@@ -61,7 +61,7 @@ class JavaPropFilePluginTest {
 
     @org.junit.Test(expected=GradleException.class)
     void prefProhibitOverwrite() {
-        project.setProperty('pref.alpha', 'eins')
+        project.ext.set('pref.alpha', 'eins')
 
         project.propFileLoader.overwriteThrow = true
         File f = JavaPropFilePluginTest.mkTestFile()
@@ -71,7 +71,7 @@ class JavaPropFilePluginTest {
 
     @org.junit.Test
     void prefOverwrite() {
-        project.setProperty('pref.alpha', 'eins')
+        project.ext.set('pref.alpha', 'eins')
 
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('alpha=one', 'ISO-8859-1')
@@ -127,7 +127,7 @@ class JavaPropFilePluginTest {
     void typeCollision() {
         checkProps('aFile')
 
-        project.aFile = new File('x.txt')
+        project.ext.aFile = new File('x.txt')
         project.propFileLoader.overwriteThrow = true
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('aFile=one', 'ISO-8859-1')
@@ -137,7 +137,7 @@ class JavaPropFilePluginTest {
     @org.junit.Test
     void changeToNull() {
         checkProps('aNull')
-        project.setProperty('aNull', (String) null)
+        project.ext.set('aNull', (String) null)
 
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('aNull=one', 'ISO-8859-1')
@@ -177,7 +177,7 @@ class JavaPropFilePluginTest {
                 JavaPropFile.Behavior.NO_SET
         project.propFileLoader.load(f)
         assertFalse(project.hasProperty('alpha'))
-        project.setProperty('alpha', 'eins')
+        project.ext.set('alpha', 'eins')
         project.propFileLoader.load(f)
         assertTrue(project.hasProperty('alpha'))
         assertEquals('eins', project.property('alpha'))
@@ -194,7 +194,7 @@ class JavaPropFilePluginTest {
                 JavaPropFile.Behavior.NO_SET
         project.propFileLoader.load(f)
         assertFalse(project.hasProperty('alpha'))
-        project.setProperty('alpha', 'eins')
+        project.ext.set('alpha', 'eins')
         project.propFileLoader.load(f)
         assertTrue(project.hasProperty('alpha'))
         assertEquals('eins', project.property('alpha'))
@@ -212,7 +212,7 @@ class JavaPropFilePluginTest {
                 JavaPropFile.Behavior.UNSET
         project.propFileLoader.load(f)
         assertFalse(project.hasProperty('alpha'))
-        project.setProperty('alpha', 'eins')
+        project.ext.set('alpha', 'eins')
         project.propFileLoader.load(f)
         assertFalse(project.hasProperty('alpha'))
     }
@@ -228,7 +228,7 @@ class JavaPropFilePluginTest {
                 JavaPropFile.Behavior.UNSET
         project.propFileLoader.load(f)
         assertFalse(project.hasProperty('alpha'))
-        project.setProperty('alpha', 'eins')
+        project.ext.set('alpha', 'eins')
         project.propFileLoader.load(f)
         assertFalse(project.hasProperty('alpha'))
     }
@@ -321,8 +321,8 @@ mid2   m2 ${bottom1}
 
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('alpha=replacement\nbeta=${beta} addition')
-        project.setProperty('alpha', 'eins')
-        project.setProperty('beta', 'zwei')
+        project.ext.set('alpha', 'eins')
+        project.ext.set('beta', 'zwei')
         project.propFileLoader.load(f)
         assertTrue(project.hasProperty('alpha'))
         assertTrue(project.hasProperty('beta'))
@@ -336,8 +336,8 @@ mid2   m2 ${bottom1}
 
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('alpha=replacement\nbeta=${beta} addition')
-        project.setProperty('alpha', 'eins')
-        project.setProperty('beta', 'zwei')
+        project.ext.set('alpha', 'eins')
+        project.ext.set('beta', 'zwei')
         project.propFileLoader.overwrite = false
         project.propFileLoader.load(f)
         assertTrue(project.hasProperty('alpha'))
@@ -375,7 +375,7 @@ mid2   m2 ${bottom1}
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('alpha=zwei', 'ISO-8859-1')
         project.propFileLoader.overwriteThrow = true
-        project.setProperty('alpha', 'eins')
+        project.ext.set('alpha', 'eins')
         project.propFileLoader.load(f)
     }
 
@@ -386,7 +386,7 @@ mid2   m2 ${bottom1}
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('alpha=eins', 'ISO-8859-1')
         project.propFileLoader.overwriteThrow = true
-        project.setProperty('alpha', 'eins')
+        project.ext.set('alpha', 'eins')
         project.propFileLoader.load(f)
         assertTrue(project.hasProperty('alpha'))
         assertEquals('eins', project.property('alpha'))
@@ -425,10 +425,10 @@ delta()=
         f.write('alpha(File)=eins\n(File)beta=zwei\ngamma()=', 'ISO-8859-1')
         project.propFileLoader.overwriteThrow = true
         project.propFileLoader.typeCasting = true
-        project.setProperty('alpha', new File('eins'))
-        project.setProperty('beta', new File('zwei'))
-        project.setProperty('gamma', null)
-        project.setProperty('delta', '')
+        project.ext.set('alpha', new File('eins'))
+        project.ext.set('beta', new File('zwei'))
+        project.ext.set('gamma', null)
+        project.ext.set('delta', '')
         project.propFileLoader.load(f)
         ['alpha', 'beta', 'gamma', 'delta'].each {
             assertTrue("Missing property '$it'", project.hasProperty(it))
@@ -603,7 +603,7 @@ systemProp|gamma()=
     void escapedDotRef() {
         checkProps('al.pha', 'beta')
 
-        project.setProperty('al.pha', 'one')
+        project.ext.set('al.pha', 'one')
         project.propFileLoader.overwriteThrow = true
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('beta =pre${al\\\\.pha}post')
@@ -841,7 +841,7 @@ mockBean$tHolder2.heldThread.name =Renamed Thread
 
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('beta=two${alpha}\nalpha=eins\ngamma=three${alpha}\n')
-        project.setProperty('alpha', 'one')
+        project.ext.set('alpha', 'one')
         project.propFileLoader.load(f)
         assertTrue(project.hasProperty('alpha'))
         assertTrue(project.hasProperty('beta'))
@@ -857,7 +857,7 @@ mockBean$tHolder2.heldThread.name =Renamed Thread
 
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('alpha=eins\nbeta=two${alpha}\n')
-        project.setProperty('alpha', 'one')
+        project.ext.set('alpha', 'one')
         project.propFileLoader.load(f)
         assertTrue(project.hasProperty('alpha'))
         assertTrue(project.hasProperty('beta'))
@@ -881,7 +881,7 @@ mockBean$tHolder2.heldThread.name =Renamed Thread
     void nonDerefDot() {
         checkProps('alpha.beta.gamma', 'delta.epsilon.mu', 'nu')
         project.propFileLoader.typeCasting = true
-        project.setProperty('alpha.beta.gamma', 'eins')
+        project.ext.set('alpha.beta.gamma', 'eins')
 
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('delta.epsilon.mu=zwei\nnu=pre${alpha.beta.gamma}post')
@@ -995,8 +995,8 @@ sp|aSysProp=werd
     @org.junit.Test
     void mapProjRef() {
         project.propFileLoader.overwriteThrow = true
-        project.setProperty('alpha', 'one')
-        project.setProperty('beta', 'two')
+        project.ext.set('alpha', 'one')
+        project.ext.set('beta', 'two')
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('gamma =pre${alpha}post\ndelta =pre${beta}post', 'ISO-8859-1')
         def aMap = [:]
@@ -1008,8 +1008,8 @@ sp|aSysProp=werd
     @org.junit.Test
     void mapEscapedDotProjRef() {
         project.propFileLoader.overwriteThrow = true
-        project.setProperty('alpha.al', 'one')
-        project.setProperty('beta.be', 'two')
+        project.ext.set('alpha.al', 'one')
+        project.ext.set('beta.be', 'two')
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('gamma =pre${alpha\\\\.al}post\ndelta =pre${beta\\\\.be}post', 'ISO-8859-1')
         def aMap = [:]
@@ -1078,7 +1078,7 @@ mu=pre${!pref.beta}post
         project.propFileLoader.overwriteThrow = true
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('beta=pre${al\\\\$pha}post')
-        project.setProperty('al$pha', 'one')
+        project.ext.set('al$pha', 'one')
         project.propFileLoader.typeCasting = true
         project.propFileLoader.load(f)
         assertTrue(project.hasProperty('beta'))
@@ -1092,7 +1092,7 @@ mu=pre${!pref.beta}post
         project.propFileLoader.overwriteThrow = true
         File f = JavaPropFilePluginTest.mkTestFile()
         f.write('beta=pre${al\\\\}pha}post')
-        project.setProperty('al}pha', 'one')
+        project.ext.set('al}pha', 'one')
         project.propFileLoader.typeCasting = true
         project.propFileLoader.load(f)
         assertTrue(project.hasProperty('beta'))
@@ -1116,9 +1116,9 @@ mu=pre${\\\\.drei}post
         System.setProperty('!eins', '11')
         System.setProperty('-zwei', '12')
         System.setProperty('.drei', '13')
-        project.setProperty('!eins', '21')
-        project.setProperty('-zwei', '22')
-        project.setProperty('.drei', '23')
+        project.ext.set('!eins', '21')
+        project.ext.set('-zwei', '22')
+        project.ext.set('.drei', '23')
         project.propFileLoader.load(f)
 
         ['alpha', 'beta', 'gamma', 'delta', 'epsilon', 'mu'].each {
@@ -1149,7 +1149,7 @@ mu=pre${\\\\.drei}post
 '''
         checkProps('aProjProp', 'aSysProp')
         System.setProperty('aSysProp', 'eins')
-        project.setProperty('aProjProp', 'zwei')
+        project.ext.set('aProjProp', 'zwei')
         File newFile = File.createTempFile('template', '.txt')
         newFile.deleteOnExit()
         newFile.write(url.getText('UTF-8'), 'UTF-8')
@@ -1171,7 +1171,7 @@ This line contains an un-expanded dot ${.reference} and a removed one in quotes:
 '''
         checkProps('aProjProp', 'aSysProp', 'reference')
         System.setProperty('aSysProp', 'eins')
-        project.setProperty('aProjProp', 'zwei')
+        project.ext.set('aProjProp', 'zwei')
         File newFile = File.createTempFile('template', '.txt')
         newFile.deleteOnExit()
         newFile.write(url.getText('UTF-8'), 'UTF-8')
@@ -1188,7 +1188,7 @@ This line contains an un-expanded dot ${.reference} and a removed one in quotes:
     void expandMapThrow() {
         checkProps('alpha', 'aSysProp')
         System.setProperty('alpha', 'eins')
-        project.setProperty('alpha', 'zwei')
+        project.ext.set('alpha', 'zwei')
         project.propFileLoader.expand('Pre ${alpha} Post', [other: 'mother'])
     }
 
