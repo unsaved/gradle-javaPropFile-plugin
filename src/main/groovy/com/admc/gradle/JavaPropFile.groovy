@@ -10,6 +10,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Action
 import org.gradle.api.GradleException
 import org.gradle.api.UnknownDomainObjectException
+import org.gradle.api.plugins.ExtraPropertiesExtension
 
 class JavaPropFile implements Action<Plugin> {
     private static final Pattern curlyRefGrpPattern =
@@ -944,7 +945,11 @@ Failed to resolve DomainExtensionObject ref though succeeded earlier:
     private static void setPossiblyNestedValue(Boolean dotDeref,
             Object topObject, String propertyPath, Object newValue) {
         if (!dotDeref) {
-            topObject[propertyPath] = newValue
+            if (topObject.hasProperty('ext') && ExtraPropertiesExtension.
+              isAssignableFrom(topObject.ext.getClass()))
+                topObject.ext[propertyPath] = newValue
+            else
+                topObject[propertyPath] = newValue
             return
         }
         List<String> tokens =
@@ -954,7 +959,11 @@ Failed to resolve DomainExtensionObject ref though succeeded earlier:
         tokens.each {
             object = object[it.replace('\u001F', '.')]
         }
-        object[propertyName.replace('\u001F', '.')] = newValue
+        if (object.hasProperty('ext') &&
+          ExtraPropertiesExtension.isAssignableFrom(object.ext.getClass()))
+            object.ext[propertyName.replace('\u001F', '.')] = newValue
+        else
+            object[propertyName.replace('\u001F', '.')] = newValue
     }
 
     /**
