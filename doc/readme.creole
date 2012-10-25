@@ -248,14 +248,14 @@ filter { String line -> output one line }
 <<prettyPrint>>
 {{{
         x.a=eks
-        # No whitespace immediately after key ##x.a## so property name is ##x.a##.
+        # No whitespace immediately after key x.a so property name is x.a.
 }}}
     vs.
 <<prettyPrint>>
 {{{
         x.a =eks
-        # Whitespace immediately after key ##x.a## so this means property ##a## of
-        # object ##x##.
+        # Whitespace immediately after key x.a so this means property a of
+        # object x.
 }}}
     (MNEMONIC:  Groovy is distinctive for allowing white space to delimit
     between method name and parameters.  We use white space as delimiter to
