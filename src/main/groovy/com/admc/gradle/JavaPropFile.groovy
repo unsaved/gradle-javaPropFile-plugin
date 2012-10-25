@@ -944,9 +944,14 @@ Failed to resolve DomainExtensionObject ref though succeeded earlier:
      */
     private static void setPossiblyNestedValue(Boolean dotDeref,
             Object topObject, String propertyPath, Object newValue) {
+        /* For the two tests beginning with 'topObject.hasProperty' and
+         * 'object.hasProperty', see
+         * http://forums.gradle.org/gradle/topics/project_description_vs_project_ext_description
+         */
         if (!dotDeref) {
             if (topObject.hasProperty('ext') && ExtraPropertiesExtension.
-              isAssignableFrom(topObject.ext.getClass()))
+              isAssignableFrom(topObject.ext.getClass()) &&
+              !topObject.hasProperty(propertyPath))
                 topObject.ext[propertyPath] = newValue
             else
                 topObject[propertyPath] = newValue
@@ -960,7 +965,8 @@ Failed to resolve DomainExtensionObject ref though succeeded earlier:
             object = object[it.replace('\u001F', '.')]
         }
         if (object.hasProperty('ext') &&
-          ExtraPropertiesExtension.isAssignableFrom(object.ext.getClass()))
+          ExtraPropertiesExtension.isAssignableFrom(object.ext.getClass()) &&
+          !object.hasProperty(propertyName))
             object.ext[propertyName.replace('\u001F', '.')] = newValue
         else
             object[propertyName.replace('\u001F', '.')] = newValue

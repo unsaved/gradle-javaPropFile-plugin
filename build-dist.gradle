@@ -19,21 +19,21 @@
  * publish to a Maven repository.
  */
 
-assert cpFileTree.files.size() > 0:
+assert ext.cpFileTree.files.size() > 0:
     '''Due to boot-strapping issue, you must build the jar with 'build.gradle'
 before you can use build file 'build-dist.gradle'.
 '''
-assert cpFileTree.files.size() < 2:
+assert ext.cpFileTree.files.size() < 2:
     '''Due to boot-strapping issue, you must have just one project jar before
 you can use build file 'build-dist.gradle'.  Please run 'gradlew clean jar'.
 '''
 buildscript {
-    cpFileTree = fileTree(
+    ext.cpFileTree = fileTree(
             dir: 'build/libs',
             excludes: ['*-sources.jar', '*-javadoc.jar'],
             include: 'gradle-javaPropFile-plugin-*.jar'
     )
-    dependencies { classpath cpFileTree }
+    dependencies { classpath ext.cpFileTree }
 }
 
 apply plugin: 'maven'
@@ -85,7 +85,9 @@ uploadArchives {
 
     repositories.mavenDeployer {
         configuration = configurations.deployJars
-        beforeDeployment { MavenDeployment deployment -> signPom(deployment) }
+        beforeDeployment {
+            MavenDeployment deployment -> signing.signPom(deployment)
+        }
         if (project.hasProperty('mavenRepository.dest.url'))
             repository(url: project.property('mavenRepository.dest.url')) {
                 authentication(authMap)
