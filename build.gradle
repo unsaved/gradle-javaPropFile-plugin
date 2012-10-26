@@ -22,7 +22,7 @@ dependencies {
     groovy localGroovy()
 }
 
-// Today this has no effect since current Groovy compiler can't do later than 1.5.
+// No effect since current Groovy compiler can't do later than 1.5.
 compileGroovy.targetCompatibility = '1.5'
 
 task noop << { }
