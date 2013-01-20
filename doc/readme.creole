@@ -159,7 +159,7 @@ filter { String line -> output one line }
         // including usage of typeCasting.
 
         // Create a new Map by loading a properties file:
-        someMap = propFileLoader(load(file('mail.properties'), [:])
+        someMap = propFileLoader.load(file('mail.properties'), [:])
 
         // To use the ContentAsStringFilter, you don't need to 'apply' anything.
         import com.admc.gradle.ContentAsStringFilter
@@ -202,7 +202,7 @@ filter { String line -> output one line }
         // including usage of typeCasting.
 
         // Create a new Map by loading a properties file:
-        someMap = propFileLoader(load(file('mail.properties'), [:])
+        someMap = propFileLoader.load(file('mail.properties'), [:])
 
         // To use the ContentAsStringFilter, you don't need to 'apply' anything.
         import com.admc.gradle.ContentAsStringFilter
