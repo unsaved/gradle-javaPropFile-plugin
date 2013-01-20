@@ -679,7 +679,7 @@ propFileLoader.unsatisfiedRefBehavior = JavaPropFile.Behavior.LITERAL
         # For each reference that you want to require JavaPropFile to expand,
         bad
            prefix the name with !, like...
-         Some text in the template file requires $~{!name} to be set.
+         Some text in the template file requires \${!name} to be set.
 
     Instead of duplicating an example here, see the configuration of
     task ##processResources## in this production build file:
