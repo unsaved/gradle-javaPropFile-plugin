@@ -192,7 +192,7 @@ filter { String line -> output one line }
         buildscript { dependencies {
             classpath fileTree(
                 dir: 'directory/containing/the/plugin/jar/file',
-                include: 'gradle-javaPropFile-plugin-*.jar
+                include: 'gradle-javaPropFile-plugin-*.jar'
             )
         } }
         apply plugin: 'javaPropFile'
