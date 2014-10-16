@@ -232,6 +232,9 @@ filter { String line -> output one line }
             set, others may leave the text of unsatisfied references unchanged,
             and other occurrences may replace the unsatisfied reference with
             nothing (empty string).
+            ** !|throw if not defined
+            ** -|replace with empty string if not defined
+            ** .|leave exactly as-is if not defined
      *= DotDeref|
             Behavior where specifications like alpha.beta.gamma means
             property-gamma-of-property-beta-of-property-alpha, instead of
@@ -346,6 +349,10 @@ filter { String line -> output one line }
     http://docs.oracle.com/javase/6/docs/api/java/util/Properties.html#load(java.io.Reader)
     you must \ to escape all white space characters (including line breaks),
     ':', and '=' inside of property keys.
+    As a consequence of the ##java.util.Properties## \-escaping rules, if you
+    want to totally avoid expansion-processing of a particular variable
+    reference like ${this}, you must double-\-escape it like this:
+    ~\~\~\${this}.
 <<prettyPrint>>
 {{{
         colon\:and\ space_inside_property_key=hello
