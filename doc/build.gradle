@@ -22,7 +22,7 @@ buildscript {
     }
 }
 apply plugin: 'java'
-apply plugin: 'javaPropFile'
+apply plugin: 'com.admc.javaPropFile'
 
 // Don't execute a non-configuration method of another plugin before you
 // load() if you want the properties file to effect the plugin method.
@@ -131,6 +131,8 @@ task displayLoadedMap << {
     // The property-name-prefix parameter is optional.  Omit the parameter
     // to use property names just as specified in the properties file.
     println propFileLoader.load(file('amap.properties'), 'myNamespace|', [:])
+    // The final "[:]" parameter causes a map to be returned (as opposed to
+    // adding to the project's properties and returning nothing).
 }
 displayLoadedMap.description =
         'Display a Map loaded from a map file with specified name-prefix'

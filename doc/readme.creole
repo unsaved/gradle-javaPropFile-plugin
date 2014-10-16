@@ -149,7 +149,7 @@ filter { String line -> output one line }
                 classpath 'com.admc:gradle-javaPropFile-plugin:latest.integration'
             }
         }
-        apply plugin: 'javaPropFile'
+        apply plugin: 'com.admc.javaPropFile'
         // Following loads 'app.properties' then 'local.properties' files
         // from project directory if they exist there.
         propFileLoader.traditionalPropertiesInit()
@@ -195,7 +195,7 @@ filter { String line -> output one line }
                 include: 'gradle-javaPropFile-plugin-*.jar'
             )
         } }
-        apply plugin: 'javaPropFile'
+        apply plugin: 'com.admc.javaPropFile'
         // Following loads 'app.properties' then 'local.properties' files
         // from project directory if they exist there.
         propFileLoader.traditionalPropertiesInit()
@@ -205,7 +205,7 @@ filter { String line -> output one line }
 
         // Create a new Map by loading a properties file:
         someMap = propFileLoader.load(file('mail.properties'), [:])
-        // The "[:]" parameter causes a map to be returned (as opposed to
+        // The final "[:]" parameter causes a map to be returned (as opposed to
         // adding to the project's properties and returning nothing).
 
         // To use the ContentAsStringFilter, you don't need to 'apply' anything.
@@ -514,8 +514,8 @@ filter { String line -> output one line }
 
 === Configurations:
 
-        After you "##apply plugin 'javaPropFile'##", you can set the following
-        properties on extension object ##propFileLoader##.
+        After you "##apply plugin 'com.admc.javaPropFile'##", you can set the
+        following properties on extension object ##propFileLoader##.
 
 ====    boolean propFileLoader.unsatisfiedRefBehavior
             What to do when ${x} is used in a property value, but 'x' is not

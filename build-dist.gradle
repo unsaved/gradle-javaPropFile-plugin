@@ -38,7 +38,7 @@ buildscript {
 
 apply plugin: 'maven'
 apply plugin: 'signing'
-apply plugin: 'javaPropFile'
+apply plugin: 'com.admc.javaPropFile'
 
 signing {
     sign configurations.archives
