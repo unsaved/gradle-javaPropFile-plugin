@@ -34,18 +34,29 @@ buildscript {
             include: 'gradle-javaPropFile-plugin-*.jar'
     )
     dependencies { classpath cpFileTree }
+    repositories {
+        jcenter()
+		//mavenCentral()
+	}
+	dependencies {
+		classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:0.6'
+		//classpath 'org.codehaus.groovy:groovy-all:2.3.4'
+	}
 }
 
 apply plugin: 'maven'
-apply plugin: 'signing'
 apply plugin: 'com.admc.javaPropFile'
+apply plugin: 'com.jfrog.bintray'
 
+/*  ENABLE THIS BLOCK to enable client-side PGP signing for MC or BinTray:
+apply plugin: 'signing'
 signing {
     sign configurations.archives
 }
+*/
 
 apply from: 'build.gradle'
-defaultTasks 'uploadArchives'
+defaultTasks 'bintrayUpload'
 
 artifacts {
      archives sourcesJar
@@ -157,3 +168,63 @@ uploadArchives { doFirst {
                     + project.property(it).class.name + '\n')
     }
 } }
+
+bintray {
+    if (project.hasProperty('bintray.user'))
+        user = project.property('bintray.user')
+    if (project.hasProperty('bintray.apikey'))
+        key = project.property('bintray.apikey')
+	configurations = ['archives']
+    //dryRun = true
+    //publish = false
+
+	pkg {
+        if (project.hasProperty('bintray.repo'))
+            repo = project.property('bintray.repo')
+		name = project.property('name')
+        if (project.hasProperty('bintray.repo.org'))
+            userOrg = project.property('bintray.repo.org')
+		desc = project.property('description')
+		websiteUrl = project.property('url')
+		issueTrackerUrl = websiteUrl + '/issues'
+		vcsUrl = project.property('scm.url')
+		licenses = ['Apache-2.0']
+		labels = ['gradle', 'properties', 'templating', 'templates']
+		publicDownloadNumbers = true
+        // attributes?
+		version {
+			// name = Bintree logical version name
+            desc = project.property('description')
+            // released = date
+            //if (project.hasProperty('scm.tag'))   TESTING to see if required
+                //vcsTag = project.property('scm.tag')
+			attributes = [
+                'gradle-plugin': "com.admc.javaPropFile:com.admc:$project.name"
+			]
+            /* This is for BinTree server-side signing.
+             * For this to work, you must upload private and public keys to
+             * BinTree account, and enable signing on the target repository.
+             * The passphrase is the passphrase that your PGP key tool
+             * encrypted the private key with.
+             * To do it client-side instead, comment out the following and
+             * enable the signing plugin above.
+             * If 'signing.password' isn't set, there will be no signing.
+             */
+            gpg {
+                sign = project.hasProperty('signing.password')
+                passphrase = (project.hasProperty('signing.password')
+                  ? project.property('signing.password') : null)
+            }
+		}
+	}
+}
+
+bintrayUpload.dependsOn << {
+    ['bintray.user', 'bintray.apikey', 'bintray.repo'].each {
+        assert (project.hasProperty(it) && project.property(it) != null
+                && project.property(it) != '') :
+            """Property '$it' is required by 'bintray' task.
+"""
+    }
+    print ''  // Gradle parser can't handle the loop terminating this block.
+}
