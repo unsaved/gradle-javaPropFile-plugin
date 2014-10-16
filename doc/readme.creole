@@ -160,6 +160,8 @@ filter { String line -> output one line }
 
         // Create a new Map by loading a properties file:
         someMap = propFileLoader.load(file('mail.properties'), [:])
+        // The "[:]" parameter causes a map to be returned (as opposed to
+        // adding to the project's properties and returning nothing).
 
         // To use the ContentAsStringFilter, you don't need to 'apply' anything.
         import com.admc.gradle.ContentAsStringFilter
@@ -203,6 +205,8 @@ filter { String line -> output one line }
 
         // Create a new Map by loading a properties file:
         someMap = propFileLoader.load(file('mail.properties'), [:])
+        // The "[:]" parameter causes a map to be returned (as opposed to
+        // adding to the project's properties and returning nothing).
 
         // To use the ContentAsStringFilter, you don't need to 'apply' anything.
         import com.admc.gradle.ContentAsStringFilter
@@ -419,7 +423,7 @@ filter { String line -> output one line }
             then JavaPropFile would end up doing
 <<prettyPrint>>
 {{{
-                gradleProject.setProperty('prefkey', 'val)
+                gradleProject.setProperty('prefkey', 'val')
 }}}
 
 ====    Map propFileLoader.load(File propertiesFile, Map aMap)
