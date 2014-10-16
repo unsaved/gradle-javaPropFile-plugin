@@ -196,8 +196,9 @@ bintray {
 			// name = Bintree logical version name
             desc = project.property('description')
             // released = date
-            //if (project.hasProperty('scm.tag'))   TESTING to see if required
-                //vcsTag = project.property('scm.tag')
+            if (project.hasProperty('scm.tag'))
+                vcsTag = project.property('scm.tag')
+                // Seems to default to version without this.
 			attributes = [
                 'gradle-plugin': "com.admc.javaPropFile:com.admc:$project.name"
 			]
