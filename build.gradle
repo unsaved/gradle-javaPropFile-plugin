@@ -9,7 +9,7 @@ if (localGradleFile.isFile()) {
     apply from: localGradleFile
 }
 
-if (version == 'unspecified') version = '0.6.1-SNAPSHOT'
+if (version == 'unspecified') version = '0.7.0-SNAPSHOT'
 if (!project.hasProperty('org.name'))
     project.ext.set('org.name', ((group == 'com.admc')
             ? 'Axis Data Management Corp.' : System.properties['user.name']))
@@ -19,7 +19,7 @@ if (!project.hasProperty('jar.title'))
 
 dependencies {
     compile gradleApi()
-    groovy localGroovy()
+    //groovy localGroovy()  // Unnecessary and illegal with Gradle 2.0
 }
 
 // No effect since current Groovy compiler can't do later than 1.5.
@@ -28,12 +28,23 @@ compileGroovy.targetCompatibility = '1.5'
 task noop << { }
 noop.description = 'Noop task for Gradle testing'
 
+processResources << {
+    // Add license file to META-INF subdir
+    copy {
+        from 'doc'
+        into new File(sourceSets.main.output.resourcesDir, 'META-INF')
+        include 'LICENSE.txt'
+    }
+    println 'done'
+}
+
 jar { doFirst {
-    project.metaInf << files('doc/LICENSE.txt')
+    // metaInf property apparently gone with Gradle 2.0
+    //project.metaInf << files('doc/LICENSE.txt')
     exclude '**/.*/**'
     jar { manifest { attributes(
         'Specification-Title': 'JavaPropFile Gradle Plugin',
-        'Specification-Version': '0.6.1-SNAPSHOT',
+        'Specification-Version': '0.7.0-SNAPSHOT',
         'Specification-Vendor': 'Axis Data Management Corp.',
         'Implementation-Title': project.property('jar.title'),
         'Implementation-Version': project.version,

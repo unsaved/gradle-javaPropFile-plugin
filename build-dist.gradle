@@ -33,7 +33,7 @@ buildscript {
             excludes: ['*-sources.jar', '*-javadoc.jar'],
             include: 'gradle-javaPropFile-plugin-*.jar'
     )
-    dependencies { classpath ext.cpFileTree }
+    dependencies { classpath cpFileTree }
 }
 
 apply plugin: 'maven'
