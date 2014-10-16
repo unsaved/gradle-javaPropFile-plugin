@@ -9,7 +9,7 @@ if (localGradleFile.isFile()) {
     apply from: localGradleFile
 }
 
-if (version == 'unspecified') version = '0.7.0c'
+if (version == 'unspecified') version = '0.7.0b'
 // N.b. As of today, Bintray doesn't accept snapshots
 if (!project.hasProperty('org.name'))
     project.ext.set('org.name', ((group == 'com.admc')
@@ -45,7 +45,7 @@ jar { doFirst {
     exclude '**/.*/**'
     jar { manifest { attributes(
         'Specification-Title': 'JavaPropFile Gradle Plugin',
-        'Specification-Version': '0.7.0c',
+        'Specification-Version': '0.7.0b',
         // N.b. As of today, Bintray doesn't accept snapshots
         'Specification-Vendor': 'Axis Data Management Corp.',
         'Implementation-Title': project.property('jar.title'),
