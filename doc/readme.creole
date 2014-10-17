@@ -139,14 +139,16 @@ filter { String line -> output one line }
 
 === Pull plugin from Internet.
 
-    Couldn't be easier.  This will pull the plugin from Maven Central:
+    Couldn't be easier.  This will pull the plugin from jCenter:
 
 <<prettyPrint lang-java>>
 {{{
         buildscript {
-            repositories { mavenCentral() }
+            repositories { jcenter() }  // Before plugin v. 1.0.0 use mavenCentral()
             dependencies {
                 classpath 'com.admc:gradle-javaPropFile-plugin:latest.integration'
+                // For strictly repeatable builds, replace 'latest.integration'
+                // with the latest literal GA version label.
             }
         }
         apply plugin: 'com.admc.javaPropFile'
@@ -154,7 +156,7 @@ filter { String line -> output one line }
         // from project directory if they exist there.
         propFileLoader.traditionalPropertiesInit()
         // See
-        // https://github.com/unsaved/gradle-javaPropFile-plugin/tree/master/doc
+        // http://admc.com/projectdocs/gradle-javaPropFile-plugin/readme.html
         // for examples of specifying your own file names and settings,
         // including usage of typeCasting.
 
@@ -171,16 +173,18 @@ filter { String line -> output one line }
             filter(ContentAsStringFilter, closure: { it.toLowerCase() })
         }
         // See
-        // https://github.com/unsaved/gradle-javaPropFile-plugin/tree/master/doc
+        // http://admc.com/projectdocs/gradle-javaPropFile-plugin/readme.html
         // for some other very useful examples using ContentAsStringFilter.
 }}}
 
 === Use plugin jar file locally.
 
-    Just use your browser to go to the JavaPropFile directory at Maven
-    Central.  http://repo1.maven.org/maven2/com/admc/gradle-javaPropFile-plugin
+    Just use your browser to go to the JavaPropFile directory at jCenter.
+    http://jcenter.bintray.com/com/admc/gradle-javaPropFile-plugin/.
     Click into the version that you want.
-    Right-click and download the only *.jar file in that directory.
+    Right-click and download the only file in that directory that ends in
+    "-<VERSION_LABEL>.jar"
+    (i.e. the only jar file which is neither for JavaDoc nor source code).
 
     You can save the plugin jar with your project, thereby automatically
     sharing it with other project developers (assuming you use some SCM system).
@@ -439,18 +443,13 @@ filter { String line -> output one line }
             new Map, just specify value [:] as the map.
             The given ##aMap## reference will be returned.
 
-====    void propFileLoader.load(
-<<prettyPrint>>
-{{{
-                File propertiesFile, String keyAssignPrefix, Map aMap)
-}}}
+====    void propFileLoader.load(File propertiesFile, String keyAssignPrefix, Map aMap)
             Exact same as previous, except that each property written to the
             Map is prefixed with the supplied String.  See description for the
             load(File, String) method above for details about how the prefix
             value is applied.
 
-====    void propFileLoader.loadIntoExensionObject(
-                File, String defaultExtObjName)
+====    void propFileLoader.loadIntoExensionObject(File, String defaultExtObjName)
             The String is an extension object name.  This is the default object
             to apply property values to (or with as-dereference-operator, this
             is where the dereferencing begins).
@@ -468,8 +467,7 @@ filter { String line -> output one line }
             intended for shared or private/local usage, so I have standardized
             on the distinctive names ##app.properties## and ##local.properties##
 
-====    Map<String, Map<String, Object>>
-                propFileLoader.getDeferredExtensionProps()
+====    Map<String, Map<String, Object>> propFileLoader.getDeferredExtensionProps()
             Most users will not use this.  It is for checking the state of
             deferred extension object properties.
             Returns a map of extension object names to map of deferred
@@ -530,8 +528,7 @@ filter { String line -> output one line }
             Defaults to com.admc.gradle.THROW, which will cause the property
             file load to fast-fail.
             You can change the behavior to any of the following.  (My syntax
-            here assumes that you imported the class
-            com.admc.gradle.JavaPropFile).
+            here assumes that you imported the class ##com.admc.gradle.JavaPropFile##).
 <<prettyPrint>>
 {{{
                 JavaPropFile.LITERAL  Leave literal ${x}
@@ -545,6 +542,10 @@ filter { String line -> output one line }
              always throw.  The only reason for this exception is the amount
              of coding and complexity needed for a capability with unknown
              user demand.
+            The unsatisfiedRefBehavior setting can be overridden for
+            individual references by using property name prefixes
+            (//.//, //-//, N/A, //!// prefixes corresponding to the listed
+            behaviors).
 
 ====    boolean propFileLoader.overwriteThrow
             Property file loading will throw and abort immediately if a

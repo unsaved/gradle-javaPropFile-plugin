@@ -1,5 +1,12 @@
 defaultTasks 'jar'
 
+/* Can't use this plugin to read in property files.  Could read them in simple
+ * fashion without variable expansion, class-typing, etc., but for now going
+ * with the least ambiguous approach of reading no property files.
+ * You can make property assignments (like for 'version', 'group' and
+ * 'ext.anything' in a "local.gradle" file.
+ */
+
 apply plugin: 'groovy'
 test.testLogging.showStandardStreams = true
 
@@ -9,7 +16,7 @@ if (localGradleFile.isFile()) {
     apply from: localGradleFile
 }
 
-if (version == 'unspecified') version = '0.7.0b'
+if (version == 'unspecified') version = '1.0.0a'
 // N.b. As of today, Bintray doesn't accept snapshots
 if (!project.hasProperty('org.name'))
     project.ext.set('org.name', ((group == 'com.admc')
@@ -45,7 +52,7 @@ jar { doFirst {
     exclude '**/.*/**'
     jar { manifest { attributes(
         'Specification-Title': 'JavaPropFile Gradle Plugin',
-        'Specification-Version': '0.7.0b',
+        'Specification-Version': '1.0.0a',
         // N.b. As of today, Bintray doesn't accept snapshots
         'Specification-Vendor': 'Axis Data Management Corp.',
         'Implementation-Title': project.property('jar.title'),

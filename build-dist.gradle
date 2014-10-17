@@ -189,18 +189,21 @@ bintray {
 		issueTrackerUrl = websiteUrl + '/issues'
 		vcsUrl = project.property('scm.url')
 		licenses = ['Apache-2.0']
+        // label values are used for Bintray and Gradle plugin site search
+        // links.  On Gradle plugin site the search links are labeled like #x.
 		labels = ['gradle', 'properties', 'templating', 'templates']
 		publicDownloadNumbers = true
         // attributes?
 		version {
 			// name = Bintree logical version name
-            desc = project.property('description')
+            if (project.hasProperty('version.description'))
+                desc = project.property('version.description')
             // released = date
             if (project.hasProperty('scm.tag'))
                 vcsTag = project.property('scm.tag')
                 // Seems to default to version without this.
 			attributes = [
-                'gradle-plugin': "com.admc.javaPropFile:com.admc:$project.name"
+                'gradle-plugin': "com.admc.javaPropFile:$project.group:$project.name"
 			]
             /* This is for BinTree server-side signing.
              * For this to work, you must upload private and public keys to
@@ -221,7 +224,8 @@ bintray {
 }
 
 bintrayUpload.dependsOn << {
-    ['bintray.user', 'bintray.apikey', 'bintray.repo'].each {
+    ['bintray.user', 'bintray.apikey', 'bintray.repo',
+     'version.description'].each {
         assert (project.hasProperty(it) && project.property(it) != null
                 && project.property(it) != '') :
             """Property '$it' is required by 'bintray' task.

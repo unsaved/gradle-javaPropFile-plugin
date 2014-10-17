@@ -289,10 +289,10 @@ pre.prettyprint { border:1px dashed blue; padding:5px; }
         <li><a href="#jcsect_vplfpsk" target="_self">void propFileLoader.load(File propertiesFile, String keyAssignPrefix)</a></li>
       </ul></li>
       <li><a href="#jcsect_mplfpma" target="_self">Map propFileLoader.load(File propertiesFile, Map aMap)</a></li>
-      <li><a href="#jcsect_VoidPropfileloaderLoad" target="_self">void propFileLoader.load(</a></li>
-      <li><a href="#jcsect_VoidPropfileloaderLoadintoexensionobject" target="_self">void propFileLoader.loadIntoExensionObject(</a></li>
+      <li><a href="#jcsect_vplfpskma" target="_self">void propFileLoader.load(File propertiesFile, String keyAssignPrefix, Map aMap)</a></li>
+      <li><a href="#jcsect_vplfsd" target="_self">void propFileLoader.loadIntoExensionObject(File, String defaultExtObjName)</a></li>
       <li><a href="#jcsect_vpt" target="_self">void propFileLoader.traditionalPropertiesInit()</a></li>
-      <li><a href="#jcsect_MapstringMapstringObject" target="_self">Map&lt;String, Map&lt;String, Object&gt;&gt;</a></li>
+      <li><a href="#jcsect_mmopg" target="_self">Map&lt;String, Map&lt;String, Object&gt;&gt; propFileLoader.getDeferredExtensionProps()</a></li>
       <li><a href="#jcsect_scjrsc" target="_self">static Class JavaPropFile.resolveClass(String className)</a></li>
       <li><a href="#jcsect_VoidPropfileloaderExecutedeferrals" target="_self">void propFileLoader.executeDeferrals()</a></li>
       <li><a href="#jcsect_StringPropfileloaderExpand" target="_self">String propFileLoader.expand(...)</a>
@@ -739,17 +739,13 @@ filter { String line -&gt; output one line }
             You must specify a Map to be populated, so if you want to load a
             new Map, just specify value [:] as the map.
             The given <tt>aMap</tt> reference will be returned.</p>
-<h4 id="jcsect_VoidPropfileloaderLoad"><span class="jcreole_hbody">    void propFileLoader.load(</span></h4>
-<pre class="prettyprint">
-                File propertiesFile, String keyAssignPrefix, Map aMap)
-</pre>
+<h4 id="jcsect_vplfpskma"><span class="jcreole_hbody">    void propFileLoader.load(File propertiesFile, String keyAssignPrefix, Map aMap)</span></h4>
 <p>            Exact same as previous, except that each property written to the
             Map is prefixed with the supplied String.  See description for the
             load(File, String) method above for details about how the prefix
             value is applied.</p>
-<h4 id="jcsect_VoidPropfileloaderLoadintoexensionobject"><span class="jcreole_hbody">    void propFileLoader.loadIntoExensionObject(</span></h4>
-<p>                File, String defaultExtObjName)
-            The String is an extension object name.  This is the default object
+<h4 id="jcsect_vplfsd"><span class="jcreole_hbody">    void propFileLoader.loadIntoExensionObject(File, String defaultExtObjName)</span></h4>
+<p>            The String is an extension object name.  This is the default object
             to apply property values to (or with as-dereference-operator, this
             is where the dereferencing begins).</p>
 <h4 id="jcsect_vpt"><span class="jcreole_hbody">    void propFileLoader.traditionalPropertiesInit()</span></h4>
@@ -764,9 +760,8 @@ filter { String line -&gt; output one line }
             the name <tt>build.properties</tt> does not distinguish whether it is
             intended for shared or private/local usage, so I have standardized
             on the distinctive names <tt>app.properties</tt> and <tt>local.properties</tt></p>
-<h4 id="jcsect_MapstringMapstringObject"><span class="jcreole_hbody">    Map&lt;String, Map&lt;String, Object&gt;&gt;</span></h4>
-<p>                propFileLoader.getDeferredExtensionProps()
-            Most users will not use this.  It is for checking the state of
+<h4 id="jcsect_mmopg"><span class="jcreole_hbody">    Map&lt;String, Map&lt;String, Object&gt;&gt; propFileLoader.getDeferredExtensionProps()</span></h4>
+<p>            Most users will not use this.  It is for checking the state of
             deferred extension object properties.
             Returns a map of extension object names to map of deferred
             property definitions for that extension object.</p>
@@ -821,8 +816,7 @@ filter { String line -&gt; output one line }
             Defaults to com.admc.gradle.THROW, which will cause the property
             file load to fast-fail.
             You can change the behavior to any of the following.  (My syntax
-            here assumes that you imported the class
-            com.admc.gradle.JavaPropFile).</p>
+            here assumes that you imported the class <tt>com.admc.gradle.JavaPropFile</tt>).</p>
 <pre class="prettyprint">
                 JavaPropFile.LITERAL  Leave literal ${x}
                 JavaPropFile.EMPTY    Replace ${x} with the empty string
@@ -834,7 +828,11 @@ filter { String line -&gt; output one line }
              assignments or in expand() Strings/files).  This situation will
              always throw.  The only reason for this exception is the amount
              of coding and complexity needed for a capability with unknown
-             user demand.</p>
+             user demand.
+            The unsatisfiedRefBehavior setting can be overridden for
+            individual references by using property name prefixes
+            (<em>.</em>, <em>-</em>, N/A, <em>!</em> prefixes corresponding to the listed
+            behaviors).</p>
 <h4 id="jcsect_BooleanPropfileloaderOverwritethrow"><span class="jcreole_hbody">    boolean propFileLoader.overwriteThrow</span></h4>
 <p>            Property file loading will throw and abort immediately if a
             property assignment is attempted to a property that already has a
@@ -979,7 +977,7 @@ propFileLoader.unsatisfiedRefBehavior = JavaPropFile.Behavior.LITERAL
 </div>
 
 <hr>
-<div class="jcreole_footer">Generated by JCreole v. 1.3.3 @ 2014-10-16T16:01:31-0400.
+<div class="jcreole_footer">Generated by JCreole v. 1.3.3 @ 2014-10-17T10:06:27-0400.
 &nbsp; &nbsp; &nbsp; &nbsp;
 Apache 2 license &copy; 2011 by Axis Data Management Corp.</div>
 </body>

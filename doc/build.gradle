@@ -7,8 +7,8 @@
  * build/resources/main/ and into build/libs/*.jar; and to build/tmp/x and
  * build/tmp/y correspondingly for the last 2.
  *
- * See the JavaPropFile README.txt file at
- * https://github.com/unsaved/gradle-javaPropFile-plugin/raw/master/README.txt
+ * See the JavaPropFile "readme.html" file at
+ * http://admc.com/projectdocs/gradle-javaPropFile-plugin/readme.html
  * for a list and explanation of all provided methods and settings for the
  * plugin.
  */
@@ -16,9 +16,11 @@
 defaultTasks 'displaySomeProps', 'displaySomeSysProps', 'displayLoadedMap'
 
 buildscript {
-    repositories { mavenCentral() }
+    repositories { jcenter() }  // Before plugin v. 1.0.0 use mavenCentral()
     dependencies {
         classpath 'com.admc:gradle-javaPropFile-plugin:latest.integration'
+        // For strictly repeatable builds, replace 'latest.integration' with
+        // the latest literal GA version label.
     }
 }
 apply plugin: 'java'
