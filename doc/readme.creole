@@ -2,9 +2,10 @@
 
 <<toc /x____x>>
 
-
-Versions 0.6.* and later require Gradle 1.2 or later.
-Versions 0.4.* and later require Gradle 1.0-milestone-6 or later.
+\\
+* Versions 1.0.* and later require Gradle 2.0 or later.
+* Versions 0.6.* and later require Gradle 1.2 or later.
+* Versions 0.4.* and later require Gradle 1.0-milestone-6 or later.
 
 **IMPORTANT:**  Users who are upgrading Gradle or upgrading JavaPropFile should
 read the file ##upgrade.txt## in the ##doc## subdirectory.
