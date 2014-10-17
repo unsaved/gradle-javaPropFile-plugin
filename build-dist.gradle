@@ -201,7 +201,9 @@ bintray {
             // released = date
             if (project.hasProperty('scm.tag'))
                 vcsTag = project.property('scm.tag')
-                // Seems to default to version without this.
+                // Defaults to version without this.
+                // Since my convention is to tag precisely with version, this
+                // is unnecessary for me.
 			attributes = [
                 'gradle-plugin': "com.admc.javaPropFile:$project.group:$project.name"
 			]
