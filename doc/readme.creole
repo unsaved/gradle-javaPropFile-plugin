@@ -1,19 +1,20 @@
 = JavaPropFile Gradle Plugin
 
+<<addClass =block notepanel>>
+This plugin is for loading a Map, a Gradle Project or extension object (and
+objects nested beneath them), with properties from Java properties file;
+or for expanding given Strings or text files with the objects just listed or
+with a supplied Map; plus a general Gradle Copy Filter is provided.
+
 <<toc /x____x>>
 
-\\
 * Versions 1.0.* and later require Gradle 2.0 or later.
 * Versions 0.6.* and later require Gradle 1.2 or later.
 * Versions 0.4.* and later require Gradle 1.0-milestone-6 or later.
 
 **IMPORTANT:**  Users who are upgrading Gradle or upgrading JavaPropFile should
 read the file ##upgrade.txt## in the ##doc## subdirectory.
-
-This plugin is for loading a Map, a Gradle Project or extension object (and
-objects nested beneath them), with properties from Java properties file;
-or for expanding given Strings or text files with the objects just listed or
-with a supplied Map; plus a general Gradle Copy Filter is provided.
+\\ \\
 
 Most classes are supported, so that you can write JDK objects, custom objects,
 array, and collections in addition to String values (using a simply //casting//
